@@ -48,9 +48,12 @@ int main(void)
     int w = 500;
     int h = 500;
 
-    Image i = image_blank(w, h);
+    Image img = image_blank(w, h);
+    RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
+    image_fill(&img, background);
 
-    Simulation s = simulation_gen(100, 100);
+    int padding = 20;
+    Simulation s = simulation_gen(w - padding * 2, h - padding * 2);
 
     AppState state = {
         .step = true,
@@ -90,18 +93,20 @@ int main(void)
 
         if (state.reset)
         {
-            s = simulation_gen(100, 100);
+            s = simulation_gen(w - padding * 2, h - padding * 2);
             state.reset = false;
         }
 
         if (!state.step_mode || state.step)
         {
             simulation_step(&s);
-            simulation_draw(&s, &i);
+            simulation_draw_field(&s, &img, padding);
+            simulation_draw_balls(&s, &img, padding);
+            simulation_draw_field_arrow(&s, &img, padding);
             state.step = false;
         }
 
-        glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, i.pixels);
+        glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
         printf("\r%f", 1.0 / (glfwGetTime() - t0));

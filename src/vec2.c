@@ -80,6 +80,11 @@ float vec2_dist_sqrd(Vec2 a, Vec2 b)
     return vec2_norm_sqrd(vec2_sub(b, a));
 }
 
+float vec2_dist(Vec2 a, Vec2 b)
+{
+    return sqrt(vec2_dist_sqrd(a, b));
+}
+
 bool vec2_equal(Vec2 a, Vec2 b)
 {
     const float eps = 0.003f;

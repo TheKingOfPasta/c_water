@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 
-#include "utils.h"
 #include "vec2.h"
 
 void particule_print(Particule* p)
@@ -22,7 +21,7 @@ Particule particule_gen_random(int sx, int sy)
     return p;
 }
 
-static void particule_apply_gravity(Particule* p)
+static inline void particule_apply_gravity(Particule* p)
 {
     vec2_add_inplace(&p->velo, (Vec2){ 0, 0.5 });
 }
@@ -63,5 +62,16 @@ void particule_step(Particule* p, int sx, int sy)
             p->pos.y = sy;
     }
 
-    particule_apply_gravity(p);
+    //    particule_apply_gravity(p);
+}
+
+float particule_density(Particule* p, Vec2 sample)
+{
+    float d = vec2_dist(p->pos, sample);
+
+    if (PARTICULE_RADIUS < d)
+        return 0;
+
+    float v = PARTICULE_RADIUS - d;
+    return v * v;
 }

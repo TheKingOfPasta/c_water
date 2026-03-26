@@ -3,7 +3,7 @@
 #include "image.h"
 #include "particule.h"
 
-#define NB_PARTICULES 100
+#define NB_PARTICULES 200
 
 typedef struct
 {
@@ -11,9 +11,16 @@ typedef struct
     int sy;
 
     Particule particules[NB_PARTICULES];
+
+    // 2d array of size sx * sy
+    float* density_field;
 } Simulation;
 
 Simulation simulation_gen(int sx, int sy);
+void simulation_free(Simulation* s);
+
 void simulation_step(Simulation* s);
 
-void simulation_draw(Simulation* s, Image* img);
+void simulation_draw_balls(Simulation* s, Image* img, int padding);
+void simulation_draw_field(Simulation* s, Image* img, int padding);
+void simulation_draw_field_arrow(Simulation* s, Image* img, int padding);

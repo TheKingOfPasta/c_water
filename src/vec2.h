@@ -27,6 +27,7 @@ float vec2_norm(Vec2 v);
 Vec2 vec2_normalized(Vec2 v);
 
 float vec2_dist_sqrd(Vec2 a, Vec2 b);
+float vec2_dist(Vec2 a, Vec2 b);
 
 bool vec2_equal(Vec2 a, Vec2 b);
 
