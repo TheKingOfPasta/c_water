@@ -47,16 +47,17 @@ int main(void)
 {
     int w = 500;
     int h = 500;
+    RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
+    int padding = 20;
 
     Image img = image_blank(w, h);
-    RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
     image_fill(&img, background);
 
-    int padding = 20;
     Simulation s = simulation_gen(w - padding * 2, h - padding * 2);
 
     AppState state = {
         .step = true,
+        .step_mode = false,
     };
 
     glfwInit();

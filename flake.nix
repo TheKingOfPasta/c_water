@@ -13,8 +13,10 @@
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
         pkgs.glfw
+        pkgs.glew
         pkgs.pkg-config
         pkgs.mesa
+        pkgs.shaderc
       ];
 
       shellHook = ''

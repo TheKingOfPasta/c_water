@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS += -Wall -Wextra -Werror -Wvla -pedantic -Wswitch -O3 -g -std=c23
+CFLAGS += -Wno-error=unused-variable -Wno-error=unused-result
 LDFLAGS = -lglfw -lGL -lm -lGLEW
 
 CFLAGS += $(shell pkg-config --cflags glfw3)
