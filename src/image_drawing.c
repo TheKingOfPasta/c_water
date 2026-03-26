@@ -1,7 +1,9 @@
 #include "image_drawing.h"
 
+#include <stdlib.h>
+
 #include "image.h"
-#include "stdlib.h"
+#include "vec2.h"
 
 void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 c)
 {
@@ -51,4 +53,22 @@ void image_draw_line(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
             y0 += sy;
         }
     }
+}
+
+void image_draw_vector(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
+{
+    const int size_arrow = 10;
+
+    image_draw_line(i, x0, y0, x1, y1, c);
+    Vec2 dir = vec2_normalized((Vec2){ x1 - x0, y1 - y0 });
+    Vec2 orth = (Vec2){ dir.y, -dir.x };
+
+    Vec2 midpoint =
+        vec2_add((Vec2){ x1, y1 }, vec2_mul_scalar(dir, -size_arrow));
+
+    Vec2 left_wing = vec2_add(midpoint, vec2_mul_scalar(orth, -size_arrow));
+    Vec2 right_wing = vec2_add(midpoint, vec2_mul_scalar(orth, size_arrow));
+
+    image_draw_line(i, left_wing.x, left_wing.y, x1, y1, c);
+    image_draw_line(i, right_wing.x, right_wing.y, x1, y1, c);
 }

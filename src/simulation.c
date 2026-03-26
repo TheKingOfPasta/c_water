@@ -1,27 +1,12 @@
 #include "simulation.h"
 
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+#include "colorRGB8.h"
 #include "image_drawing.h"
-#include "utils.h"
 #include "vec2.h"
-
-Particule particule_gen_random(int sx, int sy)
-{
-    Particule p = { .pos = vec2_random(), .velo = vec2_zero() };
-    p.pos.x *= sx;
-    p.pos.y *= sy;
-    return p;
-}
-
-void particule_print(Particule* p)
-{
-    printf("{ pos:");
-    vec2_print(&p->pos);
-    printf(", velo:");
-    vec2_print(&p->velo);
-    printf(" }\n");
-}
 
 Simulation simulation_gen(int sx, int sy)
 {
@@ -35,34 +20,33 @@ Simulation simulation_gen(int sx, int sy)
         res.particules[i] = particule_gen_random(sx, sy);
     }
 
+    res.density_field = calloc(sx * sy, sizeof(*res.density_field));
     return res;
 }
 
-void simulation_draw(Simulation* s, Image* img)
+void simulation_free(Simulation* s)
 {
-    RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
-    image_fill(img, background);
+    free(s->density_field);
+}
 
+void simulation_draw_balls(Simulation* s, Image* img, int padding)
+{
+    const int particule_radius = 5;
     const RGB8 circle_color = (RGB8){ .r = 40, .g = 40, .b = 150 };
-
-    const int padding = 30;
-
-    const int sx_pad = img->sx - padding * 2;
-    const int sy_pad = img->sy - padding * 2;
 
     for (int i = 0; i < NB_PARTICULES; i++)
     {
         Vec2 p = s->particules[i].pos;
 
-        image_draw_circle(img, padding + p.x / s->sx * sx_pad,
-                          padding + p.y / s->sy * sy_pad, 3, circle_color);
+        image_draw_circle(img, padding + p.x, padding + p.y, particule_radius,
+                          circle_color);
     }
 
     const int bb[4][2] = {
         { padding, padding },
-        { img->sx - padding, padding },
-        { img->sx - padding, img->sy - padding },
-        { padding, img->sy - padding },
+        { s->sx + padding, padding },
+        { s->sx + padding, s->sy + padding },
+        { padding, s->sy + padding },
     };
 
     for (int i = 0; i < 4; i++)
@@ -72,34 +56,106 @@ void simulation_draw(Simulation* s, Image* img)
     }
 }
 
-static void particule_apply_gravity(Particule* p)
+static void simulation_update_field(Simulation* s)
 {
-    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.5 });
+    for (int i = 0; i < s->sx * s->sy; i++)
+    {
+        float d = 0;
+        for (int j = 0; j < NB_PARTICULES; j++)
+        {
+            d += particule_density(&s->particules[j],
+                                   (Vec2){
+                                       i % s->sx,
+                                       (int)(i / s->sx),
+                                   });
+        }
+        s->density_field[i] = d;
+    }
 }
 
-static void particule_step(Simulation* s, Particule* p)
+void simulation_draw_field(Simulation* s, Image* img, int padding)
 {
-    vec2_add_inplace(&p->pos, p->velo);
-
-    if (p->pos.x < 0 || p->pos.x >= s->sx)
+    float max_density = 0.1f;
+    for (int i = 0; i < s->sx * s->sy; i++)
     {
-        p->velo.x *= -1;
-        p->pos.x = CLAMP(p->pos.x, 0, s->sx);
+        if (max_density < s->density_field[i])
+            max_density = s->density_field[i];
     }
 
-    if (p->pos.y < 0 || p->pos.y >= s->sy)
+    for (int i = 0; i < s->sx * s->sy; i++)
     {
-        p->velo.y *= -1;
-        p->pos.y = CLAMP(p->pos.y, 0, s->sy);
+        uint8_t d = s->density_field[i] / max_density * 255;
+        image_set_color(img, i % s->sx + padding, i / s->sx + padding,
+                        (RGB8){ d, d, d });
+    }
+}
+
+Vec2 simulation_compute_gradient(Simulation* s, int x, int y)
+{
+    int xm = (x > 0) ? x - 1 : x;
+    int xp = (x < s->sx - 1) ? x + 1 : x;
+    int ym = (y > 0) ? y - 1 : y;
+    int yp = (y < s->sy - 1) ? y + 1 : y;
+
+    float d_xm = s->density_field[ym * s->sx + xm];
+    float d_xp = s->density_field[ym * s->sx + xp];
+    float d_ym = s->density_field[ym * s->sx + x];
+    float d_yp = s->density_field[yp * s->sx + x];
+
+    return vec2_mul_scalar((Vec2){ d_xp - d_xm, d_yp - d_ym }, 0.5f);
+}
+
+void simulation_draw_field_arrow(Simulation* s, Image* img, int padding)
+{
+    const int number_arrow = 15;
+    const int padding_arr = (int)(s->sx / number_arrow);
+
+    const int nb_arrow_x = s->sx / padding_arr;
+    const int nb_arrow_y = s->sy / padding_arr;
+
+    Vec2* gradients = calloc(nb_arrow_x * nb_arrow_y, sizeof(Vec2));
+    int gradients_size = 0;
+
+    for (int x = 0; x < nb_arrow_x; x++)
+        for (int y = 0; y < nb_arrow_y; y++)
+        {
+            gradients[gradients_size++] = simulation_compute_gradient(
+                s, x * padding_arr + padding_arr / 2,
+                y * padding_arr + padding_arr / 2);
+        }
+
+    float mx = 0.1;
+    float my = 0.1;
+
+    for (int i = 0; i < gradients_size; i++)
+    {
+        if (gradients[i].x > mx)
+            mx = gradients[i].x;
+        if (gradients[i].y > my)
+            my = gradients[i].y;
     }
 
-    particule_apply_gravity(p);
+    for (int x = 0; x < nb_arrow_x; x++)
+        for (int y = 0; y < nb_arrow_y; y++)
+        {
+            int xo = padding + x * padding_arr + padding_arr / 2;
+            int yo = padding + y * padding_arr + padding_arr / 2;
+
+            Vec2 g = gradients[x + y * nb_arrow_x];
+
+            // image_draw_circle(img, xo, yo, 2, rgb8_cyan());
+            image_draw_vector(img, xo, yo, xo + (g.x) / mx * padding_arr / 2,
+                              yo + (g.y) / my * padding_arr / 2, rgb8_red());
+        }
+
+    free(gradients);
 }
 
 void simulation_step(Simulation* s)
 {
+    simulation_update_field(s);
     for (int i = 0; i < NB_PARTICULES; i++)
     {
-        particule_step(s, &s->particules[i]);
+        particule_step(&s->particules[i], s->sx, s->sy);
     }
 }
