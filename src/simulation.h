@@ -1,15 +1,9 @@
 #pragma once
 
 #include "image.h"
-#include "vec2.h"
+#include "particule.h"
 
 #define NB_PARTICULES 100
-
-typedef struct
-{
-    Vec2 pos;
-    Vec2 velo;
-} Particule;
 
 typedef struct
 {
