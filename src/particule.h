@@ -2,7 +2,7 @@
 
 #include "vec2.h"
 
-#define PARTICULE_RADIUS 70
+#define PARTICULE_RADIUS 500
 
 typedef struct
 {

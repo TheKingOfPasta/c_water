@@ -21,6 +21,10 @@ void simulation_free(Simulation* s);
 
 void simulation_step(Simulation* s);
 
+Vec2 simulation_compute_gradient(Simulation* s, int x, int y);
+
 void simulation_draw_balls(Simulation* s, Image* img, int padding);
 void simulation_draw_field(Simulation* s, Image* img, int padding);
 void simulation_draw_field_arrow(Simulation* s, Image* img, int padding);
+void simulation_draw_mouse_gradient(Simulation* s, Image* img, int padding,
+                                    int mouse_x, int mouse_y);

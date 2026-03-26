@@ -22,7 +22,16 @@ typedef struct AppState
     bool step;
     bool step_mode;
     bool reset;
+    double mouse_x;
+    double mouse_y;
 } AppState;
+
+static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    AppState* state = (AppState*)glfwGetWindowUserPointer(window);
+    state->mouse_x = xpos;
+    state->mouse_y = ypos;
+}
 
 static void key_callback(GLFWwindow* window, int key,
                          [[maybe_unused]] int scancode, int action,
@@ -81,6 +90,7 @@ int main(void)
     glfwSetWindowUserPointer(window, &state);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursor_callback);
 
     glPixelZoom(1, -1);
     glRasterPos2f(-1, 1);
@@ -100,17 +110,20 @@ int main(void)
 
         if (!state.step_mode || state.step)
         {
+            image_fill(&img, background);
             simulation_step(&s);
             simulation_draw_field(&s, &img, padding);
             simulation_draw_balls(&s, &img, padding);
-            simulation_draw_field_arrow(&s, &img, padding);
+            // simulation_draw_field_arrow(&s, &img, padding);
             state.step = false;
         }
 
+        simulation_draw_mouse_gradient(&s, &img, padding, (int)state.mouse_x,
+                                       (int)state.mouse_y);
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
-        printf("\r%f", 1.0 / (glfwGetTime() - t0));
+        // printf("\r%f", 1.0 / (glfwGetTime() - t0));
         fflush(stdout);
     }
 
