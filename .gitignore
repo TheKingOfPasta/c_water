@@ -8,7 +8,7 @@ compile_commands.json
 *.d
 
 # Object files
-src/*.o
+**.o
 *.o
 *.ko
 *.obj
