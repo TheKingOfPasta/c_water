@@ -14,11 +14,11 @@ void image_set_color(Image* i, int x, int y, RGB8 c)
 {
     i->pixels[y * i->sx + x] = c;
 }
-void image_fill(Image* i, RGB8* c)
+void image_fill(Image* i, RGB8 c)
 {
     for (int x = 0; x < i->sx; x++)
         for (int y = 0; y < i->sy; y++)
-            i->pixels[y * i->sx + x] = *c;
+            i->pixels[y * i->sx + x] = c;
 }
 
 bool image_in_bounds(Image* i, int x, int y)

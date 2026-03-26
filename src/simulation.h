@@ -3,16 +3,23 @@
 #include "image.h"
 #include "vec2.h"
 
-#define NB_POINTS 100
+#define NB_PARTICULES 100
+
+typedef struct
+{
+    Vec2 pos;
+    Vec2 velo;
+} Particule;
 
 typedef struct
 {
     int sx;
     int sy;
 
-    Vec2 points[NB_POINTS];
+    Particule particules[NB_PARTICULES];
 } Simulation;
 
 Simulation simulation_gen(int sx, int sy);
+void simulation_step(Simulation* s);
 
 void simulation_draw(Simulation* s, Image* img);
