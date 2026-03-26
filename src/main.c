@@ -54,10 +54,15 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
+        double t0 = glfwGetTime();
+
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, i.pixels);
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        printf("\r%f", 1.0 / (glfwGetTime() - t0));
+        fflush(stdout);
     }
 
     glfwDestroyWindow(window);
