@@ -28,7 +28,7 @@ void simulation_free(Simulation* s)
 static float simulation_compute_density(Simulation* s, Vec2 pos)
 {
     float d = 0;
-    const float mass = 1;
+    const float mass = 1000;
 
     for (int k = 0; k < NB_PARTICULES; k++)
     {

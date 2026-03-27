@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include <float.h>
 
 #include "image_drawing.h"
 #include "simulation.h"
@@ -33,17 +34,22 @@ void simulation_draw_balls(Simulation* s, Image* img, int padding)
 
 void simulation_draw_field(Simulation* s, Image* img, int padding)
 {
-    float max_density = 0.1f;
+    float max_density = -1000000.0f;
+    float min_density = FLT_MAX;
     for (int i = 0; i < s->sx * s->sy; i++)
     {
         if (max_density < s->density_field[i])
             max_density = s->density_field[i];
+        if (min_density > s->density_field[i])
+            min_density = s->density_field[i];
     }
 
-    for (int i = 0; i < s->sx * s->sy; i++)
+    float density_diff = max_density - min_density;
+    for (int i = 0; i < s->sx; i++)
+    for (int j = 0; j < s->sy; j++)
     {
-        uint8_t d = s->density_field[i] / max_density * 255;
-        image_set_color(img, i % s->sx + padding, i / s->sx + padding,
+        uint8_t d = (s->density_field[i + j * s->sx] - min_density) / density_diff * 255;
+        image_set_color(img, i + padding, j + padding,
                         (RGB8){ d, d, d });
     }
 }

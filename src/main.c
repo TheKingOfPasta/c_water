@@ -6,6 +6,9 @@
 #include "image.h"
 #include "simulation.h"
 
+#define WIDTH 1920
+#define HEIGHT 1080
+
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -54,8 +57,8 @@ static void key_callback(GLFWwindow* window, int key,
 
 int main(void)
 {
-    int w = 500;
-    int h = 500;
+    int w = WIDTH;
+    int h = HEIGHT;
     RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
     int padding = 20;
 
