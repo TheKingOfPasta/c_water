@@ -38,7 +38,7 @@ static float simulation_compute_density(Simulation* s, Vec2 pos)
     return d * mass;
 }
 
-static void simulation_update_field(Simulation* s)
+static void simulation_update_density_field(Simulation* s)
 {
     for (int i = 0; i < s->sx; i++)
         for (int j = 0; j < s->sy; j++)
@@ -65,7 +65,7 @@ Vec2 simulation_compute_gradient(Simulation* s, int x, int y)
 
 void simulation_step(Simulation* s)
 {
-    simulation_update_field(s);
+    simulation_update_density_field(s);
     for (int i = 0; i < NB_PARTICULES; i++)
     {
         particule_step(&s->particules[i], s->sx, s->sy);
