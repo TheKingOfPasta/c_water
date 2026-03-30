@@ -5,7 +5,7 @@
 #include "image_drawing.h"
 #include "simulation.h"
 
-void simulation_draw_balls(Simulation* s, Image* img, int padding)
+void simulation_draw_balls(Simulation* s, Image* img)
 {
     const int particule_radius = 5;
     const RGB8 circle_color = (RGB8){ .r = 40, .g = 40, .b = 150 };
@@ -14,15 +14,15 @@ void simulation_draw_balls(Simulation* s, Image* img, int padding)
     {
         Vec2 p = s->particules[i].pos;
 
-        image_draw_circle(img, padding + p.x, padding + p.y, particule_radius,
+        image_draw_circle(img, p.x, p.y, particule_radius,
                           circle_color);
     }
 
     const int bb[4][2] = {
-        { padding, padding },
-        { s->sx + padding, padding },
-        { s->sx + padding, s->sy + padding },
-        { padding, s->sy + padding },
+        { 0, 0 },
+        { s->sx, 0 },
+        { s->sx, s->sy },
+        { 0, s->sy },
     };
 
     for (int i = 0; i < 4; i++)
@@ -32,7 +32,7 @@ void simulation_draw_balls(Simulation* s, Image* img, int padding)
     }
 }
 
-void simulation_draw_field(Simulation* s, Image* img, int padding)
+void simulation_draw_field(Simulation* s, Image* img)
 {
     float max_density = -1000000.0f;
     float min_density = FLT_MAX;
@@ -49,12 +49,12 @@ void simulation_draw_field(Simulation* s, Image* img, int padding)
     for (int j = 0; j < s->sy; j++)
     {
         uint8_t d = (s->density_field[i + j * s->sx] - min_density) / density_diff * 255;
-        image_set_color(img, i + padding, j + padding,
+        image_set_color(img, i, j,
                         (RGB8){ d, d, d });
     }
 }
 
-void simulation_draw_field_arrow(Simulation* s, Image* img, int padding)
+void simulation_draw_field_arrow(Simulation* s, Image* img)
 {
     const int number_arrow = 15;
     const int padding_arr = (int)(s->sx / number_arrow);
@@ -86,8 +86,8 @@ void simulation_draw_field_arrow(Simulation* s, Image* img, int padding)
     for (int x = 0; x < nb_arrow_x; x++)
         for (int y = 0; y < nb_arrow_y; y++)
         {
-            int xo = padding + x * padding_arr + padding_arr / 2;
-            int yo = padding + y * padding_arr + padding_arr / 2;
+            int xo = x * padding_arr + padding_arr / 2;
+            int yo = y * padding_arr + padding_arr / 2;
 
             Vec2 g = gradients[x + y * nb_arrow_x];
 
@@ -99,11 +99,11 @@ void simulation_draw_field_arrow(Simulation* s, Image* img, int padding)
     free(gradients);
 }
 
-void simulation_draw_mouse_gradient(Simulation* s, Image* img, int padding,
+void simulation_draw_mouse_gradient(Simulation* s, Image* img,
                                     int mouse_x, int mouse_y)
 {
-    int sx = mouse_x - padding;
-    int sy = mouse_y - padding;
+    int sx = mouse_x;
+    int sy = mouse_y;
 
     if (sx < 0 || sy < 0 || sx >= s->sx || sy >= s->sy)
         return;

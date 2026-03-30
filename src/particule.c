@@ -1,4 +1,4 @@
-#include "particule.h"
+#include "simulation.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -61,11 +61,16 @@ static inline void particule_apply_gravity(Particule* p)
     vec2_add_inplace(&p->velo, (Vec2){ 0, 0.5 });
 }
 
-void particule_step(Particule* p, int sx, int sy)
+void particule_step(Simulation* s, Particule* p)
 {
+    float pressure = s->density_field[(int)(p->pos.x + p->pos.y * s->sx)] - TARGET_PRESSURE;
+    Vec2 grad = simulation_compute_gradient(s, p->pos.x, p->pos.y);
+
+    vec2_add_inplace(&p->velo, vec2_mul_scalar(grad, pressure * PRESSURE_FORCE));
+
     vec2_add_inplace(&p->pos, p->velo);
 
-    particule_interact_bounds(p, sx, sy);
+    particule_interact_bounds(p, s->sx, s->sy);
     //    particule_apply_gravity(p);
 }
 

@@ -4,10 +4,11 @@
 #include <stdlib.h>
 
 #include "image.h"
+#include "image_drawing.h"
 #include "simulation.h"
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 500
+#define HEIGHT 500
 
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
@@ -60,12 +61,11 @@ int main(void)
     int w = WIDTH;
     int h = HEIGHT;
     RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
-    int padding = 20;
 
     Image img = image_blank(w, h);
     image_fill(&img, background);
 
-    Simulation s = simulation_gen(w - padding * 2, h - padding * 2);
+    Simulation s = simulation_gen(w, h);
 
     AppState state = {
         .step = true,
@@ -107,7 +107,7 @@ int main(void)
 
         if (state.reset)
         {
-            s = simulation_gen(w - padding * 2, h - padding * 2);
+            s = simulation_gen(w, h);
             state.reset = false;
         }
 
@@ -115,14 +115,22 @@ int main(void)
         {
             image_fill(&img, background);
             simulation_step(&s);
-            simulation_draw_field(&s, &img, padding);
-            simulation_draw_balls(&s, &img, padding);
-            // simulation_draw_field_arrow(&s, &img, padding);
+            simulation_draw_field(&s, &img);
+            simulation_draw_balls(&s, &img);
+            // simulation_draw_field_arrow(&s, &img);
             state.step = false;
         }
 
-        simulation_draw_mouse_gradient(&s, &img, padding, (int)state.mouse_x,
-                                       (int)state.mouse_y);
+        for (size_t i = 0; i < NB_PARTICULES; i++)
+        {
+            Particule p = s.particules[i];
+            Vec2 v = simulation_compute_gradient(&s, p.pos.x, p.pos.y);
+            v = vec2_mul_scalar(v, 500);
+            vec2_add_inplace(&v, p.pos);
+            image_draw_vector(&img, p.pos.x, p.pos.y, v.x, v.y, rgb8_red());
+        }
+
+        //simulation_draw_mouse_gradient(&s, &img, padding, (int)state.mouse_x, (int)state.mouse_y);
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
