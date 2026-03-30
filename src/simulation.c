@@ -25,10 +25,10 @@ void simulation_free(Simulation* s)
     free(s->density_field);
 }
 
-static float simulation_compute_density(Simulation* s, Vec2 pos)
+float simulation_compute_density(Simulation* s, Vec2 pos)
 {
     float d = 0;
-    const float mass = 1000;
+    const float mass = 100;
 
     for (int k = 0; k < NB_PARTICULES; k++)
     {
@@ -50,17 +50,42 @@ static void simulation_update_density_field(Simulation* s)
 
 Vec2 simulation_compute_gradient(Simulation* s, float x, float y)
 {
-    float xm = (x > 0) ? x - 1 : x;
-    float xp = (x < s->sx - 1) ? x + 1 : x;
-    float ym = (y > 0) ? y - 1 : y;
-    float yp = (y < s->sy - 1) ? y + 1 : y;
+    float i_dx = 0.5f;
+    float i_dy = 0.5f;
 
-    float d_xm = s->density_field[(int)(y * s->sx + xm)];
-    float d_xp = s->density_field[(int)(y * s->sx + xp)];
-    float d_ym = s->density_field[(int)(ym * s->sx + x)];
-    float d_yp = s->density_field[(int)(yp * s->sx + x)];
+    float xm = x - 1;
+    float xp = x + 1;
+    float ym = y - 1;
+    float yp = y + 1;
 
-    return vec2_mul_scalar((Vec2){ d_xp - d_xm, d_yp - d_ym }, 0.5f);
+    if (xm < 0)
+    {
+        xm = x;
+        i_dx = 1.0f;
+    }
+    else if (xp > s->sx - 1)
+    {
+        xp = s->sx - 1;
+        i_dx = 1.0f;
+    }
+
+    if (ym < 0)
+    {
+        ym = y;
+        i_dy = 1.0f;
+    }
+    else if (yp > s->sy - 1)
+    {
+        yp = s->sy - 1;
+        i_dy = 1.0f;
+    }
+
+    float d_xm = simulation_compute_density(s, (Vec2){ .x = xm, .y = y });
+    float d_xp = simulation_compute_density(s, (Vec2){ .x = xp, .y = y });
+    float d_ym = simulation_compute_density(s, (Vec2){ .x = x, .y = ym });
+    float d_yp = simulation_compute_density(s, (Vec2){ .x = x, .y = yp });
+
+    return (Vec2){ (d_xp - d_xm) * i_dx, (d_yp - d_ym) * i_dy };
 }
 
 void simulation_step(Simulation* s)

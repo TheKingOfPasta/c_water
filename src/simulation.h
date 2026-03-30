@@ -42,6 +42,7 @@ void simulation_free(Simulation* s);
 
 void simulation_step(Simulation* s);
 
+float simulation_compute_density(Simulation* s, Vec2 pos);
 Vec2 simulation_compute_gradient(Simulation* s, float x, float y);
 
 void simulation_draw_balls(Simulation* s, Image* img);

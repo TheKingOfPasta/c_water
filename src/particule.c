@@ -63,8 +63,11 @@ static inline void particule_apply_gravity(Particule* p)
 
 void particule_step(Simulation* s, Particule* p)
 {
-    float pressure = s->density_field[(int)(p->pos.x + p->pos.y * s->sx)] - TARGET_PRESSURE;
+    float pressure = simulation_compute_density(s, p->pos);
+    // float pressure = s->density_field[(int)(p->pos.x + p->pos.y * s->sx)] - TARGET_PRESSURE;
     Vec2 grad = simulation_compute_gradient(s, p->pos.x, p->pos.y);
+
+    grad = vec2_neg(grad);
 
     vec2_add_inplace(&p->velo, vec2_mul_scalar(grad, pressure * PRESSURE_FORCE));
 
