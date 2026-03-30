@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS += -Wall -Wextra -Werror -Wvla -pedantic -Wswitch -O3 -g -std=c23
+CFLAGS += -Wall -Wextra -Werror -Wvla -pedantic -Wswitch -O3 -g -std=c23 -fopenmp
 CFLAGS += -Wno-error=unused-variable -Wno-error=unused-result
 LDFLAGS = -lglfw -lGL -lm -lGLEW
 

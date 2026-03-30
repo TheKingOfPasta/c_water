@@ -58,30 +58,61 @@ static inline void particule_interact_bounds(Particule* p, int sx, int sy)
 
 static inline void particule_apply_gravity(Particule* p)
 {
-    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.5 });
+    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.0981f * GRAVITY_MULTIPLIER });
 }
 
 void particule_step(Simulation* s, Particule* p)
 {
-    float pressure = simulation_compute_density(s, p->pos);
+    float pressure = simulation_compute_density(s, p) - TARGET_PRESSURE;
+
     // float pressure = s->density_field[(int)(p->pos.x + p->pos.y * s->sx)] - TARGET_PRESSURE;
-    Vec2 grad = simulation_compute_gradient(s, p->pos.x, p->pos.y);
+    Vec2 grad = particule_compute_gradient(s, p);
 
     grad = vec2_neg(grad);
 
     vec2_add_inplace(&p->velo, vec2_mul_scalar(grad, pressure * PRESSURE_FORCE));
 
     vec2_add_inplace(&p->pos, p->velo);
+    p->velo = vec2_mul_scalar(p->velo, DRAG);
 
     particule_interact_bounds(p, s->sx, s->sy);
-    //    particule_apply_gravity(p);
+    particule_apply_gravity(p);
 }
 
-float particule_density(Particule* p, Vec2 sample)
+static float particule_compute_density_gradient(float dist)
+{
+    float slope = 6.0 / (M_PI * pow(PARTICULE_RADIUS, 4));
+
+    return 2 * slope * (dist - PARTICULE_RADIUS);
+}
+
+Vec2 particule_compute_gradient(Simulation* s, Particule* p)
+{
+    Vec2 res = vec2_zero();
+
+    for (size_t i = 0; i < NB_PARTICULES; i++)
+    {
+        Particule *p2 = s->particules + i;
+        if (p2 == p || vec2_dist_sqrd(p2->pos, p->pos) > PARTICULE_RADIUS * PARTICULE_RADIUS)
+            continue;
+
+        float density = s->density_field[i];
+
+        Vec2 dir = vec2_sub(s->particules[i].pos, p->pos);
+        float dist = vec2_dist(p2->pos, p->pos);
+        dir = vec2_mul_scalar(dir, 1.0f / dist);
+
+        float slope = particule_compute_density_gradient(dist);
+
+        vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
+    }
+
+    return res;
+}
+
+float particule_density(float d)
 {
     const float vol = 6.0 / (M_PI * pow(PARTICULE_RADIUS, 4));
-
-    float d = vec2_dist(p->pos, sample);
 
     if (d > PARTICULE_RADIUS)
         return 0;

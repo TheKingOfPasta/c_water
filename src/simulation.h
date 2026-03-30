@@ -3,9 +3,11 @@
 #include "image.h"
 #include "vec2.h"
 
-#define PRESSURE_FORCE 10
-#define TARGET_PRESSURE 3
+#define PRESSURE_FORCE 10000
+#define TARGET_PRESSURE 0.000
 #define PARTICULE_RADIUS 50
+#define GRAVITY_MULTIPLIER 4.0
+#define DRAG 0.9
 
 typedef struct
 {
@@ -13,7 +15,7 @@ typedef struct
     Vec2 velo;
 } Particule;
 
-#define NB_PARTICULES 2
+#define NB_PARTICULES 2000
 
 typedef struct
 {
@@ -22,8 +24,7 @@ typedef struct
 
     Particule particules[NB_PARTICULES];
 
-    // 2d array of size sx * sy
-    float* density_field;
+    float density_field[NB_PARTICULES];
 } Simulation;
 
 /* --- PARTICLES --- */
@@ -33,7 +34,8 @@ void particule_step(Simulation* s, Particule* p);
 
 void particule_print(Particule* p);
 
-float particule_density(Particule* p, Vec2 sample);
+float particule_density(float d);
+Vec2 particule_compute_gradient(Simulation* s, Particule* p);
 
 /* --- SIMULATION --- */
 
@@ -42,11 +44,7 @@ void simulation_free(Simulation* s);
 
 void simulation_step(Simulation* s);
 
-float simulation_compute_density(Simulation* s, Vec2 pos);
-Vec2 simulation_compute_gradient(Simulation* s, float x, float y);
+float simulation_compute_density(Simulation* s, Particule* p);
 
 void simulation_draw_balls(Simulation* s, Image* img);
 void simulation_draw_field(Simulation* s, Image* img);
-void simulation_draw_field_arrow(Simulation* s, Image* img);
-void simulation_draw_mouse_gradient(Simulation* s, Image* img,
-                                    int mouse_x, int mouse_y);

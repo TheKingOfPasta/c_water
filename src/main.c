@@ -7,8 +7,8 @@
 #include "image_drawing.h"
 #include "simulation.h"
 
-#define WIDTH 500
-#define HEIGHT 500
+#define WIDTH 1920
+#define HEIGHT 1080
 
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
@@ -121,20 +121,11 @@ int main(void)
             state.step = false;
         }
 
-        for (size_t i = 0; i < NB_PARTICULES; i++)
-        {
-            Particule p = s.particules[i];
-            Vec2 v = simulation_compute_gradient(&s, p.pos.x, p.pos.y);
-            v = vec2_mul_scalar(v, 500);
-            vec2_add_inplace(&v, p.pos);
-            image_draw_vector(&img, p.pos.x, p.pos.y, v.x, v.y, rgb8_red());
-        }
-
         //simulation_draw_mouse_gradient(&s, &img, padding, (int)state.mouse_x, (int)state.mouse_y);
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
-        // printf("\r%f", 1.0 / (glfwGetTime() - t0));
+        printf("\r%f", 1.0 / (glfwGetTime() - t0));
         fflush(stdout);
     }
 
