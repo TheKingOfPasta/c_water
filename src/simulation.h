@@ -4,9 +4,10 @@
 #include "vec2.h"
 
 #define PRESSURE_FORCE 10000
-#define TARGET_PRESSURE 0.000
-#define PARTICULE_RADIUS 50
-#define GRAVITY_MULTIPLIER 4.0
+#define TARGET_PRESSURE 0.02
+#define PARTICULE_INFLUENCE_RADIUS 30
+#define PARTICULE_RADIUS 10
+#define GRAVITY_MULTIPLIER 0.0
 #define DRAG 0.9
 
 typedef struct
