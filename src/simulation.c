@@ -106,6 +106,7 @@ void simulation_step(Simulation* s)
     Vec2 velocities[NB_PARTICULES] = { 0 };
 
     Vec2 positions[NB_PARTICULES];
+#pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICULES; i++)
         positions[i] = s->particules[i].pos;
 
@@ -138,6 +139,7 @@ void simulation_step(Simulation* s)
         }
     }
 
+#pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICULES; i++)
     {
         s->particules[i].pos = positions[i];
