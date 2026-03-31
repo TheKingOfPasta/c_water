@@ -1,5 +1,3 @@
-#include <math.h>
-#include <stdlib.h>
 #include <float.h>
 
 #include "image_drawing.h"
@@ -7,22 +5,20 @@
 
 void simulation_draw_balls(Simulation* s, Image* img)
 {
-    const int particule_radius = 5;
     const RGB8 circle_color = (RGB8){ .r = 10, .g = 255, .b = 255 };
 
     for (int i = 0; i < NB_PARTICULES; i++)
     {
         Vec2 p = s->particules[i].pos;
 
-        image_draw_circle(img, p.x, p.y, particule_radius,
-                          circle_color);
+        image_draw_circle(img, p.x, p.y, PARTICULE_RADIUS, circle_color);
     }
 
     const int bb[4][2] = {
         { 0, 0 },
-        { s->sx, 0 },
-        { s->sx, s->sy },
-        { 0, s->sy },
+        { s->sx - 1, 0 },
+        { s->sx - 1, s->sy - 1 },
+        { 0, s->sy - 1 },
     };
 
     for (int i = 0; i < 4; i++)
@@ -47,10 +43,10 @@ void simulation_draw_field(Simulation* s, Image* img)
 
     float density_diff = max_density - min_density;
     for (int i = 0; i < s->sx; i++)
-    for (int j = 0; j < s->sy; j++)
-    {
-        uint8_t d = (s->density_field[i + j * s->sx] - min_density) / density_diff * 255;
-        image_set_color(img, i, j,
-                        (RGB8){ d, d, d });
-    }
+        for (int j = 0; j < s->sy; j++)
+        {
+            uint8_t d = (s->density_field[i + j * s->sx] - min_density)
+                / density_diff * 255;
+            image_set_color(img, i, j, (RGB8){ d, d, d });
+        }
 }

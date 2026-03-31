@@ -5,9 +5,10 @@
 
 #define PRESSURE_FORCE 10000
 #define TARGET_PRESSURE 0.02
-#define PARTICULE_INFLUENCE_RADIUS 30
-#define PARTICULE_RADIUS 10
+#define PARTICULE_INFLUENCE_RADIUS 30 // for density
+#define PARTICULE_RADIUS 6 // for collision & drawing
 #define GRAVITY_MULTIPLIER 0.0
+#define VELOCITY_COLLISION_DAMPNER 0.0 // 0.0 no loss - 1.0 100% loss
 #define DRAG 0.9
 
 typedef struct
