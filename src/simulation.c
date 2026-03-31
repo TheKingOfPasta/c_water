@@ -61,4 +61,58 @@ void simulation_step(Simulation* s)
     {
         particule_step(s, &s->particules[i]);
     }
+
+    Vec2 velocities[NB_PARTICULES] = { 0 };
+    Vec2 positions[NB_PARTICULES];
+    for (size_t i = 0; i < NB_PARTICULES; i++)
+        positions[i] = s->particules[i].pos;
+
+    for (size_t i = 0; i < NB_PARTICULES; i++)
+    for (size_t j = i + 1; j < NB_PARTICULES; j++)
+    {
+        float dist_sqr = vec2_dist_sqrd(positions[i], positions[j]);
+        if (dist_sqr < 4 * PARTICULE_RADIUS * PARTICULE_RADIUS && dist_sqr > 0.0001)
+        {
+            float dist = sqrtf(dist_sqr);
+
+            Vec2 dir = vec2_sub(positions[i], positions[j]);
+            float dot = vec2_dot(vec2_sub(s->particules[i].velo, s->particules[j].velo), dir);
+
+            if (dot < 0)
+            {
+                Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
+
+                v_diff = vec2_mul_scalar(v_diff, VELOCITY_COLLISION_DAMPNER);
+
+                vec2_sub_inplace(velocities + i, v_diff);
+                vec2_add_inplace(velocities + j, v_diff);
+            }
+
+            Vec2 d2 = vec2_mul_scalar(dir, (2 * PARTICULE_RADIUS - dist) / dist);
+
+            vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
+            vec2_sub_inplace(positions + j, vec2_mul_scalar(d2, 0.5f));
+        }
+    }
+
+    for (size_t i = 0; i < NB_PARTICULES; i++)
+    {
+        if (vec2_add(s->particules[i].velo, velocities[i]).x > 100000 || vec2_add(s->particules[i].velo, velocities[i]).x < -100000)
+        {
+
+        vec2_print(&s->particules[i].pos);
+        printf(" - ");
+        vec2_print(&s->particules[i].velo);
+        printf(" -> ");
+
+        vec2_print(positions + i);
+        printf(" - ");
+        Vec2 res = vec2_add(s->particules[i].velo, velocities[i]);
+        vec2_print(&res);
+        printf("\n");
+        }
+
+        s->particules[i].pos = positions[i];
+        vec2_add_inplace(&s->particules[i].velo, velocities[i]);
+    }
 }

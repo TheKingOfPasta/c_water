@@ -125,7 +125,7 @@ int main(void)
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
-        printf("\r%f", 1.0 / (glfwGetTime() - t0));
+        //printf("\r%f", 1.0 / (glfwGetTime() - t0));
         fflush(stdout);
     }
 

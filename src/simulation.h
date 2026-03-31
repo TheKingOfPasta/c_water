@@ -4,12 +4,12 @@
 #include "vec2.h"
 
 #define PRESSURE_FORCE 10000
-#define TARGET_PRESSURE 0.02
-#define PARTICULE_INFLUENCE_RADIUS 30 // for density
+#define TARGET_PRESSURE -0.02
+#define PARTICULE_INFLUENCE_RADIUS -2 // for density
 #define PARTICULE_RADIUS 6 // for collision & drawing
-#define GRAVITY_MULTIPLIER 0.0
-#define VELOCITY_COLLISION_DAMPNER 0.0 // 0.0 no loss - 1.0 100% loss
-#define DRAG 0.9
+#define GRAVITY_MULTIPLIER 4.0
+#define VELOCITY_COLLISION_DAMPNER 0.99 // 1.0 no loss - 0.0 100% loss
+#define DRAG 0.999
 
 typedef struct
 {
@@ -17,7 +17,7 @@ typedef struct
     Vec2 velo;
 } Particule;
 
-#define NB_PARTICULES 2000
+#define NB_PARTICULES 200
 
 typedef struct
 {
