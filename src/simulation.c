@@ -97,21 +97,6 @@ void simulation_step(Simulation* s)
 
     for (size_t i = 0; i < NB_PARTICULES; i++)
     {
-        if (vec2_add(s->particules[i].velo, velocities[i]).x > 100000 || vec2_add(s->particules[i].velo, velocities[i]).x < -100000)
-        {
-
-        vec2_print(&s->particules[i].pos);
-        printf(" - ");
-        vec2_print(&s->particules[i].velo);
-        printf(" -> ");
-
-        vec2_print(positions + i);
-        printf(" - ");
-        Vec2 res = vec2_add(s->particules[i].velo, velocities[i]);
-        vec2_print(&res);
-        printf("\n");
-        }
-
         s->particules[i].pos = positions[i];
         vec2_add_inplace(&s->particules[i].velo, velocities[i]);
     }
