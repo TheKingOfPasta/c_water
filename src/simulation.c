@@ -35,7 +35,7 @@ float simulation_compute_density(Simulation* s, Particule* p)
 
     for (int k = 0; k < NB_PARTICULES; k++)
     {
-        d += particule_density(vec2_dist(s->particules[k].pos, p->pos));
+        d += particule_density(vec2_dist(s->particules[k].pos, p->pos), s->particule_influence_radius);
     }
 
     return d * mass;
@@ -52,26 +52,69 @@ static void simulation_update_density_field(Simulation* s)
     }
 }
 
+static void simulation_get_file_variables(Simulation* s)
+{
+#if defined(__NIXOS__)
+    FILE* f_pressure_force = fopen("/home/zazou/pressure_force.txt", "r");
+    FILE* f_target_pressure = fopen("/home/zazou/target_pressure.txt", "r");
+    FILE* f_influence = fopen("/home/zazou/influence.txt", "r");
+    FILE* f_radius = fopen("/home/zazou/radius.txt", "r");
+    FILE* f_gravity = fopen("/home/zazou/gravity.txt", "r");
+#else
+    FILE* f_pressure_force = fopen("/home/aurel/pressure_force.txt", "r");
+    FILE* f_target_pressure = fopen("/home/aurel/target_pressure.txt", "r");
+    FILE* f_influence = fopen("/home/aurel/influence.txt", "r");
+    FILE* f_radius = fopen("/home/aurel/radius.txt", "r");
+    FILE* f_gravity = fopen("/home/aurel/gravity.txt", "r");
+#endif
+
+    char* file_pressure_force = read_all_file(f_pressure_force);
+    char* file_target_pressure = read_all_file(f_target_pressure);
+    char* file_influence = read_all_file(f_influence);
+    char* file_radius = read_all_file(f_radius);
+    char* file_gravity = read_all_file(f_gravity);
+
+    s->pressure_force = atof(file_pressure_force);
+    s->target_pressure = atof(file_target_pressure);
+    s->particule_influence_radius = atof(file_influence);
+    s->radius = atof(file_radius);
+    s->gravity_multiplier = atof(file_gravity);
+
+    free(file_pressure_force);
+    free(file_target_pressure);
+    free(file_influence);
+    free(file_radius);
+    free(file_gravity);
+    fclose(f_pressure_force);
+    fclose(f_target_pressure);
+    fclose(f_influence);
+    fclose(f_radius);
+    fclose(f_gravity);
+}
 void simulation_step(Simulation* s)
 {
+    simulation_get_file_variables(s);
+
     simulation_update_density_field(s);
 
 #pragma omp parallel for
-    for (int i = 0; i < NB_PARTICULES; i++)
+    for (size_t i = 0; i < NB_PARTICULES; i++)
     {
         particule_step(s, &s->particules[i]);
     }
 
     Vec2 velocities[NB_PARTICULES] = { 0 };
+
     Vec2 positions[NB_PARTICULES];
     for (size_t i = 0; i < NB_PARTICULES; i++)
         positions[i] = s->particules[i].pos;
 
+#pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICULES; i++)
     for (size_t j = i + 1; j < NB_PARTICULES; j++)
     {
         float dist_sqr = vec2_dist_sqrd(positions[i], positions[j]);
-        if (dist_sqr < 4 * PARTICULE_RADIUS * PARTICULE_RADIUS && dist_sqr > 0.0001)
+        if (dist_sqr < 4 * s->radius * s->radius && dist_sqr > 0.0001)
         {
             float dist = sqrtf(dist_sqr);
 
@@ -88,7 +131,7 @@ void simulation_step(Simulation* s)
                 vec2_add_inplace(velocities + j, v_diff);
             }
 
-            Vec2 d2 = vec2_mul_scalar(dir, (2 * PARTICULE_RADIUS - dist) / dist);
+            Vec2 d2 = vec2_mul_scalar(dir, (2 * s->radius - dist) / dist);
 
             vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
             vec2_sub_inplace(positions + j, vec2_mul_scalar(d2, 0.5f));

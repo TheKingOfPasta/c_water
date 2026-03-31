@@ -3,13 +3,8 @@
 #include "image.h"
 #include "vec2.h"
 
-#define PRESSURE_FORCE 2000
-#define TARGET_PRESSURE 0.2
-#define PARTICULE_INFLUENCE_RADIUS 20 // for density
-#define PARTICULE_RADIUS 6 // for collision & drawing
-#define GRAVITY_MULTIPLIER 4.0
-#define VELOCITY_COLLISION_DAMPNER 1.0 // 1.0 no loss - 0.0 100% loss
-#define DRAG 0.5
+#define VELOCITY_COLLISION_DAMPNER 0.9 // 1.0 no loss - 0.0 100% loss
+#define DRAG 0.995
 
 typedef struct
 {
@@ -24,6 +19,12 @@ typedef struct
     int sx;
     int sy;
 
+    float pressure_force;
+    float target_pressure;
+    float particule_influence_radius;
+    float radius;
+    float gravity_multiplier;
+
     Particule particules[NB_PARTICULES];
 
     float density_field[NB_PARTICULES];
@@ -36,7 +37,7 @@ void particule_step(Simulation* s, Particule* p);
 
 void particule_print(Particule* p);
 
-float particule_density(float d);
+float particule_density(float d, float influence_radius);
 Vec2 particule_compute_gradient(Simulation* s, Particule* p);
 
 /* --- SIMULATION --- */

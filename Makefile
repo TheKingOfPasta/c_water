@@ -3,6 +3,10 @@ CFLAGS += -Wall -Wextra -Werror -Wvla -pedantic -Wswitch -O3 -g -std=c23 -fopenm
 CFLAGS += -Wno-error=unused-variable -Wno-error=unused-result
 LDFLAGS = -lglfw -lGL -lm -lGLEW
 
+ifeq ($(shell test -f /etc/NIXOS && echo yes),yes)
+    CFLAGS += -D__NIXOS__
+endif
+
 CFLAGS += $(shell pkg-config --cflags glfw3)
 LDFLAGS += $(shell pkg-config --libs glfw3)
 

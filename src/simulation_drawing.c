@@ -11,7 +11,7 @@ void simulation_draw_balls(Simulation* s, Image* img)
     {
         Vec2 p = s->particules[i].pos;
 
-        image_draw_circle(img, p.x, p.y, PARTICULE_RADIUS, circle_color);
+        image_draw_circle(img, p.x, p.y, s->radius, circle_color);
     }
 
     const int bb[4][2] = {
