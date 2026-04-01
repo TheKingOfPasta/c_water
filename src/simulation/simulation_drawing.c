@@ -1,7 +1,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "config.h"
+#include "config_reloader.h"
 #include "image/image_drawing.h"
 #include "simulation.h"
 #include "utils/colorRGB8.h"

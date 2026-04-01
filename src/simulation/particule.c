@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "config.h"
+#include "config_reloader.h"
 #include "simulation.h"
 #include "utils/utils.h"
 #include "utils/vec2.h"

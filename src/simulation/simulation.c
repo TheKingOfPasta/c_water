@@ -5,7 +5,7 @@
 #include <omp.h>
 #include <stdlib.h>
 
-#include "config.h"
+#include "config_reloader.h"
 #include "utils/vec2.h"
 
 Simulation simulation_gen()

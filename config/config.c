@@ -1,4 +1,4 @@
-#include "config_type.h"
+#include "config.h"
 
 config c = {
     .sx = 1920,
