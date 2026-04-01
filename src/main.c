@@ -4,11 +4,10 @@
 #include <stdlib.h>
 
 #include "image.h"
-#include "image_drawing.h"
 #include "simulation.h"
 
 #define WIDTH 1920
-#define HEIGHT 1080
+#define HEIGHT 1200
 
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
@@ -28,6 +27,7 @@ typedef struct AppState
     bool reset;
     double mouse_x;
     double mouse_y;
+    Simulation* s;
 } AppState;
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
@@ -54,6 +54,9 @@ static void key_callback(GLFWwindow* window, int key,
 
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
         state->reset = true;
+
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+        simulation_print_chunks(state->s);
 }
 
 int main(void)
@@ -68,8 +71,9 @@ int main(void)
     Simulation s = simulation_gen(w, h);
 
     AppState state = {
-        .step = true,
-        .step_mode = false,
+        .step = false,
+        .step_mode = true,
+        .s = &s,
     };
 
     glfwInit();
@@ -115,17 +119,17 @@ int main(void)
         {
             image_fill(&img, background);
             simulation_step(&s);
-            simulation_draw_field(&s, &img);
             simulation_draw_balls(&s, &img);
-            // simulation_draw_field_arrow(&s, &img);
             state.step = false;
         }
 
-        //simulation_draw_mouse_gradient(&s, &img, padding, (int)state.mouse_x, (int)state.mouse_y);
+        image_fill(&img, background);
+        simulation_draw_chunks(&s, &img, state.mouse_x, state.mouse_y);
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
-        printf("\r%f", 1.0 / (glfwGetTime() - t0));
+        printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED",
+               1.0 / (glfwGetTime() - t0));
         fflush(stdout);
     }
 

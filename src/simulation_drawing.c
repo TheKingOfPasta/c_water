@@ -1,7 +1,15 @@
 #include <float.h>
+#include <stdio.h>
 
+#include "colorRGB8.h"
 #include "image_drawing.h"
 #include "simulation.h"
+#include "vec2.h"
+
+void simulation_draw_border(Simulation* s, Image* img)
+{
+    image_draw_square_alligned(img, 0, 0, s->sx - 1, s->sy - 1, rgb8_white());
+}
 
 void simulation_draw_balls(Simulation* s, Image* img)
 {
@@ -13,40 +21,89 @@ void simulation_draw_balls(Simulation* s, Image* img)
 
         image_draw_circle(img, p.x, p.y, PARTICULE_RADIUS, circle_color);
     }
+}
 
-    const int bb[4][2] = {
-        { 0, 0 },
-        { s->sx - 1, 0 },
-        { s->sx - 1, s->sy - 1 },
-        { 0, s->sy - 1 },
-    };
+void simulation_draw_field([[maybe_unused]] Simulation* s,
+                           [[maybe_unused]] Image* img)
+{
+    return;
+}
 
-    for (int i = 0; i < 4; i++)
+void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
+{
+    simulation_draw_balls(s, img);
+    simulation_update_chunks(s);
+
+    int cx = x / CHUNK_SIZE;
+    int cy = y / CHUNK_SIZE;
+
+    if (cx >= 0 && cy >= 0 && cx < s->nb_chunk_x && cy < s->nb_chunk_y)
     {
-        image_draw_line(img, bb[i][0], bb[i][1], bb[(i + 1) % 4][0],
-                        bb[(i + 1) % 4][1], rgb8_white());
+        // printf("\n\nx:%2d  y:%2d     cx:%2d cy:%2d     chunksize:%d\n", cx,
+        // cy,
+        //        s->nb_chunk_x, s->nb_chunk_y, CHUNK_SIZE);
+        int chunk_idx = cx + cy * s->nb_chunk_x;
+        int start_idx = s->start_chunk[chunk_idx];
+        int end_idx = s->end_chunk[chunk_idx];
+        for (int i = start_idx; i < end_idx; i++)
+        {
+            Vec2 p = s->particules[s->pairs[i].particle_idx].pos;
+
+            //     vec2_print(&p);
+            //     printf("\n");
+            image_draw_circle(img, p.x, p.y, PARTICULE_RADIUS,
+                              (RGB8){ .r = 250, .b = 0, .g = 0 });
+        }
+    }
+
+    const RGB8 chunk_border = (RGB8){ .r = 140, .g = 140, .b = 140 };
+
+    for (int i = 0; i < s->sx; i += CHUNK_SIZE)
+    {
+        image_draw_line(img, i, 0, i, s->sy, chunk_border);
+    }
+
+    for (int i = 0; i < s->sy; i += CHUNK_SIZE)
+    {
+        image_draw_line(img, 0, i, s->sx, i, chunk_border);
+    }
+
+    if (cx >= 0 && cy >= 0 && cx < s->nb_chunk_x && cy < s->nb_chunk_y)
+    {
+        image_draw_square_alligned(img, cx * CHUNK_SIZE, cy * CHUNK_SIZE,
+                                   CHUNK_SIZE, CHUNK_SIZE, rgb8_white());
     }
 }
 
-void simulation_draw_field(Simulation* s, Image* img)
+void simulation_print_chunks(Simulation* s)
 {
-    return;
-    float max_density = -1000000.0f;
-    float min_density = FLT_MAX;
-    for (int i = 0; i < s->sx * s->sy; i++)
+    printf("nb_chunk_x = %d\n", s->nb_chunk_x);
+    printf("nb_chunk_y = %d\n", s->nb_chunk_y);
+
+    printf("pairs = [\n");
+    for (int i = 0; i < NB_PARTICULES; i++)
     {
-        if (max_density < s->density_field[i])
-            max_density = s->density_field[i];
-        if (min_density > s->density_field[i])
-            min_density = s->density_field[i];
+        printf("    [%d] = %d - %d   \n", i, s->pairs[i].chunk_idx,
+               s->pairs[i].particle_idx);
     }
 
-    float density_diff = max_density - min_density;
-    for (int i = 0; i < s->sx; i++)
-        for (int j = 0; j < s->sy; j++)
+    printf("]\n start_idx =  [\n");
+    for (int i = 0; i < s->nb_chunk_x * s->nb_chunk_y; i++)
+    {
+        int idx = s->start_chunk[i];
+        if (idx != CHUNK_EMPTY_IDX)
         {
-            uint8_t d = (s->density_field[i + j * s->sx] - min_density)
-                / density_diff * 255;
-            image_set_color(img, i, j, (RGB8){ d, d, d });
+            printf("[%d] = %d\n", i, idx);
         }
+    }
+
+    printf("]\n end_idx =  [\n");
+    for (int i = 0; i < s->nb_chunk_x * s->nb_chunk_y; i++)
+    {
+        int idx = s->end_chunk[i];
+        if (idx != CHUNK_EMPTY_IDX)
+        {
+            printf("[%d] = %d\n", i, idx);
+        }
+    }
 }

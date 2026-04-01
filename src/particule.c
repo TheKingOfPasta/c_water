@@ -114,7 +114,7 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
                 > PARTICULE_INFLUENCE_RADIUS * PARTICULE_INFLUENCE_RADIUS)
             continue;
 
-        float density = s->density_field[i];
+        float density = s->particle_densities[i];
 
         Vec2 dir = vec2_sub(s->particules[i].pos, p->pos);
         float dist = vec2_dist(p2->pos, p->pos);

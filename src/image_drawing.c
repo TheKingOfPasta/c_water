@@ -72,3 +72,20 @@ void image_draw_vector(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
     image_draw_line(i, left_wing.x, left_wing.y, x1, y1, c);
     image_draw_line(i, right_wing.x, right_wing.y, x1, y1, c);
 }
+
+void image_draw_square_alligned(Image* img, int x, int y, int sx, int sy,
+                                RGB8 c)
+{
+    const int bb[4][2] = {
+        { x, y },
+        { x + sx, y },
+        { x + sx, y + sy },
+        { x, y + sy },
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        image_draw_line(img, bb[i][0], bb[i][1], bb[(i + 1) % 4][0],
+                        bb[(i + 1) % 4][1], c);
+    }
+}
