@@ -2,8 +2,6 @@
 
 #include <stdlib.h>
 
-#include "colorRGB8.h"
-
 Image image_blank(int sx, int sy)
 {
     RGB8* pxls = calloc(sx * sy, sizeof(RGB8));

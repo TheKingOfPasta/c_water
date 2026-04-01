@@ -1,6 +1,6 @@
 #pragma once
 
-#include "colorRGB8.h"
+#include "utils/colorRGB8.h"
 
 #define IMAGE_NB_LEVELS 256
 

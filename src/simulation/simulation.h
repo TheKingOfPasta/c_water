@@ -1,7 +1,7 @@
 #pragma once
 
-#include "image.h"
-#include "vec2.h"
+#include "image/image.h"
+#include "utils/vec2.h"
 
 #define VELOCITY_COLLISION_DAMPNER 0.9 // 1.0 no loss - 0.0 100% loss
 #define DRAG 0.995

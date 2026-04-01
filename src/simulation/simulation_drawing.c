@@ -1,11 +1,11 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "colorRGB8.h"
-#include "image_drawing.h"
-#include "simulation.h"
-#include "vec2.h"
 #include "config.h"
+#include "image/image_drawing.h"
+#include "simulation.h"
+#include "utils/colorRGB8.h"
+#include "utils/vec2.h"
 
 void simulation_draw_border(Image* img)
 {

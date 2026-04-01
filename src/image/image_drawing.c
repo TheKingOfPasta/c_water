@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "image.h"
-#include "vec2.h"
+#include "utils/vec2.h"
 
 void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 c)
 {

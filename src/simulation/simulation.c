@@ -5,15 +5,12 @@
 #include <omp.h>
 #include <stdlib.h>
 
-#include "utils.h"
-#include "vec2.h"
 #include "config.h"
+#include "utils/vec2.h"
 
 Simulation simulation_gen()
 {
-    Simulation s = {
-        0
-    };
+    Simulation s = { 0 };
 
     for (int i = 0; i < NB_PARTICULES; i++)
     {

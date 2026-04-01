@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "simulation.h"
-#include "utils.h"
-#include "vec2.h"
 #include "config.h"
+#include "simulation.h"
+#include "utils/utils.h"
+#include "utils/vec2.h"
 
 void particule_print(Particule* p)
 {
@@ -85,7 +85,8 @@ void particule_step(Simulation* s, Particule* p)
     particule_interact_bounds(p);
 }
 
-static float particule_compute_density_gradient(float dist, float particule_influence_radius)
+static float
+particule_compute_density_gradient(float dist, float particule_influence_radius)
 {
     float slope = 6.0 / (M_PI * pow(particule_influence_radius, 4));
 
@@ -114,7 +115,8 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
             continue;
         dir = vec2_mul_scalar(dir, 1.0f / dist);
 
-        float slope = particule_compute_density_gradient(dist, c->particule_influence_radius);
+        float slope = particule_compute_density_gradient(
+            dist, c->particule_influence_radius);
 
         vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
     }
