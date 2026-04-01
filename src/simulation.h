@@ -3,13 +3,8 @@
 #include "image.h"
 #include "vec2.h"
 
-#define PRESSURE_FORCE 10000
-#define TARGET_PRESSURE 0.015
-#define PARTICULE_INFLUENCE_RADIUS 30 // for density
-#define PARTICULE_RADIUS 10 // for collision & drawing
-#define GRAVITY_MULTIPLIER 0.0
-#define VELOCITY_COLLISION_DAMPNER 0.0 // 0.0 no loss - 1.0 100% loss
-#define DRAG 0.9
+#define VELOCITY_COLLISION_DAMPNER 0.9 // 1.0 no loss - 0.0 100% loss
+#define DRAG 0.995
 
 typedef struct
 {
@@ -19,7 +14,7 @@ typedef struct
 
 #define NB_PARTICULES 2000
 
-#define CHUNK_SIZE (PARTICULE_RADIUS * 6)
+#define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
 typedef struct
 {
@@ -34,10 +29,17 @@ typedef struct
     int sx;
     int sy;
 
+    float pressure_force;
+    float target_pressure;
+    float particule_influence_radius;
+    float radius;
+    float gravity_multiplier;
+
     Particule particules[NB_PARTICULES];
 
     float particle_densities[NB_PARTICULES];
 
+    int16_t chunk_size;
     chunk_particle_idx_pair pairs[NB_PARTICULES];
 
     int nb_chunk_x;
@@ -53,7 +55,7 @@ void particule_step(Simulation* s, Particule* p);
 
 void particule_print(Particule* p);
 
-float particule_density(float d);
+float particule_density(float d, float influence_radius);
 Vec2 particule_compute_gradient(Simulation* s, Particule* p);
 
 /* --- SIMULATION --- */

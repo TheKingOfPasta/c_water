@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 float randf(void)
@@ -9,6 +10,7 @@ float randf(void)
 
 char* read_all_file(FILE* f)
 {
+    assert(f != NULL);
     fseek(f, 0, SEEK_END);
     int eof = ftell(f);
     rewind(f);
