@@ -11,5 +11,3 @@ typedef struct
     float radius;
     float gravity_multiplier;
 } config;
-
-extern config c;

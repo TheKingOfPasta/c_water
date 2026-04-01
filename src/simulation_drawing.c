@@ -9,7 +9,7 @@
 
 void simulation_draw_border(Image* img)
 {
-    image_draw_square_alligned(img, 0, 0, c.sx - 1, c.sy - 1, rgb8_white());
+    image_draw_square_alligned(img, 0, 0, c->sx - 1, c->sy - 1, rgb8_white());
 }
 
 void simulation_draw_balls(Simulation* s, Image* img)
@@ -20,7 +20,7 @@ void simulation_draw_balls(Simulation* s, Image* img)
     {
         Vec2 p = s->particules[i].pos;
 
-        image_draw_circle(img, p.x, p.y, c.radius, circle_color);
+        image_draw_circle(img, p.x, p.y, c->radius, circle_color);
     }
 }
 
@@ -52,21 +52,21 @@ void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
 
             //     vec2_print(&p);
             //     printf("\n");
-            image_draw_circle(img, p.x, p.y, c.radius,
+            image_draw_circle(img, p.x, p.y, c->radius,
                               (RGB8){ .r = 250, .b = 0, .g = 0 });
         }
     }
 
     const RGB8 chunk_border = (RGB8){ .r = 140, .g = 140, .b = 140 };
 
-    for (int i = 0; i < c.sx; i += s->chunk_size)
+    for (int i = 0; i < c->sx; i += s->chunk_size)
     {
-        image_draw_line(img, i, 0, i, c.sy, chunk_border);
+        image_draw_line(img, i, 0, i, c->sy, chunk_border);
     }
 
-    for (int i = 0; i < c.sy; i += s->chunk_size)
+    for (int i = 0; i < c->sy; i += s->chunk_size)
     {
-        image_draw_line(img, 0, i, c.sx, i, chunk_border);
+        image_draw_line(img, 0, i, c->sx, i, chunk_border);
     }
 
     if (cx >= 0 && cy >= 0 && cx < s->nb_chunk_x && cy < s->nb_chunk_y)

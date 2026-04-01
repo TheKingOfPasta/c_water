@@ -5,6 +5,7 @@
 
 #include "image.h"
 #include "simulation.h"
+#include <dlfcn.h>
 #include "config.h"
 
 #define WIDTH 1920
@@ -13,6 +14,25 @@
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
+}
+
+config *c = NULL;
+static void *lib = NULL;
+
+void reload_config(void)
+{
+    if (system("gcc -shared -fPIC -Iinclude config/config.c -o config/config.so") != 0) {
+        fprintf(stderr, "Failed to recompile config\n");
+        return;
+    }
+
+    if (lib) dlclose(lib);
+
+    lib = dlopen("./config/config.so", RTLD_NOW | RTLD_GLOBAL);
+    if (!lib) { fprintf(stderr, "dlopen: %s\n", dlerror()); return; }
+
+    c = (config*)dlsym(lib, "c");
+    if (!c) { fprintf(stderr, "dlsym: %s\n", dlerror()); return; }
 }
 
 void framebuffer_size_callback(__attribute_maybe_unused__ GLFWwindow* window,
@@ -58,19 +78,21 @@ static void key_callback(GLFWwindow* window, int key,
 
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
         simulation_print_chunks(state->s);
+
+    if (key == GLFW_KEY_G && action == GLFW_PRESS)
+        reload_config();
 }
 
 int main(void)
 {
+    reload_config();
+
     int w = WIDTH;
     int h = HEIGHT;
     RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
 
     Image img = image_blank(w, h);
     image_fill(&img, background);
-
-    c.sx = w;
-    c.sy = h; // TODO : REMOVE THIS
 
     Simulation s = simulation_gen();
 

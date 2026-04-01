@@ -31,13 +31,13 @@ static void simulation_get_file_variables()
     char* file_radius = read_all_file(f_radius);
     char* file_gravity = read_all_file(f_gravity);
 
-    c.pressure_force = atof(file_pressure_force);
-    c.target_pressure = atof(file_target_pressure);
-    c.particule_influence_radius = atof(file_influence);
-    c.radius = atof(file_radius);
-    c.gravity_multiplier = atof(file_gravity);
+    c->pressure_force = atof(file_pressure_force);
+    c->target_pressure = atof(file_target_pressure);
+    c->particule_influence_radius = atof(file_influence);
+    c->radius = atof(file_radius);
+    c->gravity_multiplier = atof(file_gravity);
 
-    assert(c.radius > 0);
+    assert(c->radius > 0);
 
     free(file_pressure_force);
     free(file_target_pressure);
@@ -64,9 +64,9 @@ Simulation simulation_gen()
 
     simulation_get_file_variables();
 
-    s.chunk_size = c.radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
-    s.nb_chunk_x = c.sx / s.chunk_size + 1;
-    s.nb_chunk_y = c.sy / s.chunk_size + 1;
+    s.chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
+    s.nb_chunk_x = c->sx / s.chunk_size + 1;
+    s.nb_chunk_y = c->sy / s.chunk_size + 1;
 
     s.start_chunk = malloc(sizeof(uint16_t) * s.nb_chunk_x * s.nb_chunk_y);
     s.end_chunk = malloc(sizeof(uint16_t) * s.nb_chunk_x * s.nb_chunk_y);
@@ -173,7 +173,7 @@ float simulation_compute_density(Simulation* s, Particule* p)
     for (int k = 0; k < NB_PARTICULES; k++)
     {
         d += particule_density(vec2_dist(s->particules[k].pos, p->pos),
-                               c.particule_influence_radius);
+                               c->particule_influence_radius);
     }
 
     return d * mass;
@@ -210,7 +210,7 @@ void simulation_step(Simulation* s)
     for (size_t i = 0; i < NB_PARTICULES; i++)
         positions[i] = s->particules[i].pos;
 
-    float rad4 = 4 * c.radius * c.radius;
+    float rad4 = 4 * c->radius * c->radius;
 
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICULES; i++)
@@ -237,7 +237,7 @@ void simulation_step(Simulation* s)
                     vec2_add_inplace(velocities + j, v_diff);
                 }
 
-                Vec2 d2 = vec2_mul_scalar(dir, (2 * c.radius - dist) / dist);
+                Vec2 d2 = vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
 
                 vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
                 vec2_sub_inplace(positions + j, vec2_mul_scalar(d2, 0.5f));
