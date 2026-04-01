@@ -5,6 +5,7 @@
 
 #include "image.h"
 #include "simulation.h"
+#include "config.h"
 
 #define WIDTH 1920
 #define HEIGHT 1200
@@ -68,7 +69,10 @@ int main(void)
     Image img = image_blank(w, h);
     image_fill(&img, background);
 
-    Simulation s = simulation_gen(w, h);
+    c.sx = w;
+    c.sy = h; // TODO : REMOVE THIS
+
+    Simulation s = simulation_gen();
 
     AppState state = {
         .step = false,
@@ -111,7 +115,7 @@ int main(void)
 
         if (state.reset)
         {
-            s = simulation_gen(w, h);
+            s = simulation_gen();
             state.reset = false;
         }
 

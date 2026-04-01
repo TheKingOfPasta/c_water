@@ -7,8 +7,9 @@
 
 #include "utils.h"
 #include "vec2.h"
+#include "config.h"
 
-static void simulation_get_file_variables(Simulation* s)
+static void simulation_get_file_variables()
 {
 #if defined(__NIXOS__)
     FILE* f_pressure_force = fopen("./conf/pressure_force.txt", "r");
@@ -30,13 +31,13 @@ static void simulation_get_file_variables(Simulation* s)
     char* file_radius = read_all_file(f_radius);
     char* file_gravity = read_all_file(f_gravity);
 
-    s->pressure_force = atof(file_pressure_force);
-    s->target_pressure = atof(file_target_pressure);
-    s->particule_influence_radius = atof(file_influence);
-    s->radius = atof(file_radius);
-    s->gravity_multiplier = atof(file_gravity);
+    c.pressure_force = atof(file_pressure_force);
+    c.target_pressure = atof(file_target_pressure);
+    c.particule_influence_radius = atof(file_influence);
+    c.radius = atof(file_radius);
+    c.gravity_multiplier = atof(file_gravity);
 
-    assert(s->radius != 0);
+    assert(c.radius > 0);
 
     free(file_pressure_force);
     free(file_target_pressure);
@@ -50,23 +51,22 @@ static void simulation_get_file_variables(Simulation* s)
     fclose(f_gravity);
 }
 
-Simulation simulation_gen(int sx, int sy)
+Simulation simulation_gen()
 {
     Simulation s = {
-        .sx = sx,
-        .sy = sy,
+        0
     };
 
     for (int i = 0; i < NB_PARTICULES; i++)
     {
-        s.particules[i] = particule_gen_random(sx, sy);
+        s.particules[i] = particule_gen_random();
     }
 
-    simulation_get_file_variables(&s);
+    simulation_get_file_variables();
 
-    s.chunk_size = s.radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
-    s.nb_chunk_x = sx / s.chunk_size + 1;
-    s.nb_chunk_y = sy / s.chunk_size + 1;
+    s.chunk_size = c.radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
+    s.nb_chunk_x = c.sx / s.chunk_size + 1;
+    s.nb_chunk_y = c.sy / s.chunk_size + 1;
 
     s.start_chunk = malloc(sizeof(uint16_t) * s.nb_chunk_x * s.nb_chunk_y);
     s.end_chunk = malloc(sizeof(uint16_t) * s.nb_chunk_x * s.nb_chunk_y);
@@ -173,7 +173,7 @@ float simulation_compute_density(Simulation* s, Particule* p)
     for (int k = 0; k < NB_PARTICULES; k++)
     {
         d += particule_density(vec2_dist(s->particules[k].pos, p->pos),
-                               s->particule_influence_radius);
+                               c.particule_influence_radius);
     }
 
     return d * mass;
@@ -192,7 +192,7 @@ static void simulation_update_density_field(Simulation* s)
 
 void simulation_step(Simulation* s)
 {
-    simulation_get_file_variables(s);
+    simulation_get_file_variables();
     simulation_update_chunks(s);
 
     simulation_update_density_field(s);
@@ -210,12 +210,14 @@ void simulation_step(Simulation* s)
     for (size_t i = 0; i < NB_PARTICULES; i++)
         positions[i] = s->particules[i].pos;
 
+    float rad4 = 4 * c.radius * c.radius;
+
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICULES; i++)
         for (size_t j = i + 1; j < NB_PARTICULES; j++)
         {
             float dist_sqr = vec2_dist_sqrd(positions[i], positions[j]);
-            if (dist_sqr < 4 * s->radius * s->radius && dist_sqr > 0.0001)
+            if (dist_sqr < rad4 && dist_sqr > 0.0001)
             {
                 float dist = sqrtf(dist_sqr);
 
@@ -235,7 +237,7 @@ void simulation_step(Simulation* s)
                     vec2_add_inplace(velocities + j, v_diff);
                 }
 
-                Vec2 d2 = vec2_mul_scalar(dir, (2 * s->radius - dist) / dist);
+                Vec2 d2 = vec2_mul_scalar(dir, (2 * c.radius - dist) / dist);
 
                 vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
                 vec2_sub_inplace(positions + j, vec2_mul_scalar(d2, 0.5f));

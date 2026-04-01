@@ -26,15 +26,6 @@ typedef struct
 
 typedef struct
 {
-    int sx;
-    int sy;
-
-    float pressure_force;
-    float target_pressure;
-    float particule_influence_radius;
-    float radius;
-    float gravity_multiplier;
-
     Particule particules[NB_PARTICULES];
 
     float particle_densities[NB_PARTICULES];
@@ -49,7 +40,7 @@ typedef struct
 } Simulation;
 
 /* --- PARTICLES --- */
-Particule particule_gen_random(int sx, int sy);
+Particule particule_gen_random();
 
 void particule_step(Simulation* s, Particule* p);
 
@@ -60,7 +51,7 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p);
 
 /* --- SIMULATION --- */
 
-Simulation simulation_gen(int sx, int sy);
+Simulation simulation_gen();
 void simulation_free(Simulation* s);
 
 void simulation_step(Simulation* s);

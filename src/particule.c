@@ -5,6 +5,7 @@
 #include "simulation.h"
 #include "utils.h"
 #include "vec2.h"
+#include "config.h"
 
 void particule_print(Particule* p)
 {
@@ -15,31 +16,31 @@ void particule_print(Particule* p)
     printf(" }\n");
 }
 
-Particule particule_gen_random(int sx, int sy)
+Particule particule_gen_random()
 {
     Particule p = { .pos = vec2_random(), .velo = vec2_zero() };
-    p.pos.x *= sx;
-    p.pos.y *= sy;
+    p.pos.x *= c.sx;
+    p.pos.y *= c.sy;
     return p;
 }
 
-static inline void particule_interact_bounds(Particule* p, int sx, int sy)
+static inline void particule_interact_bounds(Particule* p)
 {
     if (p->pos.x < 0)
     {
         p->velo.x *= -1;
         p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
         p->pos.x = -p->pos.x;
-        if (p->pos.x > sx)
+        if (p->pos.x > c.sx)
             p->pos.x = 0;
     }
-    else if (p->pos.x >= sx)
+    else if (p->pos.x >= c.sx)
     {
         p->velo.x *= -1;
         p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
-        p->pos.x = sx - (p->pos.x - sx);
+        p->pos.x = c.sx - (p->pos.x - c.sx);
         if (p->pos.x < 0)
-            p->pos.x = sx;
+            p->pos.x = c.sx;
     }
 
     if (p->pos.y < 0)
@@ -47,47 +48,41 @@ static inline void particule_interact_bounds(Particule* p, int sx, int sy)
         p->velo.y *= -1;
         p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
         p->pos.y = -p->pos.y;
-        if (p->pos.y > sy)
+        if (p->pos.y > c.sy)
             p->pos.y = 0;
     }
-    else if (p->pos.y >= sy)
+    else if (p->pos.y >= c.sy)
     {
         p->velo.y *= -1;
         p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
-        p->pos.y = sy - (p->pos.y - sy);
+        p->pos.y = c.sy - (p->pos.y - c.sy);
         if (p->pos.y < 0)
-            p->pos.y = sy;
+            p->pos.y = c.sy;
     }
 }
 
-static inline void particule_apply_gravity(Simulation* s, Particule* p)
+static inline void particule_apply_gravity(Particule* p)
 {
-    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.0981f * s->gravity_multiplier });
-}
-
-static inline Vec2 reflect(Vec2 v, Vec2 normal)
-{
-    normal = vec2_normalized(normal);
-    return vec2_sub(v, vec2_mul_scalar(normal, vec2_dot(v, normal) * 2.0));
+    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.0981f * c.gravity_multiplier });
 }
 
 void particule_step(Simulation* s, Particule* p)
 {
-    float pressure = simulation_compute_density(s, p) - s->target_pressure;
+    float pressure = simulation_compute_density(s, p) - c.target_pressure;
 
     Vec2 grad = particule_compute_gradient(s, p);
 
     grad = vec2_neg(grad);
 
-    particule_apply_gravity(s, p);
+    particule_apply_gravity(p);
 
     vec2_add_inplace(&p->velo,
-                     vec2_mul_scalar(grad, pressure * s->pressure_force));
+                     vec2_mul_scalar(grad, pressure * c.pressure_force));
 
     vec2_add_inplace(&p->pos, p->velo);
     p->velo = vec2_mul_scalar(p->velo, DRAG);
 
-    particule_interact_bounds(p, s->sx, s->sy);
+    particule_interact_bounds(p);
 }
 
 static float particule_compute_density_gradient(float dist, float particule_influence_radius)
@@ -106,7 +101,7 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
         Particule* p2 = s->particules + i;
         if (p2 == p
             || vec2_dist_sqrd(p2->pos, p->pos)
-                > s->particule_influence_radius * s->particule_influence_radius)
+                > c.particule_influence_radius * c.particule_influence_radius)
             continue;
 
         float density = s->particle_densities[i];
@@ -119,7 +114,7 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
             continue;
         dir = vec2_mul_scalar(dir, 1.0f / dist);
 
-        float slope = particule_compute_density_gradient(dist, s->particule_influence_radius);
+        float slope = particule_compute_density_gradient(dist, c.particule_influence_radius);
 
         vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
     }
