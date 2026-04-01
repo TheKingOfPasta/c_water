@@ -9,48 +9,6 @@
 #include "vec2.h"
 #include "config.h"
 
-static void simulation_get_file_variables()
-{
-#if defined(__NIXOS__)
-    FILE* f_pressure_force = fopen("./conf/pressure_force.txt", "r");
-    FILE* f_target_pressure = fopen("./conf/target_pressure.txt", "r");
-    FILE* f_influence = fopen("./conf/influence.txt", "r");
-    FILE* f_radius = fopen("./conf/radius.txt", "r");
-    FILE* f_gravity = fopen("./conf/gravity.txt", "r");
-#else
-    FILE* f_pressure_force = fopen("/home/aurel/pressure_force.txt", "r");
-    FILE* f_target_pressure = fopen("/home/aurel/target_pressure.txt", "r");
-    FILE* f_influence = fopen("/home/aurel/influence.txt", "r");
-    FILE* f_radius = fopen("/home/aurel/radius.txt", "r");
-    FILE* f_gravity = fopen("/home/aurel/gravity.txt", "r");
-#endif
-
-    char* file_pressure_force = read_all_file(f_pressure_force);
-    char* file_target_pressure = read_all_file(f_target_pressure);
-    char* file_influence = read_all_file(f_influence);
-    char* file_radius = read_all_file(f_radius);
-    char* file_gravity = read_all_file(f_gravity);
-
-    c->pressure_force = atof(file_pressure_force);
-    c->target_pressure = atof(file_target_pressure);
-    c->particule_influence_radius = atof(file_influence);
-    c->radius = atof(file_radius);
-    c->gravity_multiplier = atof(file_gravity);
-
-    assert(c->radius > 0);
-
-    free(file_pressure_force);
-    free(file_target_pressure);
-    free(file_influence);
-    free(file_radius);
-    free(file_gravity);
-    fclose(f_pressure_force);
-    fclose(f_target_pressure);
-    fclose(f_influence);
-    fclose(f_radius);
-    fclose(f_gravity);
-}
-
 Simulation simulation_gen()
 {
     Simulation s = {
@@ -61,8 +19,6 @@ Simulation simulation_gen()
     {
         s.particules[i] = particule_gen_random();
     }
-
-    simulation_get_file_variables();
 
     s.chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
     s.nb_chunk_x = c->sx / s.chunk_size + 1;
@@ -192,7 +148,6 @@ static void simulation_update_density_field(Simulation* s)
 
 void simulation_step(Simulation* s)
 {
-    simulation_get_file_variables();
     simulation_update_chunks(s);
 
     simulation_update_density_field(s);

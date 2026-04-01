@@ -1,8 +1,8 @@
 #include "config_type.h"
 
 config c = {
-    .sx = 500,
-    .sy = 500,
+    .sx = 1920,
+    .sy = 1080,
 
     .pressure_force = 1000,
     .target_pressure = -5.0,
