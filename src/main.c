@@ -8,6 +8,7 @@
 #include "image/image.h"
 #include "image/image_drawing.h"
 #include "simulation/simulation.h"
+#include "utils/colorRGB8.h"
 
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
@@ -67,7 +68,7 @@ int main(void)
 {
     reload_config();
 
-    RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
+    RGB8 background = rgb8_black();
 
     Image img = image_blank(c->sx, c->sy);
     image_fill(&img, background);
