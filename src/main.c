@@ -91,7 +91,8 @@ int main(void)
     //    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     //    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "C Water", NULL, NULL);
+    GLFWwindow* window =
+        glfwCreateWindow(img.sx, img.sy, "C Water", NULL, NULL);
     if (window == NULL)
     {
         glfwTerminate();

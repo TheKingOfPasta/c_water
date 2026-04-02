@@ -9,9 +9,15 @@ static void* lib = NULL;
 
 void reload_config(void)
 {
-    if (system(
-            "gcc -shared -fPIC -Iinclude config/config.c -o config/config.so")
-        != 0)
+#if defined(__NIXOS__)
+    const char* cmd = "gcc -shared -fPIC -Iinclude config/config.c -o "
+                      "config/config.so -D__NIXOS__";
+#else
+    const char* cmd =
+        "gcc -shared -fPIC -Iinclude config/config.c -o config/config.so";
+#endif
+
+    if (system(cmd) != 0)
     {
         fprintf(stderr, "Failed to recompile config\n");
         return;
