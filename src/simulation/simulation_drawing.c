@@ -1,5 +1,6 @@
 #include <float.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "config_reloader.h"
 #include "image/image_drawing.h"
@@ -107,4 +108,38 @@ void simulation_print_chunks(Simulation* s)
             printf("[%d] = %d\n", i, idx);
         }
     }
+}
+
+void simulation_draw_density(Simulation *s, Image *img)
+{
+    Particule *p = calloc(1, sizeof(Particule));
+
+    float *densities = malloc(sizeof(float) * img->sx * img->sy / 10);
+
+    float min = FLT_MAX;
+    float max = FLT_MIN;
+
+    for (int j = 0; j < img->sy; j += 10)
+    for (int i = 0; i < img->sx; i += 10)
+    {
+        p->pos = (Vec2){ .x = i, .y = j };
+        float t = simulation_compute_density(s, p);
+
+        densities[i / 10 + j / 10 * img->sx] = t;
+        if (t > max)
+            max = t;
+        if (t < min)
+            min = t;
+    }
+
+    for (int j = 0; j < img->sy; j++)
+    for (int i = 0; i < img->sx; i++)
+    {
+        float d = (densities[i / 10 + j / 10 * img->sx] - min) / (max - min);
+
+        image_set_color(img, i, j, rgb8_lerp(rgb8_black(), rgb8_white(), d));
+    }
+
+    free(densities);
+    free(p);
 }

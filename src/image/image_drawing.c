@@ -1,8 +1,12 @@
 #include "image_drawing.h"
 
+#include <float.h>
+
 #include <stdlib.h>
 
 #include "image.h"
+#include "simulation/simulation.h"
+#include "utils/colorRGB8.h"
 #include "utils/vec2.h"
 
 void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 col)

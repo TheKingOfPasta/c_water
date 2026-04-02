@@ -4,8 +4,8 @@ config c = {
     .sx = 1920,
     .sy = 1080,
 
-    .pressure_force = 1.01,
-    .target_pressure = 10,
+    .pressure_force = 10000.01,
+    .target_pressure = 0.010,
     .particule_influence_radius = 500,
     .radius = 7,
     .gravity_multiplier = 0,

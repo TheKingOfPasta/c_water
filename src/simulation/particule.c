@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "config_reloader.h"
+#include "image/image_drawing.h"
 #include "simulation.h"
 #include "utils/utils.h"
 #include "utils/vec2.h"
@@ -86,9 +87,9 @@ void particule_step(Simulation* s, Particule* p)
 
 static float particule_compute_density_gradient(float dist)
 {
-    float slope = 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
+    float slope = 2.0 * 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
 
-    return 2 * slope * (dist - c->particule_influence_radius);
+    return slope * (dist - c->particule_influence_radius);
 }
 
 Vec2 particule_compute_gradient(Simulation* s, Particule* p)
@@ -107,8 +108,8 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
         if (density < 0.001)
             continue;
 
-        Vec2 dir = vec2_sub(s->particules[i].pos, p->pos);
-        float dist = vec2_dist(p2->pos, p->pos);
+        Vec2 dir = vec2_sub(p2->pos, p->pos);
+        float dist = vec2_norm(dir);
         if (dist < 0.001)
             continue;
         dir = vec2_mul_scalar(dir, 1.0f / dist);
@@ -117,6 +118,8 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
 
         vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
     }
+
+    //image_draw_vector(s->Image *i, int x0, int y0, int x1, int y1, RGB8 c);
 
     return res;
 }

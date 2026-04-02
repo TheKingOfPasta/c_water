@@ -6,6 +6,7 @@
 
 #include "config_reloader.h"
 #include "image/image.h"
+#include "image/image_drawing.h"
 #include "simulation/simulation.h"
 
 #define WIDTH 1920
@@ -26,6 +27,7 @@ typedef struct AppState
 {
     bool step;
     bool step_mode;
+    bool draw_densities;
     bool reset;
     double mouse_x;
     double mouse_y;
@@ -48,19 +50,25 @@ static void key_callback(GLFWwindow* window, int key,
 
     AppState* state = ((AppState*)glfwGetWindowUserPointer(window));
 
-    if (key == GLFW_KEY_N && action == GLFW_PRESS)
+    if (action != GLFW_PRESS)
+        return;
+
+    if (key == GLFW_KEY_N)
         state->step = true;
 
-    if ((key == GLFW_KEY_P || key == GLFW_KEY_SPACE) && action == GLFW_PRESS)
+    if (key == GLFW_KEY_P || key == GLFW_KEY_SPACE)
         state->step_mode = !state->step_mode;
 
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    if (key == GLFW_KEY_R)
         state->reset = true;
 
-    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    if (key == GLFW_KEY_D)
+        state->draw_densities = !state->draw_densities;
+
+    if (key == GLFW_KEY_C)
         simulation_print_chunks(state->s);
 
-    if (key == GLFW_KEY_G && action == GLFW_PRESS)
+    if (key == GLFW_KEY_G)
         reload_config();
 }
 
@@ -124,16 +132,21 @@ int main(void)
             state.reset = false;
         }
 
+        image_fill(&img, background);
         if (!state.step_mode || state.step)
         {
-            image_fill(&img, background);
             simulation_step(&s);
             simulation_draw_balls(&s, &img);
             state.step = false;
         }
 
-        image_fill(&img, background);
+        if (state.draw_densities)
+        {
+            simulation_draw_density(&s, &img);
+        }
+
         simulation_draw_chunks(&s, &img, state.mouse_x, state.mouse_y);
+
         glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
