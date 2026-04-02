@@ -7,9 +7,9 @@ typedef struct
 {
     Vec2 pos;
     Vec2 velo;
-} Particule;
+} Particle;
 
-#define NB_PARTICULES 2000
+#define NB_PARTICLES 2000
 
 #define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
@@ -23,12 +23,12 @@ typedef struct
 
 typedef struct
 {
-    Particule particules[NB_PARTICULES];
+    Particle particles[NB_PARTICLES];
 
-    float particle_densities[NB_PARTICULES];
+    float particle_densities[NB_PARTICLES];
 
     int16_t chunk_size;
-    chunk_particle_idx_pair pairs[NB_PARTICULES];
+    chunk_particle_idx_pair pairs[NB_PARTICLES];
 
     int nb_chunk_x;
     int nb_chunk_y;
@@ -37,14 +37,14 @@ typedef struct
 } Simulation;
 
 /* --- PARTICLES --- */
-Particule particule_gen_random();
+Particle particle_gen_random();
 
-void particule_step(Simulation* s, Particule* p);
+void particle_step(Simulation* s, Particle* p);
 
-void particule_print(Particule* p);
+void particle_print(Particle* p);
 
-float particule_density(float d);
-Vec2 particule_compute_gradient(Simulation* s, Particule* p);
+float particle_density(float d);
+Vec2 particle_compute_gradient(Simulation* s, Particle* p);
 
 /* --- SIMULATION --- */
 
@@ -54,7 +54,7 @@ void simulation_free(Simulation* s);
 void simulation_step(Simulation* s);
 void simulation_update_chunks(Simulation* s);
 
-float simulation_compute_density(Simulation* s, Particule* p);
+float simulation_compute_density(Simulation* s, Particle* p);
 
 void simulation_draw_density(Simulation* s, Image* img);
 void simulation_draw_balls(Simulation* s, Image* img);

@@ -7,7 +7,7 @@ typedef struct
 
     float pressure_force;
     float target_pressure;
-    float particule_influence_radius;
+    float particle_influence_radius;
     float radius;
     float gravity_multiplier;
     float velocity_collision_dampner;

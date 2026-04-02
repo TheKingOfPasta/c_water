@@ -11,7 +11,7 @@ config c = {
 
     .pressure_force = 30,
     .target_pressure = 1,
-    .particule_influence_radius = 50,
+    .particle_influence_radius = 50,
     .radius = 10,
     .gravity_multiplier = 0,
 

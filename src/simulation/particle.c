@@ -8,7 +8,7 @@
 #include "utils/utils.h"
 #include "utils/vec2.h"
 
-void particule_print(Particule* p)
+void particle_print(Particle* p)
 {
     printf("{ pos:");
     vec2_print(&p->pos);
@@ -17,15 +17,15 @@ void particule_print(Particule* p)
     printf(" }\n");
 }
 
-Particule particule_gen_random()
+Particle particle_gen_random()
 {
-    Particule p = { .pos = vec2_random(), .velo = vec2_zero() };
+    Particle p = { .pos = vec2_random(), .velo = vec2_zero() };
     p.pos.x *= c->sx;
     p.pos.y *= c->sy;
     return p;
 }
 
-static inline void particule_interact_bounds(Particule* p)
+static inline void particle_interact_bounds(Particle* p)
 {
     if (p->pos.x < 0)
     {
@@ -62,20 +62,20 @@ static inline void particule_interact_bounds(Particule* p)
     }
 }
 
-static inline void particule_apply_gravity(Particule* p)
+static inline void particle_apply_gravity(Particle* p)
 {
     vec2_add_inplace(&p->velo, (Vec2){ 0, 0.0981f * c->gravity_multiplier });
 }
 
-void particule_step(Simulation* s, Particule* p)
+void particle_step(Simulation* s, Particle* p)
 {
     float pressure = simulation_compute_density(s, p) - c->target_pressure;
 
-    Vec2 grad = particule_compute_gradient(s, p);
+    Vec2 grad = particle_compute_gradient(s, p);
 
     grad = vec2_neg(grad);
 
-    particule_apply_gravity(p);
+    particle_apply_gravity(p);
 
     vec2_add_inplace(&p->velo,
                      vec2_mul_scalar(grad, pressure * c->pressure_force));
@@ -83,28 +83,28 @@ void particule_step(Simulation* s, Particule* p)
     vec2_add_inplace(&p->pos, p->velo);
     p->velo = vec2_mul_scalar(p->velo, c->velocity_drag);
 
-    particule_interact_bounds(p);
+    particle_interact_bounds(p);
 }
 
-static float particule_compute_density_gradient(float dist)
+static float particle_compute_density_gradient(float dist)
 {
-    float slope = 2.0 * 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
+    float slope = 2.0 * 6.0 / (M_PI * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius);
 
-    return slope * (dist - c->particule_influence_radius);
+    return slope * (dist - c->particle_influence_radius);
 }
 
-Vec2 particule_compute_gradient(Simulation* s, Particule* p)
+Vec2 particle_compute_gradient(Simulation* s, Particle* p)
 {
     Vec2 res = vec2_zero();
 
-    for (size_t i = 0; i < NB_PARTICULES; i++)
+    for (size_t i = 0; i < NB_PARTICLES; i++)
     {
-        Particule* p2 = s->particules + i;
+        Particle* p2 = s->particles + i;
         Vec2 dir = vec2_sub(p2->pos, p->pos);
         float dist_sqrd = vec2_norm_sqrd(dir);
 
         if (p2 == p
-            || dist_sqrd > c->particule_influence_radius * c->particule_influence_radius)
+            || dist_sqrd > c->particle_influence_radius * c->particle_influence_radius)
             continue;
 
         float density = s->particle_densities[i];
@@ -116,7 +116,7 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
             continue;
         dir = vec2_mul_scalar(dir, 1.0f / dist);
 
-        float slope = particule_compute_density_gradient(dist);
+        float slope = particle_compute_density_gradient(dist);
 
         vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
     }
@@ -124,14 +124,14 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
     return res;
 }
 
-float particule_density(float d)
+float particle_density(float d)
 {
-    float v = c->particule_influence_radius - d;
+    float v = c->particle_influence_radius - d;
 
     if (v < 0)
         return 0;
 
-    float vol = 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
+    float vol = 6.0 / (M_PI * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius);
 
     return v * v * vol;
 }

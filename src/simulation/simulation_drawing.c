@@ -17,9 +17,9 @@ void simulation_draw_balls(Simulation* s, Image* img)
 {
     const RGB8 circle_color = (RGB8){ .r = 10, .g = 255, .b = 255 };
 
-    for (int i = 0; i < NB_PARTICULES; i++)
+    for (int i = 0; i < NB_PARTICLES; i++)
     {
-        Vec2 p = s->particules[i].pos;
+        Vec2 p = s->particles[i].pos;
 
         image_draw_circle(img, p.x, p.y, c->radius, circle_color);
     }
@@ -48,7 +48,7 @@ void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
         int end_idx = s->end_chunk[chunk_idx];
         for (int i = start_idx; i < end_idx; i++)
         {
-            Vec2 p = s->particules[s->pairs[i].particle_idx].pos;
+            Vec2 p = s->particles[s->pairs[i].particle_idx].pos;
 
             //     vec2_print(&p);
             //     printf("\n");
@@ -82,7 +82,7 @@ void simulation_print_chunks(Simulation* s)
     printf("nb_chunk_y = %d\n", s->nb_chunk_y);
 
     printf("pairs = [\n");
-    for (int i = 0; i < NB_PARTICULES; i++)
+    for (int i = 0; i < NB_PARTICLES; i++)
     {
         printf("    [%d] = %d - %d   \n", i, s->pairs[i].chunk_idx,
                s->pairs[i].particle_idx);
@@ -111,7 +111,7 @@ void simulation_print_chunks(Simulation* s)
 
 void simulation_draw_density(Simulation* s, Image* img)
 {
-    Particule* p = calloc(1, sizeof(Particule));
+    Particle* p = calloc(1, sizeof(Particle));
 
     float* densities = malloc(sizeof(float) * img->sx * img->sy / 10);
 
