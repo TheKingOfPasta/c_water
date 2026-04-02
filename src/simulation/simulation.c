@@ -12,9 +12,12 @@ Simulation simulation_gen()
 {
     Simulation s = { 0 };
 
-    for (int i = 0; i < NB_PARTICLES; i++)
+    int pts = sqrt(NB_PARTICLES);
+    for (int i = 0; i < pts; i++)
+    for (int j = 0; j < pts; j++)
     {
-        s.particles[i] = particle_gen_random();
+        s.particles[i + j * pts].velo = vec2_zero();
+        s.particles[i + j * pts].pos = (Vec2){ .x = (c->radius + 1) * i + c->sx / 2, .y = (c->radius + 1) * j + c->sy / 2 };
     }
 
     s.chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
