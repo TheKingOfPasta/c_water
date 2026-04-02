@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -85,12 +84,11 @@ void particule_step(Simulation* s, Particule* p)
     particule_interact_bounds(p);
 }
 
-static float
-particule_compute_density_gradient(float dist, float particule_influence_radius)
+static float particule_compute_density_gradient(float dist)
 {
-    float slope = 6.0 / (M_PI * pow(particule_influence_radius, 4));
+    float slope = 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
 
-    return 2 * slope * (dist - particule_influence_radius);
+    return 2 * slope * (dist - c->particule_influence_radius);
 }
 
 Vec2 particule_compute_gradient(Simulation* s, Particule* p)
@@ -115,8 +113,7 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
             continue;
         dir = vec2_mul_scalar(dir, 1.0f / dist);
 
-        float slope = particule_compute_density_gradient(
-            dist, c->particule_influence_radius);
+        float slope = particule_compute_density_gradient(dist);
 
         vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
     }
@@ -126,12 +123,12 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
 
 float particule_density(float d)
 {
-    const float vol = 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
-
     float v = c->particule_influence_radius - d;
 
     if (v < 0)
         return 0;
+
+    float vol = 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
 
     return v * v * vol;
 }
