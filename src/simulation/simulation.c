@@ -101,45 +101,39 @@ float simulation_compute_density(Simulation* s, Particle* p)
 
     float d = 0.0f;
 
-    //    const int chunk_check_radius = PARTICLE_INFLUENCE_RADIUS /
-    //    s->chunksize + 1;
-    //
-    //    int cx = (int)p->pos.x / s->chunk_size;
-    //    int cy = (int)p->pos.y / s->chunk_size;
-    //
-    //    for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
-    //    {
-    //        for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
-    //        {
-    //            int nx = cx + dx;
-    //            int ny = cy + dy;
-    //
-    //            if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >=
-    //            s->nb_chunk_y)
-    //                continue;
-    //
-    //            int chunk_idx = nx + ny * s->nb_chunk_x;
-    //
-    //            int start = s->start_chunk[chunk_idx];
-    //            int end = s->end_chunk[chunk_idx];
-    //
-    //            for (int i = start; i < end; i++)
-    //            {
-    //                Particle* other = &s->particles[i];
-    //
-    //                float dist = vec2_dist(other->pos, p->pos);
-    //
-    //                if (dist < PARTICLE_INFLUENCE_RADIUS)
-    //                {
-    //                    d += particle_density(dist);
-    //                }
-    //            }
-    //        }
-    //    }
-    for (int k = 0; k < NB_PARTICLES; k++)
+    const int chunk_check_radius = c->particle_influence_radius / s->chunk_size + 1;
+
+    int cx = ((int)p->pos.x) / s->chunk_size;
+    int cy = ((int)p->pos.y) / s->chunk_size;
+
+    for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
+    {
+        for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
+        {
+            int nx = cx + dx;
+            int ny = cy + dy;
+
+            if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >= s->nb_chunk_y)
+                continue;
+
+            int chunk_idx = nx + ny * s->nb_chunk_x;
+
+            int start = s->start_chunk[chunk_idx];
+            int end = s->end_chunk[chunk_idx];
+
+            for (int i = start; i < end; i++)
+            {
+                Particle* other = &s->particles[s->pairs[i].particle_idx];
+
+                float dist = vec2_dist(p->pos, other->pos);
+                d += particle_density(dist);
+            }
+        }
+    }
+    /*for (int k = 0; k < NB_PARTICLES; k++)
     {
         d += particle_density(vec2_dist(s->particles[k].pos, p->pos));
-    }
+    }*/
 
     return d * mass;
 }
@@ -176,37 +170,67 @@ void simulation_step(Simulation* s)
 
     float rad4 = 4 * c->radius * c->radius;
 
+    const int chunk_check_radius = 1;
+
 #pragma omp parallel for
-    for (size_t i = 0; i < NB_PARTICLES; i++)
-        for (size_t j = i + 1; j < NB_PARTICLES; j++)
+    for (int i = 0; i < NB_PARTICLES; i++)
+    {
+        Particle* p = s->particles + i;
+
+        int cx = ((int)p->pos.x) / s->chunk_size;
+        int cy = ((int)p->pos.y) / s->chunk_size;
+
+        for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
         {
-            float dist_sqr = vec2_dist_sqrd(positions[i], positions[j]);
-            if (dist_sqr < rad4 && dist_sqr > 0.0001)
+            for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
             {
-                float dist = sqrtf(dist_sqr);
+                int nx = cx + dx;
+                int ny = cy + dy;
 
-                Vec2 dir = vec2_sub(positions[i], positions[j]);
-                float dot = vec2_dot(
-                    vec2_sub(s->particles[i].velo, s->particles[j].velo),
-                    dir);
+                if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >= s->nb_chunk_y)
+                    continue;
 
-                if (dot < 0)
+                int chunk_idx = nx + ny * s->nb_chunk_x;
+
+                int start = s->start_chunk[chunk_idx];
+                int end = s->end_chunk[chunk_idx];
+
+                for (int j = start; j < end; j++)
                 {
-                    Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
+                    int index = s->pairs[j].particle_idx;
+                    if (index < i)
+                        continue;
 
-                    v_diff =
-                        vec2_mul_scalar(v_diff, c->velocity_collision_dampner);
+                    float dist_sqr = vec2_dist_sqrd(positions[i], positions[index]);
+                    if (dist_sqr < rad4 && dist_sqr > 0.0001)
+                    {
+                        float dist = sqrtf(dist_sqr);
 
-                    vec2_sub_inplace(velocities + i, v_diff);
-                    vec2_add_inplace(velocities + j, v_diff);
+                        Vec2 dir = vec2_sub(positions[i], positions[index]);
+                        float dot = vec2_dot(
+                            vec2_sub(s->particles[i].velo, s->particles[index].velo),
+                            dir);
+
+                        if (dot < 0)
+                        {
+                            Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
+
+                            v_diff =
+                                vec2_mul_scalar(v_diff, c->velocity_collision_dampner);
+
+                            vec2_sub_inplace(velocities + i, v_diff);
+                            vec2_add_inplace(velocities + index, v_diff);
+                        }
+
+                        Vec2 d2 = vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
+
+                        vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
+                        vec2_sub_inplace(positions + index, vec2_mul_scalar(d2, 0.5f));
+                    }
                 }
-
-                Vec2 d2 = vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
-
-                vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
-                vec2_sub_inplace(positions + j, vec2_mul_scalar(d2, 0.5f));
             }
         }
+    }
 
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICLES; i++)
