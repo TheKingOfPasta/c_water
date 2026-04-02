@@ -127,8 +127,7 @@ float simulation_compute_density(Simulation* s, Particule* p)
     //    }
     for (int k = 0; k < NB_PARTICULES; k++)
     {
-        d += particule_density(vec2_dist(s->particules[k].pos, p->pos),
-                               c->particule_influence_radius);
+        d += particule_density(vec2_dist(s->particules[k].pos, p->pos));
     }
 
     return d * mass;

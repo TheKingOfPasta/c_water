@@ -43,7 +43,7 @@ void particule_step(Simulation* s, Particule* p);
 
 void particule_print(Particule* p);
 
-float particule_density(float d, float influence_radius);
+float particule_density(float d);
 Vec2 particule_compute_gradient(Simulation* s, Particule* p);
 
 /* --- SIMULATION --- */

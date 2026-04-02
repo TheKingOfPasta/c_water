@@ -5,7 +5,7 @@
 #include "image.h"
 #include "utils/vec2.h"
 
-void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 c)
+void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 col)
 {
     for (int y = cy - r; y <= cy + r; y++)
         for (int x = cx - r; x <= cx + r; x++)
@@ -18,12 +18,12 @@ void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 c)
 
             if (dx * dx + dy * dy <= r * r)
             {
-                image_set_color(i, x, y, c);
+                image_set_color(i, x, y, col);
             }
         }
 }
 
-void image_draw_line(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
+void image_draw_line(Image* i, int x0, int y0, int x1, int y1, RGB8 col)
 {
     int dx = abs(x1 - x0);
     int dy = -abs(y1 - y0);
@@ -35,7 +35,7 @@ void image_draw_line(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
     {
         if (image_in_bounds(i, x0, y0))
         {
-            image_set_color(i, x0, y0, c);
+            image_set_color(i, x0, y0, col);
         }
 
         if (x0 == x1 && y0 == y1)
@@ -73,19 +73,18 @@ void image_draw_vector(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
     image_draw_line(i, right_wing.x, right_wing.y, x1, y1, c);
 }
 
-void image_draw_square_alligned(Image* img, int x, int y, int sx, int sy,
-                                RGB8 c)
+void image_draw_square_alligned(Image* img, int x, int y, int size_x, int size_y, RGB8 col)
 {
     const int bb[4][2] = {
         { x, y },
-        { x + sx, y },
-        { x + sx, y + sy },
-        { x, y + sy },
+        { x + size_x, y },
+        { x + size_x, y + size_y },
+        { x, y + size_y },
     };
 
     for (int i = 0; i < 4; i++)
     {
         image_draw_line(img, bb[i][0], bb[i][1], bb[(i + 1) % 4][0],
-                        bb[(i + 1) % 4][1], c);
+                        bb[(i + 1) % 4][1], col);
     }
 }

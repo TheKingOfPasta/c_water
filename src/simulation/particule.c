@@ -124,13 +124,14 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
     return res;
 }
 
-float particule_density(float d, float particule_influence_radius)
+float particule_density(float d)
 {
-    const float vol = 6.0 / (M_PI * pow(particule_influence_radius, 4));
+    const float vol = 6.0 / (M_PI * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius * c->particule_influence_radius);
 
-    if (d > particule_influence_radius)
+    float v = c->particule_influence_radius - d;
+
+    if (v < 0)
         return 0;
 
-    float v = particule_influence_radius - d;
     return v * v * vol;
 }
