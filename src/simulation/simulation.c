@@ -44,8 +44,19 @@ int pair_sort(const void* p1, const void* p2)
 
 uint16_t particule_get_chunk_idx(Particule* p, Simulation* s)
 {
-    return s->nb_chunk_x * ((int)p->pos.y / s->chunk_size)
-        + ((int)p->pos.x / s->chunk_size);
+    int cx = ((int)p->pos.x) / s->chunk_size;
+    int cy = ((int)p->pos.y) / s->chunk_size;
+
+    if (cx < 0)
+        cx = 0;
+    if (cy < 0)
+        cy = 0;
+    if (cx >= s->nb_chunk_x)
+        cx = s->nb_chunk_x - 1;
+    if (cy >= s->nb_chunk_y)
+        cy = s->nb_chunk_y - 1;
+
+    return cy * s->nb_chunk_x + cx;
 }
 
 void simulation_update_chunks(Simulation* s)

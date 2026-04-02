@@ -56,7 +56,7 @@ void simulation_update_chunks(Simulation* s);
 
 float simulation_compute_density(Simulation* s, Particule* p);
 
-void simulation_draw_density(Simulation *s, Image *img);
+void simulation_draw_density(Simulation* s, Image* img);
 void simulation_draw_balls(Simulation* s, Image* img);
 void simulation_draw_field(Simulation* s, Image* img);
 void simulation_draw_chunks(Simulation* s, Image* img, float x, float y);
