@@ -80,7 +80,7 @@ void particule_step(Simulation* s, Particule* p)
                      vec2_mul_scalar(grad, pressure * c->pressure_force));
 
     vec2_add_inplace(&p->pos, p->velo);
-    p->velo = vec2_mul_scalar(p->velo, c->pressure_force);
+    p->velo = vec2_mul_scalar(p->velo, c->velocity_drag);
 
     particule_interact_bounds(p);
 }

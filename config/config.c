@@ -10,6 +10,6 @@ config c = {
     .radius = 7,
     .gravity_multiplier = 0,
 
-    .velocity_drag = 0.99,
+    .velocity_drag = 0.999,
     .velocity_collision_dampner = 0.2,
 };
