@@ -21,8 +21,8 @@ Simulation simulation_gen()
     s.nb_chunk_x = c->sx / s.chunk_size + 1;
     s.nb_chunk_y = c->sy / s.chunk_size + 1;
 
-    s.start_chunk = malloc(sizeof(uint16_t) * s.nb_chunk_x * s.nb_chunk_y);
-    s.end_chunk = malloc(sizeof(uint16_t) * s.nb_chunk_x * s.nb_chunk_y);
+    s.start_chunk = malloc(sizeof(uint32_t) * s.nb_chunk_x * s.nb_chunk_y);
+    s.end_chunk = malloc(sizeof(uint32_t) * s.nb_chunk_x * s.nb_chunk_y);
 
     return s;
 }

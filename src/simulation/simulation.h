@@ -15,8 +15,8 @@ typedef struct
 
 typedef struct
 {
-    uint16_t chunk_idx;
-    uint16_t particle_idx;
+    uint32_t chunk_idx;
+    uint32_t particle_idx;
 } chunk_particle_idx_pair;
 
 #define CHUNK_EMPTY_IDX 0xFFFF
@@ -32,9 +32,9 @@ typedef struct
 
     int nb_chunk_x;
     int nb_chunk_y;
-    uint16_t* start_chunk;
-    uint16_t* end_chunk;
 
+    uint32_t* start_chunk;
+    uint32_t* end_chunk;
     float dt;
 } Simulation;
 
