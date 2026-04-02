@@ -9,14 +9,14 @@ typedef struct
     Vec2 velo;
 } Particle;
 
-#define NB_PARTICLES 50000
+#define NB_PARTICLES 20000
 
 #define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
 typedef struct
 {
-    uint16_t chunk_idx;
-    uint16_t particle_idx;
+    uint32_t chunk_idx;
+    uint32_t particle_idx;
 } chunk_particle_idx_pair;
 
 #define CHUNK_EMPTY_IDX 0xFFFF
@@ -32,8 +32,8 @@ typedef struct
 
     int nb_chunk_x;
     int nb_chunk_y;
-    uint16_t* start_chunk;
-    uint16_t* end_chunk;
+    uint32_t* start_chunk;
+    uint32_t* end_chunk;
 } Simulation;
 
 /* --- PARTICLES --- */
