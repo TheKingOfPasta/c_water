@@ -15,13 +15,27 @@ void simulation_draw_border(Image* img)
 
 void simulation_draw_balls(Simulation* s, Image* img)
 {
-    const RGB8 circle_color = (RGB8){ .r = 10, .g = 255, .b = 255 };
+    const float max_speed = 20.0f;
+    const RGB8 base = (RGB8){ 0, 0, 80 };
+    const RGB8 mid = (RGB8){ 0, 160, 160 };
+    const RGB8 high = rgb8_white();
 
     for (int i = 0; i < NB_PARTICLES; i++)
     {
         Vec2 p = s->particles[i].pos;
 
-        image_draw_circle(img, p.x, p.y, c->radius, circle_color);
+        float t = vec2_norm_sqrd(s->particles[i].velo) / max_speed;
+        if (t > 1.0f)
+            t = 1.0f;
+
+        RGB8 color;
+
+        if (t < 0.5f)
+            color = rgb8_lerp(base, mid, t * 2);
+        else
+            color = rgb8_lerp(mid, high, t * 2 - 1);
+
+        image_draw_circle(img, p.x, p.y, c->radius, color);
     }
 }
 
@@ -33,7 +47,7 @@ void simulation_draw_field([[maybe_unused]] Simulation* s,
 
 void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
 {
-    //simulation_draw_balls(s, img);
+    // simulation_draw_balls(s, img);
 
     int cx = x / s->chunk_size;
     int cy = y / s->chunk_size;

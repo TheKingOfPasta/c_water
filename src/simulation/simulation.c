@@ -12,12 +12,22 @@ Simulation simulation_gen()
 {
     Simulation s = { 0 };
 
-    int pts = sqrt(NB_PARTICLES);
-    for (int i = 0; i < pts; i++)
-    for (int j = 0; j < pts; j++)
+    int pts_x = (int)ceil(sqrt(NB_PARTICLES));
+    int pts_y = (NB_PARTICLES + pts_x - 1) / pts_x;
+
+    float padding = 2.0f * c->radius + 1.0f;
+
+    for (int i = 0; i < NB_PARTICLES; i++)
     {
-        s.particles[i + j * pts].velo = vec2_zero();
-        s.particles[i + j * pts].pos = (Vec2){ .x = (c->radius + 1) * i + c->sx / 2, .y = (c->radius + 1) * j + c->sy / 2 };
+        float rx = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 0.3f;
+        float ry = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 0.3f;
+
+        s.particles[i].velo = vec2_zero();
+
+        s.particles[i].pos = (Vec2){
+            .x = c->sx / 2.0f + ((i % pts_x) - pts_x / 2.0f) * padding + rx,
+            .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry
+        };
     }
 
     s.chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
@@ -104,7 +114,8 @@ float simulation_compute_density(Simulation* s, Particle* p)
 
     float d = 0.0f;
 
-    const int chunk_check_radius = c->particle_influence_radius / s->chunk_size + 1;
+    const int chunk_check_radius =
+        c->particle_influence_radius / s->chunk_size + 1;
 
     int cx = ((int)p->pos.x) / s->chunk_size;
     int cy = ((int)p->pos.y) / s->chunk_size;
@@ -165,7 +176,9 @@ void simulation_step(Simulation* s)
     {
         Particle* p = s->particles + i;
 
-        vec2_add_inplace(&p->velo, (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier * s->dt });
+        vec2_add_inplace(
+            &p->velo,
+            (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier * s->dt });
 
         predicted_positions[i] = p->pos;
         vec2_add_inplace(predicted_positions + i, p->velo);
@@ -180,7 +193,8 @@ void simulation_step(Simulation* s)
 
         grad = vec2_neg(grad);
 
-        grad = vec2_mul_scalar(grad, s->dt * c->pressure_force / s->particle_densities[i]);
+        grad = vec2_mul_scalar(
+            grad, s->dt * c->pressure_force / s->particle_densities[i]);
 
         vec2_add_inplace(&p->velo, grad);
 
@@ -217,7 +231,8 @@ void simulation_step(Simulation* s)
                 int nx = cx + dx;
                 int ny = cy + dy;
 
-                if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >= s->nb_chunk_y)
+                if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x
+                    || ny >= s->nb_chunk_y)
                     continue;
 
                 int chunk_idx = nx + ny * s->nb_chunk_x;
@@ -231,31 +246,35 @@ void simulation_step(Simulation* s)
                     if (index < i)
                         continue;
 
-                    float dist_sqr = vec2_dist_sqrd(positions[i], positions[index]);
+                    float dist_sqr =
+                        vec2_dist_sqrd(positions[i], positions[index]);
                     if (dist_sqr < rad4 && dist_sqr > 0.0001)
                     {
                         float dist = sqrtf(dist_sqr);
 
                         Vec2 dir = vec2_sub(positions[i], positions[index]);
-                        float dot = vec2_dot(
-                            vec2_sub(s->particles[i].velo, s->particles[index].velo),
-                            dir);
+                        float dot = vec2_dot(vec2_sub(s->particles[i].velo,
+                                                      s->particles[index].velo),
+                                             dir);
 
                         if (dot < 0)
                         {
                             Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
 
-                            v_diff =
-                                vec2_mul_scalar(v_diff, c->velocity_collision_dampner);
+                            v_diff = vec2_mul_scalar(
+                                v_diff, c->velocity_collision_dampner);
 
                             vec2_sub_inplace(velocities + i, v_diff);
                             vec2_add_inplace(velocities + index, v_diff);
                         }
 
-                        Vec2 d2 = vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
+                        Vec2 d2 =
+                            vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
 
-                        vec2_add_inplace(positions + i, vec2_mul_scalar(d2, 0.5f));
-                        vec2_sub_inplace(positions + index, vec2_mul_scalar(d2, 0.5f));
+                        vec2_add_inplace(positions + i,
+                                         vec2_mul_scalar(d2, 0.5f));
+                        vec2_sub_inplace(positions + index,
+                                         vec2_mul_scalar(d2, 0.5f));
                     }
                 }
             }
