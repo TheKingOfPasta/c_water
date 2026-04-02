@@ -93,32 +93,62 @@ static float particle_compute_density_gradient(float dist)
     return slope * (dist - c->particle_influence_radius);
 }
 
+static inline void particle_compute_gradient_other_particle(Simulation* s, Particle* p, size_t p2_index, Vec2 *res)
+{
+    Particle *p2 = s->particles + p2_index;
+
+    Vec2 dir = vec2_sub(p2->pos, p->pos);
+    float dist_sqrd = vec2_norm_sqrd(dir);
+
+    if (p2 == p || dist_sqrd > c->particle_influence_radius * c->particle_influence_radius)
+        return;
+
+    float density = s->particle_densities[p2_index];
+    if (density < 0.001)
+        return;
+
+    float dist = sqrt(dist_sqrd);
+    if (dist < 0.001)
+        return;
+
+    dir = vec2_mul_scalar(dir, 1.0f / dist);
+
+    float slope = particle_compute_density_gradient(dist);
+
+    vec2_add_inplace(res, vec2_mul_scalar(dir, slope / density));
+}
+
 Vec2 particle_compute_gradient(Simulation* s, Particle* p)
 {
     Vec2 res = vec2_zero();
 
-    for (size_t i = 0; i < NB_PARTICLES; i++)
+    const int chunk_check_radius = c->particle_influence_radius / s->chunk_size + 1;
+
+    int cx = ((int)p->pos.x) / s->chunk_size;
+    int cy = ((int)p->pos.y) / s->chunk_size;
+
+    for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
     {
-        Particle* p2 = s->particles + i;
-        Vec2 dir = vec2_sub(p2->pos, p->pos);
-        float dist_sqrd = vec2_norm_sqrd(dir);
+        for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
+        {
+            int nx = cx + dx;
+            int ny = cy + dy;
 
-        if (p2 == p
-            || dist_sqrd > c->particle_influence_radius * c->particle_influence_radius)
-            continue;
+            if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >= s->nb_chunk_y)
+                continue;
 
-        float density = s->particle_densities[i];
-        if (density < 0.001)
-            continue;
+            int chunk_idx = nx + ny * s->nb_chunk_x;
 
-        float dist = sqrt(dist_sqrd);
-        if (dist < 0.001)
-            continue;
-        dir = vec2_mul_scalar(dir, 1.0f / dist);
+            int start = s->start_chunk[chunk_idx];
+            int end = s->end_chunk[chunk_idx];
 
-        float slope = particle_compute_density_gradient(dist);
+            for (int i = start; i < end; i++)
+            {
+                int index = s->pairs[i].particle_idx;
 
-        vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
+                particle_compute_gradient_other_particle(s, p, index, &res);
+            }
+        }
     }
 
     return res;
