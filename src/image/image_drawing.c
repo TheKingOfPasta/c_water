@@ -20,7 +20,7 @@ void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 col)
             int dx = x - cx;
             int dy = y - cy;
 
-            if (dx * dx + dy * dy <= r * r)
+            if (dx * dx + dy * dy < r * r)
             {
                 image_set_color(i, x, y, col);
             }

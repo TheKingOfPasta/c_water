@@ -155,10 +155,37 @@ void simulation_step(Simulation* s)
 
     simulation_update_density_field(s);
 
+    Vec2 predicted_positions[NB_PARTICLES] = { 0 };
+
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICLES; i++)
     {
-        particle_step(s, i);
+        Particle* p = s->particles + i;
+
+        vec2_add_inplace(&p->velo, (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier * s->dt });
+
+        predicted_positions[i] = p->pos;
+        vec2_add_inplace(predicted_positions + i, p->velo);
+    }
+
+#pragma omp parallel for
+    for (size_t i = 0; i < NB_PARTICLES; i++)
+    {
+        Particle* p = s->particles + i;
+
+        Vec2 grad = particle_compute_pressure(s, predicted_positions, i);
+
+        grad = vec2_neg(grad);
+
+        grad = vec2_mul_scalar(grad, s->dt * c->pressure_force / s->particle_densities[i]);
+
+        vec2_add_inplace(&p->velo, grad);
+
+        vec2_add_inplace(&p->pos, p->velo);
+
+        p->velo = vec2_mul_scalar(p->velo, c->velocity_drag);
+
+        particle_interact_bounds(p);
     }
 
     Vec2 velocities[NB_PARTICLES] = { 0 };

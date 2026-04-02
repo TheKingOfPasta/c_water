@@ -9,7 +9,7 @@ typedef struct
     Vec2 velo;
 } Particle;
 
-#define NB_PARTICLES 10000
+#define NB_PARTICLES 20000
 
 #define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
@@ -41,7 +41,9 @@ typedef struct
 /* --- PARTICLES --- */
 Particle particle_gen_random();
 
-void particle_step(Simulation* s, size_t index);
+//void particle_step(Simulation* s, Vec2* predicted_positions, size_t index);
+Vec2 particle_compute_pressure(Simulation* s, Vec2* predicted_positions, size_t p1_index);
+void particle_interact_bounds(Particle* p);
 
 void particle_print(Particle* p);
 

@@ -143,7 +143,7 @@ int main(void)
 
         s.dt = glfwGetTime() - t0;
 
-        //printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / s.dt);
+        printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / s.dt);
         fflush(stdout);
     }
 
