@@ -33,7 +33,7 @@ void simulation_draw_field([[maybe_unused]] Simulation* s,
 
 void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
 {
-    simulation_draw_balls(s, img);
+    //simulation_draw_balls(s, img);
 
     int cx = x / s->chunk_size;
     int cy = y / s->chunk_size;

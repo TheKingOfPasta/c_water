@@ -20,6 +20,7 @@ typedef struct AppState
     bool step;
     bool step_mode;
     bool draw_densities;
+    bool draw_chunks;
     bool reset;
     double mouse_x;
     double mouse_y;
@@ -57,10 +58,11 @@ static void key_callback(GLFWwindow* window, int key,
     if (key == GLFW_KEY_D)
         state->draw_densities = !state->draw_densities;
 
-    if (key == GLFW_KEY_C)
-        simulation_print_chunks(state->s);
-
     if (key == GLFW_KEY_G)
+        state->draw_chunks = !state->draw_chunks;
+    // simulation_print_chunks(state->s);
+
+    if (key == GLFW_KEY_C)
         reload_config();
 }
 
@@ -126,16 +128,16 @@ int main(void)
         if (!state.step_mode || state.step)
         {
             simulation_step(&s);
-            simulation_draw_balls(&s, &img);
             state.step = false;
         }
 
         if (state.draw_densities)
-        {
             simulation_draw_density(&s, &img);
-        }
+        if (state.draw_chunks)
+            simulation_draw_chunks(&s, &img, state.mouse_x, state.mouse_y);
 
-        simulation_draw_chunks(&s, &img, state.mouse_x, state.mouse_y);
+        simulation_draw_balls(&s, &img);
+
 
         glDrawPixels(c->sx, c->sy, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
