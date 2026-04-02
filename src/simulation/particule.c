@@ -29,7 +29,7 @@ static inline void particule_interact_bounds(Particule* p)
     if (p->pos.x < 0)
     {
         p->velo.x *= -1;
-        p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
+        p->velo = vec2_mul_scalar(p->velo, c->velocity_collision_dampner);
         p->pos.x = -p->pos.x;
         if (p->pos.x > c->sx)
             p->pos.x = 0;
@@ -37,7 +37,7 @@ static inline void particule_interact_bounds(Particule* p)
     else if (p->pos.x >= c->sx)
     {
         p->velo.x *= -1;
-        p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
+        p->velo = vec2_mul_scalar(p->velo, c->velocity_collision_dampner);
         p->pos.x = c->sx - (p->pos.x - c->sx);
         if (p->pos.x < 0)
             p->pos.x = c->sx;
@@ -46,7 +46,7 @@ static inline void particule_interact_bounds(Particule* p)
     if (p->pos.y < 0)
     {
         p->velo.y *= -1;
-        p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
+        p->velo = vec2_mul_scalar(p->velo, c->velocity_collision_dampner);
         p->pos.y = -p->pos.y;
         if (p->pos.y > c->sy)
             p->pos.y = 0;
@@ -54,7 +54,7 @@ static inline void particule_interact_bounds(Particule* p)
     else if (p->pos.y >= c->sy)
     {
         p->velo.y *= -1;
-        p->velo = vec2_mul_scalar(p->velo, VELOCITY_COLLISION_DAMPNER);
+        p->velo = vec2_mul_scalar(p->velo, c->velocity_collision_dampner);
         p->pos.y = c->sy - (p->pos.y - c->sy);
         if (p->pos.y < 0)
             p->pos.y = c->sy;
@@ -80,7 +80,7 @@ void particule_step(Simulation* s, Particule* p)
                      vec2_mul_scalar(grad, pressure * c->pressure_force));
 
     vec2_add_inplace(&p->pos, p->velo);
-    p->velo = vec2_mul_scalar(p->velo, DRAG);
+    p->velo = vec2_mul_scalar(p->velo, c->pressure_force);
 
     particule_interact_bounds(p);
 }

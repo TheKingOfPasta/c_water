@@ -30,7 +30,9 @@ Simulation simulation_gen()
 void simulation_free(Simulation* s)
 {
     free(s->start_chunk);
+    s->start_chunk = NULL;
     free(s->end_chunk);
+    s->end_chunk = NULL;
 }
 
 int pair_sort(const void* p1, const void* p2)
@@ -183,7 +185,7 @@ void simulation_step(Simulation* s)
                     Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
 
                     v_diff =
-                        vec2_mul_scalar(v_diff, VELOCITY_COLLISION_DAMPNER);
+                        vec2_mul_scalar(v_diff, c->velocity_collision_dampner);
 
                     vec2_sub_inplace(velocities + i, v_diff);
                     vec2_add_inplace(velocities + j, v_diff);

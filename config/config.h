@@ -10,4 +10,6 @@ typedef struct
     float particule_influence_radius;
     float radius;
     float gravity_multiplier;
+    float velocity_collision_dampner;
+    float velocity_drag;
 } config;

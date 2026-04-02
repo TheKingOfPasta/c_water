@@ -118,7 +118,9 @@ int main(void)
 
         if (state.reset)
         {
+            simulation_free(&s);
             s = simulation_gen();
+            state.s = &s;
             state.reset = false;
         }
 
