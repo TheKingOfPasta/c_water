@@ -34,7 +34,6 @@ void simulation_draw_field([[maybe_unused]] Simulation* s,
 void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
 {
     simulation_draw_balls(s, img);
-    simulation_update_chunks(s);
 
     int cx = x / s->chunk_size;
     int cy = y / s->chunk_size;
@@ -110,35 +109,37 @@ void simulation_print_chunks(Simulation* s)
     }
 }
 
-void simulation_draw_density(Simulation *s, Image *img)
+void simulation_draw_density(Simulation* s, Image* img)
 {
-    Particule *p = calloc(1, sizeof(Particule));
+    Particule* p = calloc(1, sizeof(Particule));
 
-    float *densities = malloc(sizeof(float) * img->sx * img->sy / 10);
+    float* densities = malloc(sizeof(float) * img->sx * img->sy / 10);
 
     float min = FLT_MAX;
     float max = FLT_MIN;
 
     for (int j = 0; j < img->sy; j += 10)
-    for (int i = 0; i < img->sx; i += 10)
-    {
-        p->pos = (Vec2){ .x = i, .y = j };
-        float t = simulation_compute_density(s, p);
+        for (int i = 0; i < img->sx; i += 10)
+        {
+            p->pos = (Vec2){ .x = i, .y = j };
+            float t = simulation_compute_density(s, p);
 
-        densities[i / 10 + j / 10 * img->sx] = t;
-        if (t > max)
-            max = t;
-        if (t < min)
-            min = t;
-    }
+            densities[i / 10 + j / 10 * img->sx] = t;
+            if (t > max)
+                max = t;
+            if (t < min)
+                min = t;
+        }
 
     for (int j = 0; j < img->sy; j++)
-    for (int i = 0; i < img->sx; i++)
-    {
-        float d = (densities[i / 10 + j / 10 * img->sx] - min) / (max - min);
+        for (int i = 0; i < img->sx; i++)
+        {
+            float d =
+                (densities[i / 10 + j / 10 * img->sx] - min) / (max - min);
 
-        image_set_color(img, i, j, rgb8_lerp(rgb8_black(), rgb8_white(), d));
-    }
+            image_set_color(img, i, j,
+                            rgb8_lerp(rgb8_black(), rgb8_white(), d));
+        }
 
     free(densities);
     free(p);
