@@ -9,18 +9,9 @@
 #include "image/image_drawing.h"
 #include "simulation/simulation.h"
 
-#define WIDTH 1920
-#define HEIGHT 1200
-
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
-}
-
-void framebuffer_size_callback(__attribute_maybe_unused__ GLFWwindow* window,
-                               int width, int height)
-{
-    glViewport(0, 0, width, height);
 }
 
 typedef struct AppState
@@ -76,11 +67,9 @@ int main(void)
 {
     reload_config();
 
-    int w = WIDTH;
-    int h = HEIGHT;
     RGB8 background = (RGB8){ .r = 30, .g = 20, .b = 50 };
 
-    Image img = image_blank(w, h);
+    Image img = image_blank(c->sx, c->sy);
     image_fill(&img, background);
 
     Simulation s = simulation_gen();
@@ -101,7 +90,7 @@ int main(void)
     //    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     //    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(w, h, "C Water", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "C Water", NULL, NULL);
     if (window == NULL)
     {
         glfwTerminate();
@@ -110,7 +99,6 @@ int main(void)
     glfwMakeContextCurrent(window);
 
     glfwSetWindowUserPointer(window, &state);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, cursor_callback);
 
@@ -147,7 +135,7 @@ int main(void)
 
         simulation_draw_chunks(&s, &img, state.mouse_x, state.mouse_y);
 
-        glDrawPixels(w, h, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
+        glDrawPixels(c->sx, c->sy, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
         printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED",

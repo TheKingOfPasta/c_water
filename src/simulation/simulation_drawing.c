@@ -133,11 +133,13 @@ void simulation_draw_density(Simulation *s, Image *img)
     }
 
     for (int j = 0; j < img->sy; j++)
-    for (int i = 0; i < img->sx; i++)
     {
-        float d = (densities[i / 10 + j / 10 * img->sx] - min) / (max - min);
+        for (int i = 0; i < img->sx; i++)
+        {
+            float d = (densities[i / 10 + j / 10 * img->sx] - min) / (max - min);
 
-        image_set_color(img, i, j, rgb8_lerp(rgb8_black(), rgb8_white(), d));
+            image_set_color(img, i, j, rgb8_lerp(rgb8_black(), rgb8_white(), d));
+        }
     }
 
     free(densities);

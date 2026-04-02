@@ -9,7 +9,7 @@ typedef struct
     Vec2 velo;
 } Particule;
 
-#define NB_PARTICULES 2000
+#define NB_PARTICULES 1
 
 #define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
