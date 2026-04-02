@@ -2,7 +2,12 @@
 
 config c = {
     .sx = 1920,
+
+#if defined (__NIXOS__)
     .sy = 1200,
+#else
+    .sy = 1080,
+#endif
 
     .pressure_force = 10,
     .target_pressure = 1,

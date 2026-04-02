@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -99,17 +100,18 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
     for (size_t i = 0; i < NB_PARTICULES; i++)
     {
         Particule* p2 = s->particules + i;
+        Vec2 dir = vec2_sub(p2->pos, p->pos);
+        float dist_sqrd = vec2_norm_sqrd(dir);
+
         if (p2 == p
-            || vec2_dist_sqrd(p2->pos, p->pos)
-                > c->particule_influence_radius * c->particule_influence_radius)
+            || dist_sqrd > c->particule_influence_radius * c->particule_influence_radius)
             continue;
 
         float density = s->particle_densities[i];
         if (density < 0.001)
             continue;
 
-        Vec2 dir = vec2_sub(p2->pos, p->pos);
-        float dist = vec2_norm(dir);
+        float dist = sqrt(dist_sqrd);
         if (dist < 0.001)
             continue;
         dir = vec2_mul_scalar(dir, 1.0f / dist);
@@ -118,8 +120,6 @@ Vec2 particule_compute_gradient(Simulation* s, Particule* p)
 
         vec2_add_inplace(&res, vec2_mul_scalar(dir, slope / density));
     }
-
-    //image_draw_vector(s->Image *i, int x0, int y0, int x1, int y1, RGB8 c);
 
     return res;
 }
