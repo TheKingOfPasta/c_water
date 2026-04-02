@@ -138,12 +138,12 @@ int main(void)
 
         simulation_draw_balls(&s, &img);
 
-
         glDrawPixels(c->sx, c->sy, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
         glfwSwapBuffers(window);
 
-        printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED",
-               1.0 / (glfwGetTime() - t0));
+        s.dt = glfwGetTime() - t0;
+
+        //printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / s.dt);
         fflush(stdout);
     }
 

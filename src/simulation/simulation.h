@@ -9,7 +9,7 @@ typedef struct
     Vec2 velo;
 } Particle;
 
-#define NB_PARTICLES 50000
+#define NB_PARTICLES 10000
 
 #define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
@@ -34,17 +34,18 @@ typedef struct
     int nb_chunk_y;
     uint16_t* start_chunk;
     uint16_t* end_chunk;
+
+    float dt;
 } Simulation;
 
 /* --- PARTICLES --- */
 Particle particle_gen_random();
 
-void particle_step(Simulation* s, Particle* p);
+void particle_step(Simulation* s, size_t index);
 
 void particle_print(Particle* p);
 
 float particle_density(float d);
-Vec2 particle_compute_gradient(Simulation* s, Particle* p);
 
 /* --- SIMULATION --- */
 

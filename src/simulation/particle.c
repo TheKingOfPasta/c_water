@@ -62,64 +62,47 @@ static inline void particle_interact_bounds(Particle* p)
     }
 }
 
-static inline void particle_apply_gravity(Particle* p)
+static inline void particle_apply_gravity(Simulation *s, Particle* p)
 {
-    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.0981f * c->gravity_multiplier });
+    vec2_add_inplace(&p->velo, (Vec2){ 0, 0.0981f * c->gravity_multiplier * s->dt });
 }
 
-void particle_step(Simulation* s, Particle* p)
-{
-    float pressure = simulation_compute_density(s, p) - c->target_pressure;
-
-    Vec2 grad = particle_compute_gradient(s, p);
-
-    grad = vec2_neg(grad);
-
-    particle_apply_gravity(p);
-
-    vec2_add_inplace(&p->velo,
-                     vec2_mul_scalar(grad, pressure * c->pressure_force));
-
-    vec2_add_inplace(&p->pos, p->velo);
-    p->velo = vec2_mul_scalar(p->velo, c->velocity_drag);
-
-    particle_interact_bounds(p);
-}
-
-static float particle_compute_density_gradient(float dist)
+static inline float particle_compute_density_gradient(float dist)
 {
     float slope = 2.0 * 6.0 / (M_PI * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius);
 
     return slope * (dist - c->particle_influence_radius);
 }
 
-static inline void particle_compute_gradient_other_particle(Simulation* s, Particle* p, size_t p2_index, Vec2 *res)
+static inline void particle_compute_pressure_other_particle(Simulation* s, size_t p1_index, size_t p2_index, Vec2 *res)
 {
+    Particle *p1 = s->particles + p1_index;
     Particle *p2 = s->particles + p2_index;
 
-    Vec2 dir = vec2_sub(p2->pos, p->pos);
+    Vec2 dir = vec2_sub(p2->pos, p1->pos);
     float dist_sqrd = vec2_norm_sqrd(dir);
 
-    if (p2 == p || dist_sqrd > c->particle_influence_radius * c->particle_influence_radius)
+    if (p1 == p2 || dist_sqrd > c->particle_influence_radius * c->particle_influence_radius)
         return;
 
-    float density = s->particle_densities[p2_index];
-    if (density < 0.001)
+    float density = (s->particle_densities[p2_index] + s->particle_densities[p1_index]) / 2;
+    if (density < 0.00001)
         return;
 
     float dist = sqrt(dist_sqrd);
-    if (dist < 0.001)
+    if (dist < 0.00001)
         return;
 
     dir = vec2_mul_scalar(dir, 1.0f / dist);
 
     float slope = particle_compute_density_gradient(dist);
 
-    vec2_add_inplace(res, vec2_mul_scalar(dir, slope / density));
+    vec2_add_inplace(res, vec2_mul_scalar(dir, (density - c->target_pressure) * slope / density));
 }
 
-Vec2 particle_compute_gradient(Simulation* s, Particle* p)
+static inline Vec2 particle_compute_pressure(Simulation* s, size_t p1_index)
 {
+    Particle *p = s->particles + p1_index;
     Vec2 res = vec2_zero();
 
     const int chunk_check_radius = c->particle_influence_radius / s->chunk_size + 1;
@@ -144,14 +127,33 @@ Vec2 particle_compute_gradient(Simulation* s, Particle* p)
 
             for (int i = start; i < end; i++)
             {
-                int index = s->pairs[i].particle_idx;
+                int p2_index = s->pairs[i].particle_idx;
 
-                particle_compute_gradient_other_particle(s, p, index, &res);
+                particle_compute_pressure_other_particle(s, p1_index, p2_index, &res);
             }
         }
     }
 
     return res;
+}
+
+void particle_step(Simulation* s, size_t index)
+{
+    Particle *p = s->particles + index;
+    Vec2 grad = particle_compute_pressure(s, index);
+
+    grad = vec2_neg(grad);
+
+    particle_apply_gravity(s, p);
+
+    grad = vec2_mul_scalar(grad, s->dt * c->pressure_force / s->particle_densities[index]);
+
+    vec2_add_inplace(&p->velo, grad);
+
+    vec2_add_inplace(&p->pos, p->velo);
+    p->velo = vec2_mul_scalar(p->velo, c->velocity_drag);
+
+    particle_interact_bounds(p);
 }
 
 float particle_density(float d)

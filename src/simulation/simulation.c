@@ -158,7 +158,7 @@ void simulation_step(Simulation* s)
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICLES; i++)
     {
-        particle_step(s, &s->particles[i]);
+        particle_step(s, i);
     }
 
     Vec2 velocities[NB_PARTICLES] = { 0 };
