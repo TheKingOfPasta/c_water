@@ -1,7 +1,6 @@
 #include "image_drawing.h"
 
 #include <float.h>
-
 #include <stdlib.h>
 
 #include "image.h"
@@ -20,7 +19,7 @@ void image_draw_circle(Image* i, int cx, int cy, int r, RGB8 col)
             int dx = x - cx;
             int dy = y - cy;
 
-            if (dx * dx + dy * dy < r * r)
+            if (dx * dx + dy * dy <= r * r)
             {
                 image_set_color(i, x, y, col);
             }
@@ -77,7 +76,8 @@ void image_draw_vector(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
     image_draw_line(i, right_wing.x, right_wing.y, x1, y1, c);
 }
 
-void image_draw_square_alligned(Image* img, int x, int y, int size_x, int size_y, RGB8 col)
+void image_draw_square_alligned(Image* img, int x, int y, int size_x,
+                                int size_y, RGB8 col)
 {
     const int bb[4][2] = {
         { x, y },
