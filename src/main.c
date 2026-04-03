@@ -127,6 +127,7 @@ int main(void)
             s = simulation_gen();
             state.s = &s;
             state.reset = false;
+            reload_config();
         }
 
         image_fill(&img, background);
