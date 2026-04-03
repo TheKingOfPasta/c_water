@@ -117,9 +117,7 @@ float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PART
 
     LOOP_NEIGHBOURS(predicted_positions[index], c->particle_influence_radius / s->chunk_size + 1)
     {
-        Particle* other = &s->particles[s->pairs[i].particle_idx];
-
-        float dist = vec2_dist(predicted_positions[index], other->pos);
+        float dist = vec2_dist(predicted_positions[index], predicted_positions[s->pairs[i].particle_idx]);
         d += particle_density(dist);
     }
 
@@ -166,8 +164,6 @@ void simulation_step(Simulation* s)
     for (size_t i = 0; i < NB_PARTICLES; i++)
     {
         Particle* p = s->particles + i;
-        if (s->particle_densities[i] < 0.0001)
-            continue;
 
         Vec2 grad = particle_compute_pressure(s, predicted_positions, i);
 
