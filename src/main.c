@@ -66,6 +66,11 @@ static void key_callback(GLFWwindow* window, int key,
         reload_config();
 }
 
+float my_float_lerp(float a, float b, float t)
+{
+    return a + t * (b - a);
+}
+
 int main(void)
 {
     reload_config();
@@ -109,9 +114,14 @@ int main(void)
     glPixelZoom(1, -1);
     glRasterPos2f(-1, 1);
 
+    double tstart = glfwGetTime();
+    float scaling_pressure = c->pressure_force;
+
     while (!glfwWindowShouldClose(window))
     {
         double t0 = glfwGetTime();
+        if (t0 - tstart < 5)
+            c->pressure_force = my_float_lerp(0, scaling_pressure, (t0 - tstart) / 5);
 
         glClear(GL_COLOR_BUFFER_BIT);
         glfwPollEvents();
@@ -130,6 +140,8 @@ int main(void)
             simulation_step(&s);
             state.step = false;
         }
+        else
+            tstart = glfwGetTime();
 
         if (state.draw_densities)
             simulation_draw_density(&s, &img);
@@ -143,7 +155,7 @@ int main(void)
 
         s.dt = glfwGetTime() - t0;
 
-        printf("\r%s %f", state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / s.dt);
+        printf("\r%s %f           ", state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / s.dt);
         fflush(stdout);
     }
 

@@ -15,7 +15,7 @@ void simulation_draw_border(Image* img)
 
 void simulation_draw_balls(Simulation* s, Image* img)
 {
-    const float max_speed = 20.0f;
+    const float max_speed = 30.0f;
     const RGB8 base = (RGB8){ 0, 0, 80 };
     const RGB8 mid = (RGB8){ 0, 160, 160 };
     const RGB8 high = rgb8_white();

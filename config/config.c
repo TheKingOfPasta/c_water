@@ -16,5 +16,5 @@ config c = {
     .gravity_multiplier = 0.0,
 
     .velocity_drag = 1,
-    .velocity_collision_dampner = 0.99,
+    .velocity_collision_dampner = 0.5,
 };
