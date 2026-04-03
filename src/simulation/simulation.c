@@ -215,7 +215,6 @@ void simulation_step(Simulation* s)
     float rad4 = 4 * c->radius * c->radius;
 
     const int chunk_check_radius = 1;
-
 #pragma omp parallel for
     for (int i = 0; i < NB_PARTICLES; i++)
     {
@@ -246,11 +245,11 @@ void simulation_step(Simulation* s)
                     if (index < i)
                         continue;
 
-                    float dist_sqr =
+                    float dist_sqrd =
                         vec2_dist_sqrd(positions[i], positions[index]);
-                    if (dist_sqr < rad4 && dist_sqr > 0.0001)
+                    if (dist_sqrd < rad4 && dist_sqrd > 0.0001)
                     {
-                        float dist = sqrtf(dist_sqr);
+                        float dist = sqrtf(dist_sqrd);
 
                         Vec2 dir = vec2_sub(positions[i], positions[index]);
                         float dot = vec2_dot(vec2_sub(s->particles[i].velo,
@@ -259,7 +258,7 @@ void simulation_step(Simulation* s)
 
                         if (dot < 0)
                         {
-                            Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
+                            Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqrd);
 
                             vec2_sub_inplace(velocities + i, v_diff);
                             vec2_add_inplace(velocities + index, v_diff);
