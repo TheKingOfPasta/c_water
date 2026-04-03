@@ -124,10 +124,10 @@ int main(void)
         if (state.reset)
         {
             simulation_free(&s);
+            reload_config();
             s = simulation_gen();
             state.s = &s;
             state.reset = false;
-            reload_config();
         }
 
         image_fill(&img, background);
