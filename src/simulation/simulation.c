@@ -120,6 +120,15 @@ float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PART
     int cx = ((int)predicted_positions[index].x) / s->chunk_size;
     int cy = ((int)predicted_positions[index].y) / s->chunk_size;
 
+    if (cx < 0)
+        cx = 0;
+    if (cy < 0)
+        cy = 0;
+    if (cx >= s->nb_chunk_x)
+        cx = s->nb_chunk_x - 1;
+    if (cy >= s->nb_chunk_y)
+        cy = s->nb_chunk_y - 1;
+
     for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
     {
         for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
@@ -187,6 +196,8 @@ void simulation_step(Simulation* s)
     for (size_t i = 0; i < NB_PARTICLES; i++)
     {
         Particle* p = s->particles + i;
+        if (s->particle_densities[i] < 0.0001)
+            continue;
 
         Vec2 grad = particle_compute_pressure(s, predicted_positions, i);
 
