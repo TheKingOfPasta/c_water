@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "config_reloader.h"
+#include "utils/utils.h"
 #include "utils/vec2.h"
 
 Simulation simulation_gen()
@@ -114,45 +115,14 @@ float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PART
 
     float d = 0.0f;
 
-    const int chunk_check_radius =
-        c->particle_influence_radius / s->chunk_size + 1;
-
-    int cx = ((int)predicted_positions[index].x) / s->chunk_size;
-    int cy = ((int)predicted_positions[index].y) / s->chunk_size;
-
-    if (cx < 0)
-        cx = 0;
-    if (cy < 0)
-        cy = 0;
-    if (cx >= s->nb_chunk_x)
-        cx = s->nb_chunk_x - 1;
-    if (cy >= s->nb_chunk_y)
-        cy = s->nb_chunk_y - 1;
-
-    for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
+    LOOP_NEIGHBOURS(predicted_positions[index], c->particle_influence_radius / s->chunk_size + 1)
     {
-        for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
-        {
-            int nx = cx + dx;
-            int ny = cy + dy;
+        Particle* other = &s->particles[s->pairs[i].particle_idx];
 
-            if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >= s->nb_chunk_y)
-                continue;
-
-            int chunk_idx = nx + ny * s->nb_chunk_x;
-
-            int start = s->start_chunk[chunk_idx];
-            int end = s->end_chunk[chunk_idx];
-
-            for (int i = start; i < end; i++)
-            {
-                Particle* other = &s->particles[s->pairs[i].particle_idx];
-
-                float dist = vec2_dist(predicted_positions[index], other->pos);
-                d += particle_density(dist);
-            }
-        }
+        float dist = vec2_dist(predicted_positions[index], other->pos);
+        d += particle_density(dist);
     }
+
     /*for (int k = 0; k < NB_PARTICLES; k++)
     {
         d += particle_density(vec2_dist(s->particles[k].pos, p->pos));
