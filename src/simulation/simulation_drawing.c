@@ -15,7 +15,7 @@ void simulation_draw_border(Image* img)
 
 void simulation_draw_balls(Simulation* s, Image* img)
 {
-    const float max_speed = 20.0f;
+    const float max_speed = 30.0f;
     const RGB8 base = (RGB8){ 0, 0, 120 };
     const RGB8 mid = (RGB8){ 0, 160, 160 };
     const RGB8 high = rgb8_white();
@@ -124,9 +124,10 @@ void simulation_print_chunks(Simulation* s)
     }
 }
 
-void simulation_draw_density(Simulation* s, Image* img)
+void simulation_draw_density([[maybe_unused]] Simulation* s,
+                             [[maybe_unused]] Image* img)
 {
-    Particle* p = calloc(1, sizeof(Particle));
+    /*Particle* p = calloc(1, sizeof(Particle));
 
     float* densities = malloc(sizeof(float) * img->sx * img->sy / 10);
 
@@ -157,5 +158,5 @@ void simulation_draw_density(Simulation* s, Image* img)
         }
 
     free(densities);
-    free(p);
+    free(p);*/
 }

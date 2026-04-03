@@ -55,10 +55,10 @@ int pair_sort(const void* p1, const void* p2)
     return a - b;
 }
 
-uint16_t particle_get_chunk_idx(Particle* p, Simulation* s)
+uint16_t particle_get_chunk_idx(Vec2* pos, Simulation* s)
 {
-    int cx = ((int)p->pos.x) / s->chunk_size;
-    int cy = ((int)p->pos.y) / s->chunk_size;
+    int cx = ((int)pos->x) / s->chunk_size;
+    int cy = ((int)pos->y) / s->chunk_size;
 
     if (cx < 0)
         cx = 0;
@@ -72,11 +72,11 @@ uint16_t particle_get_chunk_idx(Particle* p, Simulation* s)
     return cy * s->nb_chunk_x + cx;
 }
 
-void simulation_update_chunks(Simulation* s)
+static inline void simulation_update_chunks(Simulation* s, Vec2 predicted_positions[NB_PARTICLES])
 {
     for (int i = 0; i < NB_PARTICLES; i++)
     {
-        s->pairs[i].chunk_idx = particle_get_chunk_idx(s->particles + i, s);
+        s->pairs[i].chunk_idx = particle_get_chunk_idx(predicted_positions + i, s);
         s->pairs[i].particle_idx = i;
     }
 
@@ -108,7 +108,7 @@ void simulation_update_chunks(Simulation* s)
     }
 }
 
-float simulation_compute_density(Simulation* s, Particle* p)
+float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t index)
 {
     const float mass = 1.0f;
 
@@ -117,8 +117,8 @@ float simulation_compute_density(Simulation* s, Particle* p)
     const int chunk_check_radius =
         c->particle_influence_radius / s->chunk_size + 1;
 
-    int cx = ((int)p->pos.x) / s->chunk_size;
-    int cy = ((int)p->pos.y) / s->chunk_size;
+    int cx = ((int)predicted_positions[index].x) / s->chunk_size;
+    int cy = ((int)predicted_positions[index].y) / s->chunk_size;
 
     for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
     {
@@ -139,7 +139,7 @@ float simulation_compute_density(Simulation* s, Particle* p)
             {
                 Particle* other = &s->particles[s->pairs[i].particle_idx];
 
-                float dist = vec2_dist(p->pos, other->pos);
+                float dist = vec2_dist(predicted_positions[index], other->pos);
                 d += particle_density(dist);
             }
         }
@@ -152,12 +152,11 @@ float simulation_compute_density(Simulation* s, Particle* p)
     return d * mass;
 }
 
-static void simulation_update_density_field(Simulation* s)
+static void simulation_update_density_field(Simulation* s, Vec2 predicted_positions[NB_PARTICLES])
 {
     for (size_t i = 0; i < NB_PARTICLES; i++)
     {
-        Particle* p = s->particles + i;
-        float d = simulation_compute_density(s, p);
+        float d = simulation_compute_density(s, predicted_positions, i);
 
         s->particle_densities[i] = d;
     }
@@ -165,10 +164,6 @@ static void simulation_update_density_field(Simulation* s)
 
 void simulation_step(Simulation* s)
 {
-    simulation_update_chunks(s);
-
-    simulation_update_density_field(s);
-
     Vec2 predicted_positions[NB_PARTICLES] = { 0 };
 
 #pragma omp parallel for
@@ -183,6 +178,10 @@ void simulation_step(Simulation* s)
         predicted_positions[i] = p->pos;
         vec2_add_inplace(predicted_positions + i, p->velo);
     }
+
+    simulation_update_chunks(s, predicted_positions);
+
+    simulation_update_density_field(s, predicted_positions);
 
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICLES; i++)
@@ -206,6 +205,7 @@ void simulation_step(Simulation* s)
     }
 
     Vec2 velocities[NB_PARTICLES] = { 0 };
+    bool collided[NB_PARTICLES] = { 0 };
 
     Vec2 positions[NB_PARTICLES];
 #pragma omp parallel for
@@ -261,11 +261,11 @@ void simulation_step(Simulation* s)
                         {
                             Vec2 v_diff = vec2_mul_scalar(dir, dot / dist_sqr);
 
-                            v_diff = vec2_mul_scalar(
-                                v_diff, c->velocity_collision_dampner);
-
                             vec2_sub_inplace(velocities + i, v_diff);
                             vec2_add_inplace(velocities + index, v_diff);
+
+                            collided[i] = true;
+                            collided[index] = true;
                         }
 
                         Vec2 d2 =
@@ -284,7 +284,11 @@ void simulation_step(Simulation* s)
 #pragma omp parallel for
     for (size_t i = 0; i < NB_PARTICLES; i++)
     {
-        s->particles[i].pos = positions[i];
-        vec2_add_inplace(&s->particles[i].velo, velocities[i]);
+        Particle* p = s->particles + i;
+
+        p->pos = positions[i];
+        vec2_add_inplace(&p->velo, velocities[i]);
+        if (collided[i])
+            p->velo = vec2_mul_scalar(p->velo, c->velocity_collision_dampner);
     }
 }
