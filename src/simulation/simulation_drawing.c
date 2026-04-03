@@ -123,9 +123,9 @@ void simulation_print_chunks(Simulation* s)
     }
 }
 
-void simulation_draw_density(Simulation* s, Image* img)
+void simulation_draw_density([[maybe_unused]] Simulation* s, [[maybe_unused]] Image* img)
 {
-    Particle* p = calloc(1, sizeof(Particle));
+    /*Particle* p = calloc(1, sizeof(Particle));
 
     float* densities = malloc(sizeof(float) * img->sx * img->sy / 10);
 
@@ -156,5 +156,5 @@ void simulation_draw_density(Simulation* s, Image* img)
         }
 
     free(densities);
-    free(p);
+    free(p);*/
 }

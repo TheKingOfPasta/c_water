@@ -69,7 +69,7 @@ static inline float particle_compute_density_gradient(float dist)
     return slope * (dist - c->particle_influence_radius);
 }
 
-static inline void particle_compute_pressure_other_particle(Simulation* s, Vec2* predicted_positions, size_t p1_index, size_t p2_index, Vec2 *res)
+static inline void particle_compute_pressure_other_particle(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t p1_index, size_t p2_index, Vec2 *res)
 {
     if (p1_index == p2_index)
         return;
@@ -95,15 +95,15 @@ static inline void particle_compute_pressure_other_particle(Simulation* s, Vec2*
     vec2_add_inplace(res, vec2_mul_scalar(dir, (density - c->target_pressure) * slope / density));
 }
 
-Vec2 particle_compute_pressure(Simulation* s, Vec2* predicted_positions, size_t p1_index)
+Vec2 particle_compute_pressure(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t p1_index)
 {
     Particle *p = s->particles + p1_index;
     Vec2 res = vec2_zero();
 
     const int chunk_check_radius = c->particle_influence_radius / s->chunk_size + 1;
 
-    int cx = ((int)p->pos.x) / s->chunk_size;
-    int cy = ((int)p->pos.y) / s->chunk_size;
+    int cx = ((int)predicted_positions[p1_index].x) / s->chunk_size;
+    int cy = ((int)predicted_positions[p1_index].y) / s->chunk_size;
 
     for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
     {

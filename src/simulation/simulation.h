@@ -9,7 +9,7 @@ typedef struct
     Vec2 velo;
 } Particle;
 
-#define NB_PARTICLES 40000
+#define NB_PARTICLES 10000
 
 #define CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS 6
 
@@ -42,8 +42,7 @@ typedef struct
 Particle particle_gen_random();
 
 // void particle_step(Simulation* s, Vec2* predicted_positions, size_t index);
-Vec2 particle_compute_pressure(Simulation* s, Vec2* predicted_positions,
-                               size_t p1_index);
+Vec2 particle_compute_pressure(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t p1_index);
 void particle_interact_bounds(Particle* p);
 
 void particle_print(Particle* p);
@@ -56,9 +55,9 @@ Simulation simulation_gen();
 void simulation_free(Simulation* s);
 
 void simulation_step(Simulation* s);
-void simulation_update_chunks(Simulation* s);
+//void simulation_update_chunks(Simulation* s);
 
-float simulation_compute_density(Simulation* s, Particle* p);
+float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t index);
 
 void simulation_draw_density(Simulation* s, Image* img);
 void simulation_draw_balls(Simulation* s, Image* img);
