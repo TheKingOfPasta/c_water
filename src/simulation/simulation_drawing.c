@@ -1,6 +1,5 @@
 #include <float.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "config_reloader.h"
 #include "image/image_drawing.h"
@@ -16,8 +15,8 @@ void simulation_draw_border(Image* img)
 void simulation_draw_balls(Simulation* s, Image* img)
 {
     const float max_speed = 30.0f;
-    const RGB8 base = (RGB8){ 0, 0, 120 };
-    const RGB8 mid = (RGB8){ 0, 160, 160 };
+    const RGB8 base = (RGB8){ 0, 0, 150 };
+    const RGB8 mid = (RGB8){ 0, 200, 200 };
     const RGB8 high = rgb8_white();
     const float mid_point = 0.1;
 
