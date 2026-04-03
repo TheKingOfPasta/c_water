@@ -9,7 +9,7 @@ config c = {
     .sy = 1080,
 #endif
 
-    .pressure_force = 0.01,
+    .pressure_force = 0.001,
     .target_pressure = -60,
     .particle_influence_radius = 20,
     .radius = 1,

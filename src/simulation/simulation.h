@@ -35,7 +35,6 @@ typedef struct
 
     uint32_t* start_chunk;
     uint32_t* end_chunk;
-    float dt;
 } Simulation;
 
 /* --- PARTICLES --- */

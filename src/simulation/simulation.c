@@ -150,7 +150,7 @@ void simulation_step(Simulation* s)
 
         vec2_add_inplace(
             &p->velo,
-            (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier * s->dt });
+            (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier });
 
         predicted_positions[i] = p->pos;
         vec2_add_inplace(predicted_positions + i, p->velo);
@@ -170,7 +170,7 @@ void simulation_step(Simulation* s)
         grad = vec2_neg(grad);
 
         grad = vec2_mul_scalar(
-            grad, s->dt * c->pressure_force / s->particle_densities[i]);
+            grad, c->pressure_force / s->particle_densities[i]);
 
         vec2_add_inplace(&p->velo, grad);
 
