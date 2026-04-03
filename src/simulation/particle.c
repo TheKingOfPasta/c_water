@@ -97,62 +97,17 @@ static inline void particle_compute_pressure_other_particle(Simulation* s, Vec2 
 
 Vec2 particle_compute_pressure(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t p1_index)
 {
-    Particle *p = s->particles + p1_index;
     Vec2 res = vec2_zero();
 
-    const int chunk_check_radius = c->particle_influence_radius / s->chunk_size + 1;
-
-    int cx = ((int)predicted_positions[p1_index].x) / s->chunk_size;
-    int cy = ((int)predicted_positions[p1_index].y) / s->chunk_size;
-
-    for (int dx = -chunk_check_radius; dx <= chunk_check_radius; dx++)
+    LOOP_NEIGHBOURS(predicted_positions[p1_index], c->particle_influence_radius / s->chunk_size + 1)
     {
-        for (int dy = -chunk_check_radius; dy <= chunk_check_radius; dy++)
-        {
-            int nx = cx + dx;
-            int ny = cy + dy;
+        int p2_index = s->pairs[i].particle_idx;
 
-            if (nx < 0 || ny < 0 || nx >= s->nb_chunk_x || ny >= s->nb_chunk_y)
-                continue;
-
-            int chunk_idx = nx + ny * s->nb_chunk_x;
-
-            int start = s->start_chunk[chunk_idx];
-            int end = s->end_chunk[chunk_idx];
-
-            for (int i = start; i < end; i++)
-            {
-                int p2_index = s->pairs[i].particle_idx;
-
-                particle_compute_pressure_other_particle(s, predicted_positions, p1_index, p2_index, &res);
-            }
-        }
+        particle_compute_pressure_other_particle(s, predicted_positions, p1_index, p2_index, &res);
     }
 
     return res;
 }
-
-/*void particle_step(Simulation* s, Vec2* predicted_positions, size_t index)
-{
-    Particle *p = s->particles + index;
-    Vec2 grad = particle_compute_pressure(s, predicted_positions, index);
-
-    grad = vec2_neg(grad);
-
-    particle_apply_gravity(s, index);
-
-    vec2_add_inplace(predicted_positions + index, s->particles[index].velo);
-
-    grad = vec2_mul_scalar(grad, s->dt * c->pressure_force / s->particle_densities[index]);
-
-    vec2_add_inplace(velocities + index, grad);
-
-    vec2_add_inplace(positions + index, p->velo);
-
-    p->velo = vec2_mul_scalar(p->velo, c->velocity_drag);
-
-    particle_interact_bounds(p);
-}*/
 
 float particle_density(float d)
 {
