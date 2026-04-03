@@ -16,9 +16,10 @@ void simulation_draw_border(Image* img)
 void simulation_draw_balls(Simulation* s, Image* img)
 {
     const float max_speed = 20.0f;
-    const RGB8 base = (RGB8){ 0, 0, 80 };
+    const RGB8 base = (RGB8){ 0, 0, 120 };
     const RGB8 mid = (RGB8){ 0, 160, 160 };
     const RGB8 high = rgb8_white();
+    const float mid_point = 0.1;
 
     for (int i = 0; i < NB_PARTICLES; i++)
     {
@@ -30,10 +31,10 @@ void simulation_draw_balls(Simulation* s, Image* img)
 
         RGB8 color;
 
-        if (t < 0.5f)
-            color = rgb8_lerp(base, mid, t * 2);
+        if (t < mid_point)
+            color = rgb8_lerp(base, mid, t / mid_point);
         else
-            color = rgb8_lerp(mid, high, t * 2 - 1);
+            color = rgb8_lerp(mid, high, (t - mid_point) / (1 - mid_point));
 
         image_draw_circle(img, p.x, p.y, c->radius, color);
     }
