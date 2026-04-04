@@ -4,7 +4,7 @@
 
 float randf(void);
 
-char* read_all_file(FILE* f);
+char* read_all_file(char *file);
 
 #define CLAMP(x, min, max) (x)<(min) ? (min) : (x)>(max) ? (max) : (x)
 

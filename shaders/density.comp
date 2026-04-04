@@ -1,0 +1,63 @@
+struct Particle
+{
+    vec2 pos;
+    vec2 velo;
+};
+
+layout(std430, binding = 0) buffer ParticleBuffer
+{
+    Particle particles[];
+};
+layout(std430, binding = 1) buffer PredictedPositionsBuffer
+{
+    vec2 predicted_positions[];
+};
+layout(std430, binding = 2) buffer Densities {
+    float densities[];
+};
+
+layout(std140, binding = 0) uniform ConfigBlock {
+    int sx;
+    int sy;
+
+    float pressure_force;
+    float target_pressure;
+    float particle_influence_radius;
+    float radius;
+    float gravity_multiplier;
+    float velocity_collision_dampner;
+    float velocity_drag;
+} c;
+
+uniform float dt;
+uniform int N;
+
+float particle_density(float d)
+{
+    float v = c.particle_influence_radius - d;
+
+    if (v < 0)
+        return 0;
+
+    float vol = 6.0 / (3.14159265359 * c.particle_influence_radius * c.particle_influence_radius * c.particle_influence_radius * c.particle_influence_radius);
+
+    return v * v * vol;
+}
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= densities.length())
+        return;
+
+    float mass = 1.0f;
+    float d = 0.0f;
+
+    for (int i = 0; i < N; i++)
+    {
+        float dist = length(predicted_positions[idx] - predicted_positions[i]);
+        d += particle_density(dist);
+    }
+
+    densities[idx] = d;
+}

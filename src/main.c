@@ -1,4 +1,160 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <GL/gl.h>
+#include <assert.h>
+#include <string.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#include "config_reloader.h"
+#include "utils/utils.h"
+#include "simulation/simulation.h"
+#include "opengl/utils.h"
+#include "opengl/headers.h"
+
+#define N 1000
+
+GLuint compile_shader(GLenum type, const char* src)
+{
+    GLuint s = glCreateShader(type);
+    glShaderSource(s,1,&src,NULL);
+    glCompileShader(s);
+
+    int ok;
+    glGetShaderiv(s,GL_COMPILE_STATUS,&ok);
+    if(!ok){
+        char log[1024];
+        glGetShaderInfoLog(s,1024,NULL,log);
+        printf("shader error:\n%s\n",log);
+        exit(1);
+    }
+    return s;
+}
+
+GLuint create_program(GLuint s1, GLuint s2)
+{
+    GLuint p = glCreateProgram();
+    glAttachShader(p,s1);
+    glAttachShader(p,s2);
+    glLinkProgram(p);
+    return p;
+}
+
+GLuint create_compute_program(GLuint s)
+{
+    GLuint p = glCreateProgram();
+    glAttachShader(p,s);
+    glLinkProgram(p);
+    return p;
+}
+
+char *read_shader(char *file)
+{
+    char *a = read_all_file("src/opengl/headers.h");
+    char *b = read_all_file(file);
+    char *version = "#version 430 core\n\n";
+
+    char* res = calloc(strlen(version) + strlen(a) + 1 + strlen(b) + 1, sizeof(char));
+    res = strcat(res, version);
+    res = strcat(res, a);
+    res = strcat(res, "\n");
+    res = strcat(res, b);
+
+    free(b);
+    free(a);
+
+    return res;
+}
+
+int main()
+{
+    srand(time(NULL));
+
+    if(!glfwInit())
+        return 1;
+
+    const char *compute_src = read_shader("shaders/shader.comp");
+    const char *density_src = read_shader("shaders/density.comp");
+    const char *frag_src = read_shader("shaders/shader.frag");
+    const char *vert_src = read_shader("shaders/shader.vert");
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* win = glfwCreateWindow(1920, 1080, "C Water", NULL, NULL);
+
+    glfwMakeContextCurrent(win);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        return 1;
+
+    GLuint ds = compile_shader(GL_COMPUTE_SHADER, density_src);
+    GLuint density_prog = create_compute_program(ds);
+    GLuint cs = compile_shader(GL_COMPUTE_SHADER,compute_src);
+    GLuint compute_prog = create_compute_program(cs);
+
+    GLuint vs = compile_shader(GL_VERTEX_SHADER,vert_src);
+    GLuint fs = compile_shader(GL_FRAGMENT_SHADER,frag_src);
+    GLuint render_prog = create_program(vs,fs);
+
+    Particle* particles = malloc(sizeof(Particle)*N);
+
+    for(int i = 0; i < N; i++)
+    {
+        particles[i].pos.x = 1920.0 * (float)rand() / RAND_MAX;
+        particles[i].pos.y = 1080.0 * (float)rand() / RAND_MAX;
+        particles[i].velo.x = 0;
+        particles[i].velo.y = 0;
+    }
+
+    opengl_add_array(particles, sizeof(Particle) * N, BINDING_PARTICLES);
+
+    GLuint vao;
+    glGenVertexArrays(1,&vao);
+    glBindVertexArray(vao);
+
+    GLuint ubo;// Uniform buffer object <=> pass struct to shaders
+    glGenBuffers(1, &ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(config), c, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
+
+    glEnable(GL_PROGRAM_POINT_SIZE);
+
+    float dt = 0.016f;
+    free(particles);
+
+    while(!glfwWindowShouldClose(win))
+    {
+        glUseProgram(density_prog);
+
+        glDispatchCompute((N+255)/256,1,1);
+
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+
+        glUseProgram(compute_prog);
+        glUniform1f(glGetUniformLocation(compute_prog,"dt"),dt);
+
+        glDispatchCompute((N+255)/256,1,1);
+
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(render_prog);
+        glDrawArrays(GL_POINTS,0,N);
+
+        glfwSwapBuffers(win);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+}
+
+/*#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <dlfcn.h>
 #include <stdio.h>
@@ -156,3 +312,4 @@ int main(void)
 
     return 0;
 }
+*/
