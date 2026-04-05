@@ -103,7 +103,7 @@ static void key_callback(GLFWwindow* window, int key,
         reload_config();
 }
 
-void init(GLuint particles_ssbo)
+void init_particles(GLuint particles_ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
     Particle* particles = (Particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
@@ -128,9 +128,6 @@ int main()
 
     srand(time(NULL));
 
-    if(!glfwInit())
-        return 1;
-
     reload_config();
 
     const char *predicted_positions_src = read_shader("shaders/predicted_positions.comp");
@@ -139,15 +136,7 @@ int main()
     const char *frag_src = read_shader("shaders/shader.frag");
     const char *vert_src = read_shader("shaders/shader.vert");
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* win = glfwCreateWindow(c->sx, c->sy, "C Water", NULL, NULL);
-
-    glfwMakeContextCurrent(win);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-        return 1;
+    GLFWwindow *win = init_window();
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);
@@ -167,13 +156,13 @@ int main()
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
     GLuint chunks_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_CHUNKS);
 
-    init(particles_ssbo);
+    init_particles(particles_ssbo);
 
     GLuint vao;
     glGenVertexArrays(1,&vao);
     glBindVertexArray(vao);
 
-    GLuint ubo;// Uniform buffer object <=> pass struct to shaders
+    GLuint ubo;
     glGenBuffers(1, &ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, ubo);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(config), c, GL_DYNAMIC_DRAW);
@@ -195,7 +184,7 @@ int main()
         if (state.reset)
         {
             reload_config();
-            init(particles_ssbo);
+            init_particles(particles_ssbo);
             state.reset = false;
         }
 

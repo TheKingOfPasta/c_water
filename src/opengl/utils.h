@@ -14,3 +14,4 @@ GLuint compile_shader(GLenum type, const char* src);
 GLuint create_program(GLuint s1, GLuint s2);
 char *read_shader_includes(char *file);
 char *read_shader(char *file);
+GLFWwindow* init_window();

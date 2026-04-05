@@ -168,3 +168,27 @@ char *read_shader(char *file)
     printf("------------------------------------\n");*/
     return res;
 }
+
+GLFWwindow* init_window()
+{
+    if(!glfwInit())
+    {
+        printf("glfwInit() failed\n");
+        exit(1);
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* win = glfwCreateWindow(c->sx, c->sy, "C Water", NULL, NULL);
+
+    glfwMakeContextCurrent(win);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        printf("glad failed to load\n");
+        exit(1);
+    }
+
+    return win;
+}
