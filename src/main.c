@@ -90,7 +90,7 @@ char *read_shader(char *file)
             f_cpy = realloc(f_cpy, cpy_len);
 
             f_cpy = strcat(f_cpy, replace_with);
-            cpy_i += -strlen(include_text) - file_name_size + 31 + strlen(replace_with);
+            cpy_i += strlen(replace_with) - strlen(include_text) - file_name_size + 30;
             f_i += file_name_size;
             free(replace_with);
         }
