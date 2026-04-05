@@ -6,9 +6,10 @@
 
 void opengl_add_config(GLuint program, GLuint ubo);
 GLuint opengl_add_array(void *array, int size, int index);
-void opengl_prepare_program(GLuint program);
-void opengl_launch_last_prepared_program();
-void opengl_launch_program(GLuint program, GLuint ubo, GLuint particles_ssbo);
+void opengl_prepare_program(GLuint program, GLuint ubo);
+void opengl_launch_last_prepared_program(size_t elt_count);
+void opengl_launch_program(GLuint program, GLuint ubo, size_t elt_count);
+
 GLuint create_compute_program(GLuint s, const char *src);
 GLuint compile_shader(GLenum type, const char* src);
 GLuint create_program(GLuint s1, GLuint s2);

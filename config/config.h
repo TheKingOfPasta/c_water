@@ -12,4 +12,9 @@ typedef struct
     float gravity_multiplier;
     float velocity_collision_dampner;
     float velocity_drag;
+
+    int chunk_size;
+
+    int nb_chunk_x;
+    int nb_chunk_y;
 } config;

@@ -1,0 +1,37 @@
+#include "shaders/chunks.h"
+
+uniform int NB_PARTICLES;
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx != 0)
+        return;
+
+    for (int i = 0; i < c.nb_chunk_x * c.nb_chunk_y; i++)
+    {
+        start_chunks[i] = -1;
+        end_chunks[i] = -1;
+    }
+
+    int last_idx = -1;
+    for (int i = 0; i < NB_PARTICLES; i++)
+    {
+        int curr_idx = pairs[i].chunk_idx;
+        if (last_idx != curr_idx)
+        {
+            if (last_idx != -1)
+            {
+                end_chunks[last_idx] = i;
+            }
+            last_idx = curr_idx;
+            start_chunks[last_idx] = i;
+        }
+    }
+    if (last_idx != -1)
+    {
+        end_chunks[last_idx] = NB_PARTICLES;
+    }
+}

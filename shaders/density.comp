@@ -1,4 +1,5 @@
 #include "shaders/particle.glsl"
+#include "shaders/chunks.h"
 
 layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
@@ -9,7 +10,6 @@ layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
     float densities[];
 };
 
-uniform float dt;
 uniform int NB_PARTICLES;
 
 float particle_density(float d)
@@ -32,14 +32,31 @@ void main()
     if (idx >= NB_PARTICLES)
         return;
 
+    vec2 pos = predicted_positions[idx];
+    int radius = int(c.particle_influence_radius / c.chunk_size) + 1;
+
     float mass = 1.0f;
     float d = 0.0f;
 
-    for (int i = 0; i < NB_PARTICLES; i++)
-    {
-        float dist = length(predicted_positions[idx] - predicted_positions[i]);
-        d += particle_density(dist);
-    }
+    int cx = (int(pos.x) / c.chunk_size < 0 ? 0 : int(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1 : int(pos.x) / c.chunk_size);
+    int cy = (int(pos.y) / c.chunk_size < 0 ? 0 : int(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1 : int(pos.y) / c.chunk_size);
+
+    for (int dx = -radius; dx <= radius; dx++)
+        for (int dy = -radius; dy <= radius; dy++)
+        {
+            if (cx + dx < 0 || cy + dy < 0 || cx + dx >= c.nb_chunk_x || cy + dy >= c.nb_chunk_y)
+                continue;
+
+            int nx = cx + dx;
+            int ny = cy + dy;
+            int start = start_chunks[nx + ny * c.nb_chunk_x];
+            int end = end_chunks[nx + ny * c.nb_chunk_x];
+            for (int i = start; i < end; i++)
+            {
+                float dist = length(pos - predicted_positions[pairs[i].particle_idx]);
+                d += particle_density(dist);
+            }
+        }
 
     densities[idx] = d;
 }

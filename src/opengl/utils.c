@@ -26,24 +26,23 @@ GLuint opengl_add_array(void *array, int size, int index)
     return ssbo;
 }
 
-void opengl_prepare_program(GLuint program)
+void opengl_prepare_program(GLuint program, GLuint ubo)
 {
     glUseProgram(program);
+    opengl_add_config(program, ubo);
 }
 
-void opengl_launch_last_prepared_program()
+void opengl_launch_last_prepared_program(size_t elt_count)
 {
-    glDispatchCompute((NB_PARTICLES+255)/256,1,1);
+    glDispatchCompute((elt_count+255)/256,1,1);
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 }
 
-void opengl_launch_program(GLuint program, GLuint ubo, GLuint particles_ssbo)
+void opengl_launch_program(GLuint program, GLuint ubo, size_t elt_count)
 {
-    opengl_prepare_program(program);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BINDING_PARTICLES, particles_ssbo);
-    opengl_add_config(program, ubo);
-    opengl_launch_last_prepared_program();
+    opengl_prepare_program(program, ubo);
+    opengl_launch_last_prepared_program(elt_count);
 }
 
 GLuint create_compute_program(GLuint s, const char *src)
@@ -77,7 +76,7 @@ GLuint compile_shader(GLenum type, const char* src)
     {
         char log[1024];
         glGetShaderInfoLog(s, 1024, NULL, log);
-        printf("shader error %s:\n%s\n", src, log);
+        printf("shader error\n%s\n:\n%s\n", src, log);
         exit(1);
     }
 
@@ -151,7 +150,7 @@ char *read_shader(char *file)
     char *config = read_all_file("src/opengl/headers.glsl");
     char *f_cpy = read_shader_includes(file);
 
-    char* res = calloc(strlen(version) + strlen(bindings) + strlen(f_cpy) + strlen(config) + 1, sizeof(char));
+    char* res = calloc(strlen(version) + strlen(bindings) + strlen(config) + strlen(f_cpy) + 2, sizeof(char));
     res = strcat(res, version);
     res = strcat(res, bindings);
     res = strcat(res, config);

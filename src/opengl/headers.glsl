@@ -9,4 +9,9 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     float gravity_multiplier;
     float velocity_collision_dampner;
     float velocity_drag;
+
+    int chunk_size;
+
+    int nb_chunk_x;
+    int nb_chunk_y;
 } c;

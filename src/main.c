@@ -53,6 +53,46 @@ void print_predicted_positions(GLuint ssbo)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
+void print_particles(GLuint ssbo)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    Particle* densities = (Particle *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+
+    if (!densities)
+    {
+        printf("Failed to map densities buffer\n");
+        return;
+    }
+
+    for (int i = 0; i < NB_PARTICLES; i++)
+    {
+        printf("pred_pos[%i] = ", i);
+        vec2_print(&densities[i].pos);
+        printf("\n");
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void print_pairs(GLuint ssbo)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    chunk_particle_idx_pair* densities = (chunk_particle_idx_pair*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+
+    if (!densities)
+    {
+        printf("Failed to map densities buffer\n");
+        return;
+    }
+
+    for (int i = 0; i < NB_PARTICLES; i++)
+    {
+        printf("%i %i\n", densities[i].chunk_idx, densities[i].particle_idx);
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
 typedef struct AppState
 {
     bool step;
@@ -119,6 +159,13 @@ void init_particles(GLuint particles_ssbo)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
+static inline int pair_sort(const void* p1, const void* p2)
+{
+    uint16_t a = ((chunk_particle_idx_pair*)p1)->chunk_idx;
+    uint16_t b = ((chunk_particle_idx_pair*)p2)->chunk_idx;
+    return a - b;
+}
+
 int main()
 {
     AppState state = {
@@ -131,8 +178,11 @@ int main()
     reload_config();
 
     const char *predicted_positions_src = read_shader("shaders/predicted_positions.comp");
-    const char *compute_src = read_shader("shaders/shader.comp");
+    const char *chunks_src = read_shader("shaders/chunks.comp");
     const char *density_src = read_shader("shaders/density.comp");
+    const char *compute_src = read_shader("shaders/shader.comp");
+    const char *init_pairs_src = read_shader("shaders/init_pairs.comp");
+
     const char *frag_src = read_shader("shaders/shader.frag");
     const char *vert_src = read_shader("shaders/shader.vert");
 
@@ -143,18 +193,25 @@ int main()
     glfwSetCursorPosCallback(win, cursor_callback);
 
     GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, predicted_positions_src);
+    GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, chunks_src);
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
-
     GLuint compute_prog = compile_shader(GL_COMPUTE_SHADER, compute_src);
+    GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, init_pairs_src);
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
     GLuint render_prog = create_program(vs, fs);
 
+    c->chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
+    c->nb_chunk_x = c->sx / c->chunk_size + 1;
+    c->nb_chunk_y = c->sy / c->chunk_size + 1;
+
     GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
     GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
-    GLuint chunks_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_CHUNKS);
+    GLuint start_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_START_CHUNKS);
+    GLuint end_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_END_CHUNKS);
+    GLuint pairs_ssbo = opengl_add_array(NULL, sizeof(chunk_particle_idx_pair) * NB_PARTICLES, BINDING_PAIRS);
 
     init_particles(particles_ssbo);
 
@@ -190,12 +247,27 @@ int main()
 
         if (!state.step_mode || state.step)
         {
-            opengl_launch_program(predicted_positions_prog, ubo, particles_ssbo);
-            opengl_launch_program(density_prog, ubo, particles_ssbo);
+            opengl_launch_program(predicted_positions_prog, ubo, NB_PARTICLES);
+
+            opengl_launch_program(init_pairs_prog, ubo, NB_PARTICLES);
+
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, pairs_ssbo);
+            chunk_particle_idx_pair *pairs = (chunk_particle_idx_pair *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+
+            qsort(pairs, NB_PARTICLES, sizeof(chunk_particle_idx_pair), pair_sort);
+            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+            opengl_launch_program(chunks_prog, ubo, 1);
+            //print_pairs(pairs_ssbo);
+            //printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
+
+            //print_particles(particles_ssbo);
+
+            opengl_launch_program(density_prog, ubo, NB_PARTICLES);
             // print_densities(densities_ssbo);
             // print_predicted_positions(pred_pos_ssbo);
 
-            opengl_launch_program(compute_prog, ubo, particles_ssbo);
+            opengl_launch_program(compute_prog, ubo, NB_PARTICLES);
 
             state.step = false;
         }
