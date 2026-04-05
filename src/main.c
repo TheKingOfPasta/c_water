@@ -53,8 +53,79 @@ void print_predicted_positions(GLuint ssbo)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
+typedef struct AppState
+{
+    bool step;
+    bool step_mode;
+    bool draw_densities;
+    bool draw_chunks;
+    bool reset;
+    double mouse_x;
+    double mouse_y;
+} AppState;
+
+static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    AppState* state = (AppState*)glfwGetWindowUserPointer(window);
+    state->mouse_x = xpos;
+    state->mouse_y = ypos;
+}
+
+static void key_callback(GLFWwindow* window, int key,
+                         [[maybe_unused]] int scancode, int action,
+                         [[maybe_unused]] int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    AppState* state = ((AppState*)glfwGetWindowUserPointer(window));
+
+    if (action != GLFW_PRESS)
+        return;
+
+    if (key == GLFW_KEY_N)
+        state->step = true;
+
+    if (key == GLFW_KEY_P || key == GLFW_KEY_SPACE)
+        state->step_mode = !state->step_mode;
+
+    if (key == GLFW_KEY_R)
+        state->reset = true;
+
+    if (key == GLFW_KEY_D)
+        state->draw_densities = !state->draw_densities;
+
+    if (key == GLFW_KEY_G)
+        state->draw_chunks = !state->draw_chunks;
+    // simulation_print_chunks(state->s);
+
+    if (key == GLFW_KEY_C)
+        reload_config();
+}
+
+void init(GLuint particles_ssbo)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
+    Particle* particles = (Particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+
+    for(int i = 0; i < NB_PARTICLES; i++)
+    {
+        particles[i].pos.x = 1920.0 * (float)rand() / RAND_MAX;
+        particles[i].pos.y = 1080.0 * (float)rand() / RAND_MAX;
+        particles[i].velo.x = 0;
+        particles[i].velo.y = 0;
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
 int main()
 {
+    AppState state = {
+        .step = false,
+        .step_mode = true,
+    };
+
     srand(time(NULL));
 
     if(!glfwInit())
@@ -78,6 +149,10 @@ int main()
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         return 1;
 
+    glfwSetWindowUserPointer(win, &state);
+    glfwSetKeyCallback(win, key_callback);
+    glfwSetCursorPosCallback(win, cursor_callback);
+
     GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, predicted_positions_src);
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
 
@@ -87,19 +162,12 @@ int main()
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
     GLuint render_prog = create_program(vs, fs);
 
-    Particle particles[NB_PARTICLES];
-
-    for(int i = 0; i < NB_PARTICLES; i++)
-    {
-        particles[i].pos.x = 1920.0 * (float)rand() / RAND_MAX;
-        particles[i].pos.y = 1080.0 * (float)rand() / RAND_MAX;
-        particles[i].velo.x = 0;
-        particles[i].velo.y = 0;
-    }
-
-    GLuint particles_ssbo = opengl_add_array(particles, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
+    GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
     GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
+    GLuint chunks_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_CHUNKS);
+
+    init(particles_ssbo);
 
     GLuint vao;
     glGenVertexArrays(1,&vao);
@@ -113,8 +181,6 @@ int main()
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    float dt = 0.016f;
-
     #define FPS_COUNT 100
 
     double total = 0.0;
@@ -125,12 +191,26 @@ int main()
     while(!glfwWindowShouldClose(win))
     {
         double t0 = glfwGetTime();
-        opengl_launch_program(predicted_positions_prog, ubo, particles_ssbo);
-        opengl_launch_program(density_prog, ubo, particles_ssbo);
-        // print_densities(densities_ssbo);
-        // print_predicted_positions(pred_pos_ssbo);
 
-        opengl_launch_program(compute_prog, ubo, particles_ssbo);
+        if (state.reset)
+        {
+            reload_config();
+            init(particles_ssbo);
+            state.reset = false;
+        }
+
+        if (!state.step_mode || state.step)
+        {
+            opengl_launch_program(predicted_positions_prog, ubo, particles_ssbo);
+            opengl_launch_program(density_prog, ubo, particles_ssbo);
+            // print_densities(densities_ssbo);
+            // print_predicted_positions(pred_pos_ssbo);
+
+            opengl_launch_program(compute_prog, ubo, particles_ssbo);
+
+            state.step = false;
+        }
+
 
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -170,22 +250,12 @@ int main()
 #include "simulation/simulation.h"
 #include "utils/colorRGB8.h"
 
+
 static void error_callback([[maybe_unused]] int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
 
-typedef struct AppState
-{
-    bool step;
-    bool step_mode;
-    bool draw_densities;
-    bool draw_chunks;
-    bool reset;
-    double mouse_x;
-    double mouse_y;
-    Simulation* s;
-} AppState;
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 {
