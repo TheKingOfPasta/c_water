@@ -27,15 +27,16 @@ GLuint create_compute_program(GLuint s)
 GLuint compile_shader(GLenum type, const char* src)
 {
     GLuint s = glCreateShader(type);
-    glShaderSource(s,1,&src,NULL);
+    glShaderSource(s, 1, &src, NULL);
     glCompileShader(s);
 
     int ok;
-    glGetShaderiv(s,GL_COMPILE_STATUS,&ok);
-    if(!ok){
+    glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
+    if(!ok)
+    {
         char log[1024];
-        glGetShaderInfoLog(s,1024,NULL,log);
-        printf("shader error:\n%s\n",log);
+        glGetShaderInfoLog(s, 1024, NULL, log);
+        printf("shader error %s:\n%s\n", src, log);
         exit(1);
     }
 
@@ -57,7 +58,7 @@ GLuint create_program(GLuint s1, GLuint s2)
 
 char *read_shader(char *file)
 {
-    char *version = "#version 430 core\n\n";
+    char *version = "#version 430 core\n#line 1\n\n";
 
     char *bindings = read_all_file("src/opengl/headers.h");
     char *f = read_all_file(file);
@@ -71,34 +72,38 @@ char *read_shader(char *file)
 
     const char *include_text = "#include \"";
 
-    while (f_i < len)
+    while (f_i <= len)
     {
         if (strncmp(f + f_i, include_text, strlen(include_text)) == 0)
         {
             f_i += strlen(include_text);
 
+            char file_name[150] = { 0 };
+
             size_t file_name_size = 0;
             while (f[f_i + file_name_size] != '"')
+            {
+                file_name[file_name_size] = f[f_i + file_name_size];
                 file_name_size += 1;
+            }
 
-            char *file_name = calloc(file_name_size + 1, sizeof(char));
-            file_name = strncpy(file_name, f + f_i, file_name_size);
-            char *replace_with = read_all_file(file_name);
-            free(file_name);
+            f_i += file_name_size + 1;
 
-            cpy_len += strlen(replace_with);
+            char* f2 = read_all_file(file_name);
+            size_t len2 = strlen(f2);
+
+            cpy_len += len2 + 1;
+
             f_cpy = realloc(f_cpy, cpy_len);
+            f_cpy = strcat(f_cpy, f2);
 
-            f_cpy = strcat(f_cpy, replace_with);
-            cpy_i += strlen(replace_with) - strlen(include_text) - file_name_size + 30;
-            f_i += file_name_size;
-            free(replace_with);
+            while (f_cpy[cpy_i])
+                cpy_i += 1;
         }
         else
-            f_cpy[cpy_i] = f[f_i];
+            f_cpy[cpy_i++] = f[f_i];
 
         f_i += 1;
-        cpy_i += 1;
     }
 
     char* res = calloc(strlen(version) + strlen(bindings) + strlen(f_cpy) + strlen(config) + 1, sizeof(char));
@@ -113,6 +118,9 @@ char *read_shader(char *file)
     free(f_cpy);
     free(config);
 
+    /*printf("------------------------------------\n");
+    printf("%s\n", res);
+    printf("------------------------------------\n");*/
     return res;
 }
 
