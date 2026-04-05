@@ -69,11 +69,13 @@ char *read_shader(char *file)
     size_t cpy_len = len;
     char *f_cpy = calloc(len + 1, sizeof(char));
 
+    const char *include_text = "#include \"";
+
     while (f_i < len)
     {
-        if (strncmp(f + f_i, "#include \"", sizeof("#include \"") - 1) == 0)
+        if (strncmp(f + f_i, include_text, strlen(include_text)) == 0)
         {
-            f_i += sizeof("#include \"") - 1;
+            f_i += strlen(include_text);
 
             size_t file_name_size = 0;
             while (f[f_i + file_name_size] != '"')
@@ -88,7 +90,7 @@ char *read_shader(char *file)
             f_cpy = realloc(f_cpy, cpy_len);
 
             f_cpy = strcat(f_cpy, replace_with);
-            cpy_i += -sizeof("#include \"") - file_name_size + 31 + strlen(replace_with);
+            cpy_i += -strlen(include_text) - file_name_size + 31 + strlen(replace_with);
             f_i += file_name_size;
             free(replace_with);
         }

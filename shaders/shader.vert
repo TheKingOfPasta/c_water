@@ -1,13 +1,4 @@
-struct Particle {
-    vec2 pos;
-    vec2 velo;
-    float r;
-};
-
-layout(std430, binding = 0) buffer ParticleBuffer
-{
-    Particle particles[];
-};
+#include "shaders/particle.glsl"
 
 void main()
 {
