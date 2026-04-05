@@ -238,8 +238,16 @@ int main()
 
     float dt = 0.016f;
 
+    #define FPS_COUNT 100
+
+    double total = 0.0;
+
+    double FPS[FPS_COUNT] = { 0 };
+    size_t fps_i = 0;
+
     while(!glfwWindowShouldClose(win))
     {
+        double t0 = glfwGetTime();
         opengl_launch_program(predicted_positions_prog, ubo, particles_ssbo);
         opengl_launch_program(density_prog, ubo, particles_ssbo);
         // print_densities(densities_ssbo);
@@ -254,6 +262,20 @@ int main()
 
         glfwSwapBuffers(win);
         glfwPollEvents();
+
+        double t1 = glfwGetTime();
+
+        total -= FPS[fps_i] / FPS_COUNT;
+
+        FPS[fps_i++] = 1.0 / (t1 - t0);
+        total += FPS[fps_i - 1] / FPS_COUNT;
+
+        if (fps_i == FPS_COUNT)
+            fps_i = 0;
+
+        printf("\r%f           ", total);
+
+        fflush(stdout);
     }
 
     glfwTerminate();
