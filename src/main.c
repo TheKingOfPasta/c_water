@@ -191,10 +191,6 @@ int main()
     const char *frag_src = read_shader("shaders/shader.frag");
     const char *vert_src = read_shader("shaders/shader.vert");
 
-    printf("=== predicted_positions ===\n%s\n", predicted_positions_src);
-    printf("=== density ===\n%s\n", density_src);
-    printf("=== compute ===\n%s\n", compute_src);
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -223,14 +219,10 @@ int main()
         particles[i].velo.x = 0;
         particles[i].velo.y = 0;
     }
-/*
-    float densities[NB_PARTICLES];
-    for (size_t i = 0; i < NB_PARTICLES; i++)
-        densities[i] = 42;
-*/
+
     GLuint particles_ssbo = opengl_add_array(particles, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
-    //GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
-    //GLuint densities_ssbo = opengl_add_array(densities, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
+    GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
+    GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
 
     GLuint vao;
     glGenVertexArrays(1,&vao);
@@ -248,16 +240,12 @@ int main()
 
     while(!glfwWindowShouldClose(win))
     {
-        //opengl_launch_program(predicted_positions_prog, ubo);
-        //opengl_launch_program(density_prog, ubo);
+        opengl_launch_program(predicted_positions_prog, ubo, particles_ssbo);
+        opengl_launch_program(density_prog, ubo, particles_ssbo);
         // print_densities(densities_ssbo);
         // print_predicted_positions(pred_pos_ssbo);
 
         opengl_launch_program(compute_prog, ubo, particles_ssbo);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
-        float *data = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        printf("particle[0].pos = %f %f\n", data[0], data[1]);
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
         glClear(GL_COLOR_BUFFER_BIT);

@@ -1,17 +1,17 @@
 #include "shaders/particle.glsl"
 
-/*layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
+layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
     vec2 predicted_positions[];
 };
 layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
 {
     float densities[];
-};*/
+};
 
 uniform int NB_PARTICLES;
 
-/*float particle_compute_density_gradient(float dist)
+float particle_compute_density_gradient(float dist)
 {
     float slope = 2.0 * 6.0 / (3.14159265359 * c.particle_influence_radius * c.particle_influence_radius * c.particle_influence_radius * c.particle_influence_radius);
 
@@ -50,7 +50,7 @@ vec2 particle_compute_pressure(uint i)
     }
 
     return res;
-}*/
+}
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
@@ -61,20 +61,15 @@ void main()
         return;*/
 
     Particle p = particles[i];
-    p.pos += vec2(1, 0);
-    particles[i] = p;
-    return;
 
-    /*vec2 grad = particle_compute_pressure(i);
+    vec2 grad = particle_compute_pressure(i);
     grad = -grad;
 
-    //grad *= c.pressure_force / densities[i];
+    grad *= c.pressure_force / densities[i];
 
     p.velo += grad;
-    p.velo += vec2(1, 0);
     p.pos += p.velo;
-    particles[i] = p;
-    //p.velo *= c.velocity_drag;
+    p.velo *= c.velocity_drag;
 
     if (p.pos.x > 1920.0)
     {
@@ -131,5 +126,5 @@ void main()
         }
     }
 
-    particles[i] = p;*/
+    particles[i] = p;
 }
