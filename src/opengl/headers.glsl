@@ -1,4 +1,4 @@
-layout(std140, binding = 0) uniform ConfigBlock {
+layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     int sx;
     int sy;
 

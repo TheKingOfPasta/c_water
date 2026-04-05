@@ -4,7 +4,7 @@ struct Particle
     vec2 velo;
 };
 
-layout(std430, binding = 0) buffer ParticleBuffer
+layout(std430, binding = BINDING_PARTICLES) buffer ParticleBuffer
 {
     Particle particles[];
 };

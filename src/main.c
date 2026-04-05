@@ -15,11 +15,21 @@
 #include "opengl/utils.h"
 #include "opengl/headers.h"
 
-GLuint create_compute_program(GLuint s)
+GLuint create_compute_program(GLuint s, const char *src)
 {
     GLuint p = glCreateProgram();
-    glAttachShader(p,s);
+    glAttachShader(p, s);
     glLinkProgram(p);
+
+    int ok;
+    glGetProgramiv(p, GL_LINK_STATUS, &ok);
+    if (!ok)
+    {
+        char log[1024];
+        glGetProgramInfoLog(p, 1024, NULL, log);
+        printf("program link error:\n%s\n%s\n", log, src);
+        exit(1);
+    }
 
     return p;
 }
@@ -41,7 +51,7 @@ GLuint compile_shader(GLenum type, const char* src)
     }
 
     if (type == GL_COMPUTE_SHADER)
-        return create_compute_program(s);
+        return create_compute_program(s, src);
 
     return s;
 }
@@ -56,6 +66,51 @@ GLuint create_program(GLuint s1, GLuint s2)
     return p;
 }
 
+char *read_shader_includes(char *file)
+{
+    char *f = read_all_file(file);
+    size_t result_len = 1;
+    char *result = calloc(result_len, sizeof(char));
+
+    const char *include_text = "#include \"";
+    size_t include_len = strlen(include_text);
+    size_t f_i = 0;
+    size_t len = strlen(f);
+
+    while (f_i < len)
+    {
+        if (strncmp(f + f_i, include_text, include_len) == 0)
+        {
+            f_i += include_len;
+
+            char file_name[150] = { 0 };
+            size_t file_name_size = 0;
+            while (f[f_i] != '"')
+                file_name[file_name_size++] = f[f_i++];
+            f_i++;
+
+            char *included = read_shader_includes(file_name);
+            size_t included_len = strlen(included);
+
+            result = realloc(result, result_len + included_len + 1 + len);
+            strcat(result, included);
+            result_len += included_len;
+
+            free(included);
+        }
+        else
+        {
+            result = realloc(result, result_len + len);
+            result[result_len - 1] = f[f_i++];
+            result[result_len] = '\0';
+            result_len++;
+        }
+    }
+
+    free(f);
+    return result;
+}
+
 char *read_shader(char *file)
 {
     char *version = "#version 430 core\n#line 1\n\n";
@@ -63,48 +118,7 @@ char *read_shader(char *file)
     char *bindings = read_all_file("src/opengl/headers.h");
     char *f = read_all_file(file);
     char *config = read_all_file("src/opengl/headers.glsl");
-
-    size_t cpy_i = 0;
-    size_t f_i = 0;
-    size_t len = strlen(f);
-    size_t cpy_len = len;
-    char *f_cpy = calloc(len + 1, sizeof(char));
-
-    const char *include_text = "#include \"";
-
-    while (f_i <= len)
-    {
-        if (strncmp(f + f_i, include_text, strlen(include_text)) == 0)
-        {
-            f_i += strlen(include_text);
-
-            char file_name[150] = { 0 };
-
-            size_t file_name_size = 0;
-            while (f[f_i + file_name_size] != '"')
-            {
-                file_name[file_name_size] = f[f_i + file_name_size];
-                file_name_size += 1;
-            }
-
-            f_i += file_name_size + 1;
-
-            char* f2 = read_all_file(file_name);
-            size_t len2 = strlen(f2);
-
-            cpy_len += len2 + 1;
-
-            f_cpy = realloc(f_cpy, cpy_len);
-            f_cpy = strcat(f_cpy, f2);
-
-            while (f_cpy[cpy_i])
-                cpy_i += 1;
-        }
-        else
-            f_cpy[cpy_i++] = f[f_i];
-
-        f_i += 1;
-    }
+    char *f_cpy = read_shader_includes(file);
 
     char* res = calloc(strlen(version) + strlen(bindings) + strlen(f_cpy) + strlen(config) + 1, sizeof(char));
     res = strcat(res, version);
@@ -124,6 +138,44 @@ char *read_shader(char *file)
     return res;
 }
 
+void print_densities(GLuint densities_ssbo)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, densities_ssbo);
+    float *densities = (float *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+
+    if (!densities)
+    {
+        printf("Failed to map densities buffer\n");
+        return;
+    }
+
+    for (int i = 0; i < NB_PARTICLES; i++)
+        printf("density[%d] = %f\n", i, densities[i]);
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void print_predicted_positions(GLuint ssbo)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    Vec2* densities = (Vec2 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+
+    if (!densities)
+    {
+        printf("Failed to map densities buffer\n");
+        return;
+    }
+
+    for (int i = 0; i < NB_PARTICLES; i++)
+    {
+        printf("pred_pos[%i] = ", i);
+        vec2_print(densities + i);
+        printf("\n");
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
 int main()
 {
     srand(time(NULL));
@@ -138,6 +190,10 @@ int main()
     const char *density_src = read_shader("shaders/density.comp");
     const char *frag_src = read_shader("shaders/shader.frag");
     const char *vert_src = read_shader("shaders/shader.vert");
+
+    printf("=== predicted_positions ===\n%s\n", predicted_positions_src);
+    printf("=== density ===\n%s\n", density_src);
+    printf("=== compute ===\n%s\n", compute_src);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -167,10 +223,14 @@ int main()
         particles[i].velo.x = 0;
         particles[i].velo.y = 0;
     }
-
-    opengl_add_array(particles, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
-    opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
-    opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
+/*
+    float densities[NB_PARTICLES];
+    for (size_t i = 0; i < NB_PARTICLES; i++)
+        densities[i] = 42;
+*/
+    GLuint particles_ssbo = opengl_add_array(particles, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
+    //GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
+    //GLuint densities_ssbo = opengl_add_array(densities, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
 
     GLuint vao;
     glGenVertexArrays(1,&vao);
@@ -180,7 +240,7 @@ int main()
     glGenBuffers(1, &ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, ubo);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(config), c, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
+    glBindBufferBase(GL_UNIFORM_BUFFER, BINDING_CONFIG, ubo);
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -188,15 +248,16 @@ int main()
 
     while(!glfwWindowShouldClose(win))
     {
-        opengl_launch_program(predicted_positions_prog);
-        opengl_launch_program(density_prog);
+        //opengl_launch_program(predicted_positions_prog, ubo);
+        //opengl_launch_program(density_prog, ubo);
+        // print_densities(densities_ssbo);
+        // print_predicted_positions(pred_pos_ssbo);
 
-        opengl_prepare_program(compute_prog);
-
-        glUniform1f(glGetUniformLocation(compute_prog,"dt"),dt);
-
-        opengl_launch_last_prepared_program();
-
+        opengl_launch_program(compute_prog, ubo, particles_ssbo);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
+        float *data = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        printf("particle[0].pos = %f %f\n", data[0], data[1]);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
         glClear(GL_COLOR_BUFFER_BIT);

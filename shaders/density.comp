@@ -1,10 +1,11 @@
 #include "shaders/particle.glsl"
 
-layout(std430, binding = 1) buffer PredictedPositionsBuffer
+layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
     vec2 predicted_positions[];
 };
-layout(std430, binding = 2) buffer Densities {
+layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
+{
     float densities[];
 };
 
@@ -23,10 +24,12 @@ float particle_density(float d)
     return v * v * vol;
 }
 
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
-    if (idx >= densities.length())
+    if (idx >= NB_PARTICLES)
         return;
 
     float mass = 1.0f;
