@@ -11,7 +11,12 @@ float randf(void)
 char* read_all_file(char *file)
 {
     FILE* f = fopen(file, "r");
-    assert(f != NULL);
+    if (f == NULL)
+    {
+        printf("%s does not exist\n", file);
+        exit(1);
+    }
+
     fseek(f, 0, SEEK_END);
     int eof = ftell(f);
     rewind(f);

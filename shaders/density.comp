@@ -16,21 +16,8 @@ layout(std430, binding = 2) buffer Densities {
     float densities[];
 };
 
-layout(std140, binding = 0) uniform ConfigBlock {
-    int sx;
-    int sy;
-
-    float pressure_force;
-    float target_pressure;
-    float particle_influence_radius;
-    float radius;
-    float gravity_multiplier;
-    float velocity_collision_dampner;
-    float velocity_drag;
-} c;
-
 uniform float dt;
-uniform int N;
+uniform int NB_PARTICLES;
 
 float particle_density(float d)
 {
@@ -53,7 +40,7 @@ void main()
     float mass = 1.0f;
     float d = 0.0f;
 
-    for (int i = 0; i < N; i++)
+    for (int i = 0; i < NB_PARTICLES; i++)
     {
         float dist = length(predicted_positions[idx] - predicted_positions[i]);
         d += particle_density(dist);

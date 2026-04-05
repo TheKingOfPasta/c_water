@@ -9,18 +9,10 @@ layout(std430, binding = 0) buffer ParticleBuffer
     Particle particles[];
 };
 
-layout(std140, binding = 0) uniform ConfigBlock {
-    int sx;
-    int sy;
-
-    float pressure_force;
-    float target_pressure;
-    float particle_influence_radius;
-    float radius;
-    float gravity_multiplier;
-    float velocity_collision_dampner;
-    float velocity_drag;
-} c;
+layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
+{
+    float densities[];
+};
 
 uniform float dt;
 uniform int N;
@@ -33,9 +25,7 @@ void main()
 
     Particle p = particles[i];
 
-    p.velo += vec2(0.0, 10*-0.981) * dt;
-
-    //p.pos += p.velo * dt;
+    p.pos += p.velo * dt;
 
     if (p.pos.x > 1920.0)
     {
@@ -61,7 +51,7 @@ void main()
 
     for (int i2 = 0; i2 < N; i2++)
     {
-        
+        //densities
     }
 
     particles[i] = p;

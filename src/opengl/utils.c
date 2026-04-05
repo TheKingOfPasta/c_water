@@ -1,6 +1,7 @@
 #include "opengl/utils.h"
 
 #include "config_reloader.h"
+#include "simulation/simulation.h"
 
 void opengl_add_config(GLuint program)
 {
@@ -22,4 +23,22 @@ void opengl_add_array(void *array, int size, int index)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, particleSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, array, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, particleSSBO);
+}
+
+void opengl_prepare_program(GLuint program)
+{
+    glUseProgram(program);
+}
+
+void opengl_launch_last_prepared_program()
+{
+    glDispatchCompute((NB_PARTICLES+255)/256,1,1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void opengl_launch_program(GLuint program)
+{
+    opengl_prepare_program(program);
+    opengl_launch_last_prepared_program();
 }

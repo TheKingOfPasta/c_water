@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdarg.h>
 
 #include "config_reloader.h"
 #include "utils/utils.h"
@@ -14,7 +15,14 @@
 #include "opengl/utils.h"
 #include "opengl/headers.h"
 
-#define N 1000
+GLuint create_compute_program(GLuint s)
+{
+    GLuint p = glCreateProgram();
+    glAttachShader(p,s);
+    glLinkProgram(p);
+
+    return p;
+}
 
 GLuint compile_shader(GLenum type, const char* src)
 {
@@ -30,6 +38,10 @@ GLuint compile_shader(GLenum type, const char* src)
         printf("shader error:\n%s\n",log);
         exit(1);
     }
+
+    if (type == GL_COMPUTE_SHADER)
+        return create_compute_program(s);
+
     return s;
 }
 
@@ -39,31 +51,65 @@ GLuint create_program(GLuint s1, GLuint s2)
     glAttachShader(p,s1);
     glAttachShader(p,s2);
     glLinkProgram(p);
-    return p;
-}
 
-GLuint create_compute_program(GLuint s)
-{
-    GLuint p = glCreateProgram();
-    glAttachShader(p,s);
-    glLinkProgram(p);
     return p;
 }
 
 char *read_shader(char *file)
 {
-    char *a = read_all_file("src/opengl/headers.h");
-    char *b = read_all_file(file);
     char *version = "#version 430 core\n\n";
 
-    char* res = calloc(strlen(version) + strlen(a) + 1 + strlen(b) + 1, sizeof(char));
-    res = strcat(res, version);
-    res = strcat(res, a);
-    res = strcat(res, "\n");
-    res = strcat(res, b);
+    char *bindings = read_all_file("src/opengl/headers.h");
+    char *f = read_all_file(file);
+    char *config = read_all_file("src/opengl/headers.glsl");
 
-    free(b);
-    free(a);
+    size_t cpy_i = 0;
+    size_t f_i = 0;
+    size_t len = strlen(f);
+    size_t cpy_len = len;
+    char *f_cpy = calloc(len + 1, sizeof(char));
+
+    while (f_i < len)
+    {
+        if (strncmp(f + f_i, "#include \"", sizeof("#include \"") - 1) == 0)
+        {
+            f_i += sizeof("#include \"") - 1;
+
+            size_t file_name_size = 0;
+            while (f[f_i + file_name_size] != '"')
+                file_name_size += 1;
+
+            char *file_name = calloc(file_name_size + 1, sizeof(char));
+            file_name = strncpy(file_name, f + f_i, file_name_size);
+            char *replace_with = read_all_file(file_name);
+            free(file_name);
+
+            cpy_len += strlen(replace_with);
+            f_cpy = realloc(f_cpy, cpy_len);
+
+            f_cpy = strcat(f_cpy, replace_with);
+            cpy_i += -sizeof("#include \"") - file_name_size + 31 + strlen(replace_with);
+            f_i += file_name_size;
+            free(replace_with);
+        }
+        else
+            f_cpy[cpy_i] = f[f_i];
+
+        f_i += 1;
+        cpy_i += 1;
+    }
+
+    char* res = calloc(strlen(version) + strlen(bindings) + strlen(f_cpy) + strlen(config) + 1, sizeof(char));
+    res = strcat(res, version);
+    res = strcat(res, bindings);
+    res = strcat(res, config);
+    res = strcat(res, "\n");
+    res = strcat(res, f_cpy);
+
+    free(bindings);
+    free(f);
+    free(f_cpy);
+    free(config);
 
     return res;
 }
@@ -75,6 +121,9 @@ int main()
     if(!glfwInit())
         return 1;
 
+    reload_config();
+
+    const char *predicted_positions_src = read_shader("shaders/predicted_positions.comp");
     const char *compute_src = read_shader("shaders/shader.comp");
     const char *density_src = read_shader("shaders/density.comp");
     const char *frag_src = read_shader("shaders/shader.frag");
@@ -84,24 +133,24 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* win = glfwCreateWindow(1920, 1080, "C Water", NULL, NULL);
+    GLFWwindow* win = glfwCreateWindow(c->sx, c->sy, "C Water", NULL, NULL);
 
     glfwMakeContextCurrent(win);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         return 1;
 
-    GLuint ds = compile_shader(GL_COMPUTE_SHADER, density_src);
-    GLuint density_prog = create_compute_program(ds);
-    GLuint cs = compile_shader(GL_COMPUTE_SHADER,compute_src);
-    GLuint compute_prog = create_compute_program(cs);
+    GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, predicted_positions_src);
+    GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
 
-    GLuint vs = compile_shader(GL_VERTEX_SHADER,vert_src);
-    GLuint fs = compile_shader(GL_FRAGMENT_SHADER,frag_src);
-    GLuint render_prog = create_program(vs,fs);
+    GLuint compute_prog = compile_shader(GL_COMPUTE_SHADER, compute_src);
 
-    Particle* particles = malloc(sizeof(Particle)*N);
+    GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
+    GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
+    GLuint render_prog = create_program(vs, fs);
 
-    for(int i = 0; i < N; i++)
+    Particle particles[NB_PARTICLES];
+
+    for(int i = 0; i < NB_PARTICLES; i++)
     {
         particles[i].pos.x = 1920.0 * (float)rand() / RAND_MAX;
         particles[i].pos.y = 1080.0 * (float)rand() / RAND_MAX;
@@ -109,7 +158,9 @@ int main()
         particles[i].velo.y = 0;
     }
 
-    opengl_add_array(particles, sizeof(Particle) * N, BINDING_PARTICLES);
+    opengl_add_array(particles, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
+    opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
+    opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
 
     GLuint vao;
     glGenVertexArrays(1,&vao);
@@ -124,28 +175,23 @@ int main()
     glEnable(GL_PROGRAM_POINT_SIZE);
 
     float dt = 0.016f;
-    free(particles);
 
     while(!glfwWindowShouldClose(win))
     {
-        glUseProgram(density_prog);
+        opengl_launch_program(predicted_positions_prog);
+        opengl_launch_program(density_prog);
 
-        glDispatchCompute((N+255)/256,1,1);
+        opengl_prepare_program(compute_prog);
 
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-
-        glUseProgram(compute_prog);
         glUniform1f(glGetUniformLocation(compute_prog,"dt"),dt);
 
-        glDispatchCompute((N+255)/256,1,1);
+        opengl_launch_last_prepared_program();
 
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
 
         glClear(GL_COLOR_BUFFER_BIT);
-
         glUseProgram(render_prog);
-        glDrawArrays(GL_POINTS,0,N);
+        glDrawArrays(GL_POINTS,0,NB_PARTICLES);
 
         glfwSwapBuffers(win);
         glfwPollEvents();

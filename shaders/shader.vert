@@ -18,5 +18,5 @@ void main()
     v.y = p.pos.y / 1080.0 * 2.0 - 1.0;
 
     gl_Position = vec4(v, 0.0, 1.0);
-    gl_PointSize = 5;
+    gl_PointSize = c.radius;
 }
