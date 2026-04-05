@@ -1,11 +1,17 @@
+in float speed;
 out vec4 FragColor;
 
 void main()
 {
-    vec2 p = gl_PointCoord * 2.0 - 1.0;
+    vec2 pt = gl_PointCoord * 2.0 - 1.0;
 
-    if(dot(p, p) > 1.0)
+    if(dot(pt, pt) > 1.0)
         discard;
 
-    FragColor = vec4(1.0,0.6,0.2,1.0);
+    float t = clamp(speed, 0, 1);
+
+    vec4 c1 = vec4(0.0, 0.0, 0.0, 1);
+    vec4 c2 = vec4(0.0, 0.6, 0.8, 1);
+
+    FragColor = c1 * t + c2 * (1 - t);
 }

@@ -1,5 +1,7 @@
 #include "shaders/particle.glsl"
 
+out float speed;
+
 void main()
 {
     Particle p = particles[gl_VertexID];
@@ -10,4 +12,5 @@ void main()
 
     gl_Position = vec4(v, 0.0, 1.0);
     gl_PointSize = c.radius;
+    speed = length(p.velo);
 }
