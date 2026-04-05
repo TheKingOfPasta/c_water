@@ -57,8 +57,8 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
     uint i = gl_GlobalInvocationID.x;
-    /*if (i >= NB_PARTICLES)
-        return;*/
+    if (i >= NB_PARTICLES)
+        return;
 
     Particle p = particles[i];
 
@@ -91,39 +91,6 @@ void main()
     {
         p.pos.y *= -1.0;
         p.velo.y *= -0.9;
-    }
-
-    particles[i] = p;
-
-    return;
-
-    float rad = 5;
-
-    for (int i2 = 0; i2 < 100; i2++)
-    {
-        if (i2 < i)
-            continue;
-
-        vec2 dir = particles[i].pos - particles[i2].pos;
-        float dist = length(dir);
-
-        if (dist < 2 * rad && dist > 0.0001)
-        {
-            float d = dot(particles[i].velo - particles[i2].velo, dir);
-
-            if (d < 0)
-            {
-                vec2 v_diff = dir * d / dist;
-
-                particles[i].velo -= v_diff;
-                particles[i2].velo += v_diff;
-            }
-
-            vec2 d2 = dir * (2.0 * rad - dist) / dist;
-
-            particles[i].pos += d2 * 0.5;
-            particles[i2].pos -= d2 * 0.5;
-        }
     }
 
     particles[i] = p;
