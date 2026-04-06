@@ -7,22 +7,11 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
-    if (idx != 0)
+    if (idx >= NB_PARTICLES)
         return;
 
-    for (int i = 0; i < c.nb_chunk_x * c.nb_chunk_y; i++)
+    if (idx == 0 || pairs[idx].chunk_idx != pairs[idx - 1].chunk_idx)
     {
-        start_chunks[i] = -1;
-    }
-
-    int last_idx = -1;
-    for (int i = 0; i < NB_PARTICLES; i++)
-    {
-        int curr_idx = pairs[i].chunk_idx;
-        if (last_idx != curr_idx)
-        {
-            last_idx = curr_idx;
-            start_chunks[last_idx] = i;
-        }
+        start_chunks[pairs[idx].chunk_idx] = int(idx);
     }
 }

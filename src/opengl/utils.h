@@ -16,3 +16,14 @@ GLuint create_program(GLuint s1, GLuint s2);
 char *read_shader_includes(char *file);
 char *read_shader(char *file);
 GLFWwindow* init_window();
+
+#define START_TIME(t)\
+            GLuint query##t;\
+            glGenQueries(1, &query##t);\
+            glBeginQuery(GL_TIME_ELAPSED, query##t);
+
+#define END_TIME(t)\
+            glEndQuery(GL_TIME_ELAPSED);\
+            GLuint64 elapsed##t;\
+            glGetQueryObjectui64v(query##t, GL_QUERY_RESULT, &elapsed##t);\
+            printf("GPU time %s : %.2f ms\n", #t, elapsed##t / 1e6);

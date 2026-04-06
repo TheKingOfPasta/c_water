@@ -307,61 +307,38 @@ int main()
 
         if (!state.step_mode || state.step)
         {
-            GLuint query;
-            glGenQueries(1, &query);
-            glBeginQuery(GL_TIME_ELAPSED, query);
-
-            opengl_launch_program(predicted_positions_prog, ubo, NB_PARTICLES);
-
-            glEndQuery(GL_TIME_ELAPSED);
-            GLuint64 elapsed;
-            glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsed);
             printf("\n");
-            printf("GPU time 1: %.2f ms\n", elapsed / 1e6);
+            START_TIME(predicted_positions);
+            opengl_launch_program(predicted_positions_prog, ubo, NB_PARTICLES);
+            END_TIME(predicted_positions);
 
-            GLuint query2;
-            glGenQueries(1, &query2);
-            glBeginQuery(GL_TIME_ELAPSED, query2);
-
+            START_TIME(init_pairs);
             opengl_launch_program(init_pairs_prog, ubo, NB_PARTICLES);
+            END_TIME(init_pairs);
 
-            glEndQuery(GL_TIME_ELAPSED);
-            GLuint64 elapsed2;
-            glGetQueryObjectui64v(query2, GL_QUERY_RESULT, &elapsed2);
-            printf("GPU time 2: %.2f ms\n", elapsed2 / 1e6);
-
-            GLuint query3;
-            glGenQueries(1, &query3);
-            glBeginQuery(GL_TIME_ELAPSED, query3);
-
+            START_TIME(sort);
             opengl_prepare_program(sort_prog, ubo);
             sort_pairs(loc_passStep, loc_passStage);
+            END_TIME(sort);
 
-            glEndQuery(GL_TIME_ELAPSED);
-            GLuint64 elapsed3;
-            glGetQueryObjectui64v(query3, GL_QUERY_RESULT, &elapsed3);
-            printf("GPU time 3: %.2f ms\n", elapsed3 / 1e6);
+            START_TIME(chunks);
+            opengl_launch_program(chunks_prog, ubo, NB_PARTICLES);
+            END_TIME(chunks);
 
-            GLuint query4;
-            glGenQueries(1, &query4);
-            glBeginQuery(GL_TIME_ELAPSED, query4);
-
-            opengl_launch_program(chunks_prog, ubo, 1);
-
-            glEndQuery(GL_TIME_ELAPSED);
-            GLuint64 elapsed4;
-            glGetQueryObjectui64v(query4, GL_QUERY_RESULT, &elapsed4);
-            printf("GPU time 4: %.2f ms\n", elapsed4 / 1e6);
             //print_pairs(pairs_ssbo);
             //printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
 
             //print_particles(particles_ssbo);
 
+            START_TIME(density);
             opengl_launch_program(density_prog, ubo, NB_PARTICLES);
+            END_TIME(density);
             // print_densities(densities_ssbo);
             // print_predicted_positions(pred_pos_ssbo);
 
+            START_TIME(compute);
             opengl_launch_program(compute_prog, ubo, NB_PARTICLES);
+            END_TIME(compute);
 
             state.step = false;
             glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
@@ -379,6 +356,7 @@ int main()
 
         glfwSwapBuffers(win);
         glfwPollEvents();
+        double t2 = glfwGetTime();
 
         total -= FPS[fps_i] / FPS_COUNT;
 
@@ -388,7 +366,7 @@ int main()
         if (fps_i == FPS_COUNT)
             fps_i = 0;
 
-        printf("\r%f                         ", total);
+        printf("\r%f %f                         ", total, 1.0 / (t2 - t1));
 
         fflush(stdout);
     }
