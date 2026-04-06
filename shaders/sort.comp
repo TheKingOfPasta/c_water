@@ -1,0 +1,38 @@
+#include "shaders/chunks.h"
+
+uniform int NB_PARTICLES;
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+uniform int passStep;
+uniform int passStage;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+
+    uint pairDistance = uint(passStep) / 2u;
+    uint blockWidth = uint(passStep);
+
+    uint indexInBlock = idx & (pairDistance - 1u);
+    uint blockStart = (idx / pairDistance) * blockWidth;
+
+    uint left = blockStart + indexInBlock;
+    uint right = left + pairDistance;
+
+    if (right >= uint(65536))
+        return;
+
+    uint stageBlock = left / uint(passStage);
+    bool ascending  = (stageBlock & 1u) == 0u;
+
+    chunk_particle_idx_pair a = pairs[left];
+    chunk_particle_idx_pair b = pairs[right];
+
+    bool shouldSwap = ascending ? (a.chunk_idx > b.chunk_idx) : (a.chunk_idx < b.chunk_idx);
+    if (shouldSwap)
+    {
+        pairs[left]  = b;
+        pairs[right] = a;
+    }
+}

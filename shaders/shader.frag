@@ -10,7 +10,7 @@ void main()
 
     float t = clamp(speed, 0, 1);
 
-    vec4 c1 = vec4(0.0, 0.0, 0.0, 1);
+    vec4 c1 = vec4(1.0, 0.0, 0.0, 1);
     vec4 c2 = vec4(0.0, 0.6, 0.8, 1);
 
     FragColor = c1 * t + c2 * (1 - t);

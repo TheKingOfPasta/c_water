@@ -1,3 +1,4 @@
+#include <float.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
@@ -93,6 +94,35 @@ void print_pairs(GLuint ssbo)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
+int next_p2(int n)
+{
+    int res = 1;
+    while (res < n)
+        res *= 2;
+
+    return res;
+}
+
+void sort_pairs(GLuint loc_passStep, GLuint loc_passStage)
+{
+    int n = next_p2(NB_PARTICLES);
+    int numThreads = n / 2;
+
+    for (int stage = 2; stage <= n; stage <<= 1)
+    {
+        for (int step = stage; step >= 2; step >>= 1)
+        {
+            glUniform1i(loc_passStep,  step);
+            glUniform1i(loc_passStage, stage);
+
+            int groups = (numThreads + 255) / 256;
+            glDispatchCompute(groups, 1, 1);
+
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        }
+    }
+}
+
 typedef struct AppState
 {
     bool step;
@@ -182,6 +212,7 @@ int main()
     const char *density_src = read_shader("shaders/density.comp");
     const char *compute_src = read_shader("shaders/shader.comp");
     const char *init_pairs_src = read_shader("shaders/init_pairs.comp");
+    const char *sort_src = read_shader("shaders/sort.comp");
 
     const char *frag_src = read_shader("shaders/shader.frag");
     const char *vert_src = read_shader("shaders/shader.vert");
@@ -197,6 +228,7 @@ int main()
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
     GLuint compute_prog = compile_shader(GL_COMPUTE_SHADER, compute_src);
     GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, init_pairs_src);
+    GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, sort_src);
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
@@ -206,12 +238,17 @@ int main()
     c->nb_chunk_x = c->sx / c->chunk_size + 1;
     c->nb_chunk_y = c->sy / c->chunk_size + 1;
 
+    int n2 = next_p2(NB_PARTICLES);
+    chunk_particle_idx_pair* pairs = malloc(n2 * sizeof(chunk_particle_idx_pair));
+    for (int i = 0; i < n2; i++)
+        pairs[i].chunk_idx = INT32_MAX;
+
     GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
     GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
     GLuint start_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_START_CHUNKS);
     GLuint end_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_END_CHUNKS);
-    GLuint pairs_ssbo = opengl_add_array(NULL, sizeof(chunk_particle_idx_pair) * NB_PARTICLES, BINDING_PAIRS);
+    GLuint pairs_ssbo = opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
 
     init_particles(particles_ssbo);
 
@@ -224,6 +261,9 @@ int main()
     glBindBuffer(GL_UNIFORM_BUFFER, ubo);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(config), c, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, BINDING_CONFIG, ubo);
+
+    GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
+    GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -251,11 +291,8 @@ int main()
 
             opengl_launch_program(init_pairs_prog, ubo, NB_PARTICLES);
 
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, pairs_ssbo);
-            chunk_particle_idx_pair *pairs = (chunk_particle_idx_pair *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-
-            qsort(pairs, NB_PARTICLES, sizeof(chunk_particle_idx_pair), pair_sort);
-            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+            opengl_prepare_program(sort_prog, ubo);
+            sort_pairs(loc_passStep, loc_passStage);
 
             opengl_launch_program(chunks_prog, ubo, 1);
             //print_pairs(pairs_ssbo);
