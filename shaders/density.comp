@@ -50,9 +50,13 @@ void main()
             int nx = cx + dx;
             int ny = cy + dy;
             int start = start_chunks[nx + ny * c.nb_chunk_x];
-            int end = end_chunks[nx + ny * c.nb_chunk_x];
-            for (int i = start; i < end; i++)
+            int chunk_idx = pairs[start].chunk_idx;
+
+            for (int i = start; i < NB_PARTICLES; i++)
             {
+                if (pairs[i].chunk_idx != chunk_idx)
+                    break;
+
                 float dist = length(pos - predicted_positions[pairs[i].particle_idx]);
                 d += particle_density(dist);
             }

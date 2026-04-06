@@ -218,6 +218,7 @@ int main()
     const char *vert_src = read_shader("shaders/shader.vert");
 
     GLFWwindow *win = init_window();
+    glfwSwapInterval(0);
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);
@@ -243,18 +244,37 @@ int main()
     for (int i = 0; i < n2; i++)
         pairs[i].chunk_idx = INT32_MAX;
 
-    GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
+    GLuint particles_buffer;
+    glGenBuffers(1, &particles_buffer);
+
+    glBindBuffer(GL_ARRAY_BUFFER, particles_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Particle) * NB_PARTICLES, NULL, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BINDING_PARTICLES, particles_buffer);
+
+    //GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
     GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
     GLuint start_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_START_CHUNKS);
-    GLuint end_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_END_CHUNKS);
     GLuint pairs_ssbo = opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
 
-    init_particles(particles_ssbo);
+    init_particles(particles_buffer);
 
     GLuint vao;
-    glGenVertexArrays(1,&vao);
+    glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, particles_buffer);
+
+    glBindVertexArray(vao);
+    glVertexAttribPointer(
+        LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0
+    );
+    glEnableVertexAttribArray(LOCATION_POS);
+
+    glVertexAttribPointer(
+        LOCATION_VELO, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(Vec2))
+    );
+    glEnableVertexAttribArray(LOCATION_VELO);
 
     GLuint ubo;
     glGenBuffers(1, &ubo);
@@ -278,23 +298,60 @@ int main()
     {
         double t0 = glfwGetTime();
 
-        if (state.reset)
+        /*if (state.reset)
         {
             reload_config();
-            init_particles(particles_ssbo);
+            init_particles(particles_buffer);
             state.reset = false;
-        }
+        }*/
 
         if (!state.step_mode || state.step)
         {
+            GLuint query;
+            glGenQueries(1, &query);
+            glBeginQuery(GL_TIME_ELAPSED, query);
+
             opengl_launch_program(predicted_positions_prog, ubo, NB_PARTICLES);
 
+            glEndQuery(GL_TIME_ELAPSED);
+            GLuint64 elapsed;
+            glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsed);
+            printf("\n");
+            printf("GPU time 1: %.2f ms\n", elapsed / 1e6);
+
+            GLuint query2;
+            glGenQueries(1, &query2);
+            glBeginQuery(GL_TIME_ELAPSED, query2);
+
             opengl_launch_program(init_pairs_prog, ubo, NB_PARTICLES);
+
+            glEndQuery(GL_TIME_ELAPSED);
+            GLuint64 elapsed2;
+            glGetQueryObjectui64v(query2, GL_QUERY_RESULT, &elapsed2);
+            printf("GPU time 2: %.2f ms\n", elapsed2 / 1e6);
+
+            GLuint query3;
+            glGenQueries(1, &query3);
+            glBeginQuery(GL_TIME_ELAPSED, query3);
 
             opengl_prepare_program(sort_prog, ubo);
             sort_pairs(loc_passStep, loc_passStage);
 
+            glEndQuery(GL_TIME_ELAPSED);
+            GLuint64 elapsed3;
+            glGetQueryObjectui64v(query3, GL_QUERY_RESULT, &elapsed3);
+            printf("GPU time 3: %.2f ms\n", elapsed3 / 1e6);
+
+            GLuint query4;
+            glGenQueries(1, &query4);
+            glBeginQuery(GL_TIME_ELAPSED, query4);
+
             opengl_launch_program(chunks_prog, ubo, 1);
+
+            glEndQuery(GL_TIME_ELAPSED);
+            GLuint64 elapsed4;
+            glGetQueryObjectui64v(query4, GL_QUERY_RESULT, &elapsed4);
+            printf("GPU time 4: %.2f ms\n", elapsed4 / 1e6);
             //print_pairs(pairs_ssbo);
             //printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
 
@@ -307,18 +364,21 @@ int main()
             opengl_launch_program(compute_prog, ubo, NB_PARTICLES);
 
             state.step = false;
+            glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
         }
 
 
+        double t1 = glfwGetTime();
 
         glClear(GL_COLOR_BUFFER_BIT);
+
         glUseProgram(render_prog);
-        glDrawArrays(GL_POINTS,0,NB_PARTICLES);
+
+        glBindVertexArray(vao);
+        glDrawArrays(GL_POINTS, 0, NB_PARTICLES);
 
         glfwSwapBuffers(win);
         glfwPollEvents();
-
-        double t1 = glfwGetTime();
 
         total -= FPS[fps_i] / FPS_COUNT;
 
@@ -328,7 +388,7 @@ int main()
         if (fps_i == FPS_COUNT)
             fps_i = 0;
 
-        printf("\r%f           ", total);
+        printf("\r%f                         ", total);
 
         fflush(stdout);
     }

@@ -12,7 +12,3 @@ layout(std430, binding = BINDING_START_CHUNKS) buffer StartChunksBuffer
 {
     int start_chunks[];
 };
-layout(std430, binding = BINDING_END_CHUNKS) buffer EndChunksBuffer
-{
-    int end_chunks[];
-};

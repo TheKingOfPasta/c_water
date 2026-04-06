@@ -13,7 +13,6 @@ void main()
     for (int i = 0; i < c.nb_chunk_x * c.nb_chunk_y; i++)
     {
         start_chunks[i] = -1;
-        end_chunks[i] = -1;
     }
 
     int last_idx = -1;
@@ -22,16 +21,8 @@ void main()
         int curr_idx = pairs[i].chunk_idx;
         if (last_idx != curr_idx)
         {
-            if (last_idx != -1)
-            {
-                end_chunks[last_idx] = i;
-            }
             last_idx = curr_idx;
             start_chunks[last_idx] = i;
         }
-    }
-    if (last_idx != -1)
-    {
-        end_chunks[last_idx] = NB_PARTICLES;
     }
 }
