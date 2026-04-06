@@ -210,7 +210,7 @@ int main()
     const char *predicted_positions_src = read_shader("shaders/predicted_positions.comp");
     const char *chunks_src = read_shader("shaders/chunks.comp");
     const char *density_src = read_shader("shaders/density.comp");
-    const char *compute_src = read_shader("shaders/shader.comp");
+    const char *pressure_src = read_shader("shaders/pressure.comp");
     const char *init_pairs_src = read_shader("shaders/init_pairs.comp");
     const char *sort_src = read_shader("shaders/sort.comp");
 
@@ -227,7 +227,7 @@ int main()
     GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, predicted_positions_src);
     GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, chunks_src);
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
-    GLuint compute_prog = compile_shader(GL_COMPUTE_SHADER, compute_src);
+    GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, pressure_src);
     GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, init_pairs_src);
     GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, sort_src);
 
@@ -336,9 +336,9 @@ int main()
             // print_densities(densities_ssbo);
             // print_predicted_positions(pred_pos_ssbo);
 
-            START_TIME(compute);
-            opengl_launch_program(compute_prog, ubo, NB_PARTICLES);
-            END_TIME(compute);
+            START_TIME(pressure);
+            opengl_launch_program(pressure_prog, ubo, NB_PARTICLES);
+            END_TIME(pressure);
 
             state.step = false;
             glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
