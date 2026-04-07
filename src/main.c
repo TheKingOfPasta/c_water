@@ -239,7 +239,7 @@ int main()
     reload_config();
 
     GLFWwindow *win = init_window();
-    glfwSwapInterval(0);
+    //glfwSwapInterval(0);
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);
