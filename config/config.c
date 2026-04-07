@@ -13,7 +13,7 @@ config c = {
     .target_pressure = -60,
     .particle_influence_radius = 10,
     .radius = 1,
-    .gravity_multiplier = 0.0,
+    .gravity_multiplier = 1.0,
 
     .velocity_drag = 1,
     .velocity_collision_dampner = 0.9,

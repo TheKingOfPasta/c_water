@@ -205,8 +205,8 @@ void init_particles(GLuint particles_ssbo)
 
     for (int i = 0; i < NB_PARTICLES; i++)
     {
-        float rx = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 0.3f;
-        float ry = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 0.3f;
+        float rx = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 1.3f;
+        float ry = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 1.3f;
 
         particles[i].velo.x = 0;
         particles[i].velo.y = 0;

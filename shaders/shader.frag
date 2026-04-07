@@ -8,10 +8,19 @@ void main()
     if(dot(pt, pt) > 1.0)
         discard;
 
-    float t = clamp(speed, 0, 1);
+    const float max_speed = 5.5;
+    const vec4 base = vec4( 000, 000, 150, 1 );
+    const vec4 mid  = vec4( 000, 200, 200, 1 );
+    const vec4 high = vec4( 255, 255, 255, 1 );
+    const float mid_point = 0.1;
 
-    vec4 c1 = vec4(1.0, 0.0, 0.0, 1);
-    vec4 c2 = vec4(0.0, 0.6, 0.8, 1);
+    float t = speed / max_speed;
 
-    FragColor = c1 * t + c2 * (1 - t);
+    if (t > 1.0f)
+        t = 1.0f;
+
+    if (t < mid_point)
+        FragColor = base * (1 - t / mid_point) + mid * (t / mid_point);
+    else
+        FragColor = mid * (1 - (t - mid_point) / (1 - mid_point)) + high * ((t - mid_point) / (1 - mid_point));
 }
