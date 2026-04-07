@@ -252,6 +252,7 @@ int main()
     const char *init_pairs_src = read_shader("shaders/init_pairs.comp");
     const char *sort_src = read_shader("shaders/sort.comp");
     const char *init_chunks_src = read_shader("shaders/init_chunks.comp");
+    const char *viscosity_src = read_shader("shaders/viscosity.comp");
 
     const char *frag_src = read_shader("shaders/shader.frag");
     const char *vert_src = read_shader("shaders/shader.vert");
@@ -263,6 +264,7 @@ int main()
     GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, init_pairs_src);
     GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, sort_src);
     GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, init_chunks_src);
+    GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, viscosity_src);
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
@@ -372,6 +374,10 @@ int main()
             END_TIME(density);
             // print_densities(densities_ssbo);
             // print_predicted_positions(pred_pos_ssbo);
+
+            START_TIME(viscosity);
+            opengl_launch_program(viscosity_prog, ubo, NB_PARTICLES);
+            END_TIME(viscosity);
 
             START_TIME(pressure);
             opengl_launch_program(pressure_prog, ubo, NB_PARTICLES);

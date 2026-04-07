@@ -1,0 +1,54 @@
+#include "shaders/particle.glsl"
+#include "shaders/chunks.h"
+
+uniform int NB_PARTICLES;
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+vec2 particle_calculate_viscosity(uint idx, uint i)
+{
+    float dist = length(particles[idx].pos - particles[i].pos);
+
+    float v = max(0, dist * dist - c.particle_influence_radius * c.particle_influence_radius);
+
+    return c.viscosity_strength * v * v * v * (particles[i].velo - particles[idx].velo);
+}
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= NB_PARTICLES)
+        return;
+
+    Particle p = particles[idx];
+
+    vec2 res = vec2(0, 0);
+    vec2 pos = particles[idx].pos;
+
+    int radius = 1;
+
+    int cx = (int(pos.x) / c.chunk_size < 0 ? 0 : int(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1 : int(pos.x) / c.chunk_size);
+    int cy = (int(pos.y) / c.chunk_size < 0 ? 0 : int(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1 : int(pos.y) / c.chunk_size);
+
+    for (int dx = -radius; dx <= radius; dx++)
+        for (int dy = -radius; dy <= radius; dy++)
+        {
+            if (cx + dx < 0 || cy + dy < 0 || cx + dx >= c.nb_chunk_x || cy + dy >= c.nb_chunk_y)
+                continue;
+
+            uint nx = cx + dx;
+            uint ny = cy + dy;
+            uint start = start_chunks[nx + ny * c.nb_chunk_x];
+            uint chunk_idx = pairs[start].chunk_idx;
+
+            for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+            {
+                res += particle_calculate_viscosity(idx, pairs[i].particle_idx);
+            }
+        }
+
+    p.pos += res;
+
+    particles[idx] = p;
+
+}

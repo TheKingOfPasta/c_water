@@ -12,6 +12,7 @@ typedef struct
     float gravity_multiplier;
     float velocity_collision_dampner;
     float velocity_drag;
+    float viscosity_strength;
 
     int chunk_size;
 
