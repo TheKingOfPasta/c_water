@@ -1,3 +1,4 @@
+#include "shaders/chunks.h"
 #include "shaders/particle.glsl"
 
 layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
@@ -40,14 +41,33 @@ vec2 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
     return dir * ((density - c.target_pressure) * slope / density);
 }
 
-vec2 particle_compute_pressure(uint i)
+vec2 particle_compute_pressure(uint idx)
 {
     vec2 res = vec2(0, 0);
 
-    for (uint j = 0; j < NB_PARTICLES; j++)
-    {
-        res += particle_compute_pressure_other_particle(i, j);
-    }
+    vec2 pos = predicted_positions[idx];
+
+    int radius = 1;
+
+    int cx = (int(pos.x) / c.chunk_size < 0 ? 0 : int(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1 : int(pos.x) / c.chunk_size);
+    int cy = (int(pos.y) / c.chunk_size < 0 ? 0 : int(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1 : int(pos.y) / c.chunk_size);
+
+    for (int dx = -radius; dx <= radius; dx++)
+        for (int dy = -radius; dy <= radius; dy++)
+        {
+            if (cx + dx < 0 || cy + dy < 0 || cx + dx >= c.nb_chunk_x || cy + dy >= c.nb_chunk_y)
+                continue;
+
+            uint nx = cx + dx;
+            uint ny = cy + dy;
+            uint start = start_chunks[nx + ny * c.nb_chunk_x];
+            uint chunk_idx = pairs[start].chunk_idx;
+
+            for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+            {
+                res += particle_compute_pressure_other_particle(idx, pairs[i].particle_idx);
+            }
+        }
 
     return res;
 }

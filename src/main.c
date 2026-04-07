@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <assert.h>
+#include <math.h>
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
@@ -70,6 +71,25 @@ void print_particles(GLuint ssbo)
         printf("pred_pos[%i] = ", i);
         vec2_print(&densities[i].pos);
         printf("\n");
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void print_start_chunks(GLuint ssbo)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    uint32_t* densities = (uint32_t *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+
+    if (!densities)
+    {
+        printf("Failed to map densities buffer\n");
+        return;
+    }
+
+    for (int i = 0; i < c->nb_chunk_x * c->nb_chunk_y; i++)
+    {
+        printf("%i : %u\n", i, densities[i]);
     }
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -178,12 +198,23 @@ void init_particles(GLuint particles_ssbo)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
     Particle* particles = (Particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
 
-    for(int i = 0; i < NB_PARTICLES; i++)
+    int pts_x = (int)ceil(sqrt(NB_PARTICLES));
+    int pts_y = (NB_PARTICLES + pts_x - 1) / pts_x;
+
+    float padding = 2.0f * c->radius + 1.0f;
+
+    for (int i = 0; i < NB_PARTICLES; i++)
     {
-        particles[i].pos.x = 1920.0 * (float)rand() / RAND_MAX;
-        particles[i].pos.y = 1080.0 * (float)rand() / RAND_MAX;
+        float rx = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 0.3f;
+        float ry = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 0.3f;
+
         particles[i].velo.x = 0;
         particles[i].velo.y = 0;
+
+        particles[i].pos = (Vec2){
+            .x = c->sx / 2.0f + ((i % pts_x) - pts_x / 2.0f) * padding + rx,
+            .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry
+        };
     }
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -207,16 +238,6 @@ int main()
 
     reload_config();
 
-    const char *predicted_positions_src = read_shader("shaders/predicted_positions.comp");
-    const char *chunks_src = read_shader("shaders/chunks.comp");
-    const char *density_src = read_shader("shaders/density.comp");
-    const char *pressure_src = read_shader("shaders/pressure.comp");
-    const char *init_pairs_src = read_shader("shaders/init_pairs.comp");
-    const char *sort_src = read_shader("shaders/sort.comp");
-
-    const char *frag_src = read_shader("shaders/shader.frag");
-    const char *vert_src = read_shader("shaders/shader.vert");
-
     GLFWwindow *win = init_window();
     glfwSwapInterval(0);
 
@@ -224,18 +245,30 @@ int main()
     glfwSetKeyCallback(win, key_callback);
     glfwSetCursorPosCallback(win, cursor_callback);
 
+    const char *predicted_positions_src = read_shader("shaders/predicted_positions.comp");
+    const char *chunks_src = read_shader("shaders/chunks.comp");
+    const char *density_src = read_shader("shaders/density.comp");
+    const char *pressure_src = read_shader("shaders/pressure.comp");
+    const char *init_pairs_src = read_shader("shaders/init_pairs.comp");
+    const char *sort_src = read_shader("shaders/sort.comp");
+    const char *init_chunks_src = read_shader("shaders/init_chunks.comp");
+
+    const char *frag_src = read_shader("shaders/shader.frag");
+    const char *vert_src = read_shader("shaders/shader.vert");
+
     GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, predicted_positions_src);
     GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, chunks_src);
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
     GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, pressure_src);
     GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, init_pairs_src);
     GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, sort_src);
+    GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, init_chunks_src);
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
     GLuint render_prog = create_program(vs, fs);
 
-    c->chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
+    c->chunk_size = c->particle_influence_radius;
     c->nb_chunk_x = c->sx / c->chunk_size + 1;
     c->nb_chunk_y = c->sy / c->chunk_size + 1;
 
@@ -284,6 +317,7 @@ int main()
 
     GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
     GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
+    GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -298,15 +332,17 @@ int main()
     {
         double t0 = glfwGetTime();
 
-        /*if (state.reset)
+        if (state.reset)
         {
             reload_config();
             init_particles(particles_buffer);
             state.reset = false;
-        }*/
+        }
 
         if (!state.step_mode || state.step)
         {
+            opengl_launch_program(init_chunks_prog, ubo, c->nb_chunk_x * c->nb_chunk_y);
+
             printf("\n");
             START_TIME(predicted_positions);
             opengl_launch_program(predicted_positions_prog, ubo, NB_PARTICLES);
@@ -318,6 +354,7 @@ int main()
 
             START_TIME(sort);
             opengl_prepare_program(sort_prog, ubo);
+            glUniform1i(loc_next_p2, n2);
             sort_pairs(loc_passStep, loc_passStage);
             END_TIME(sort);
 
@@ -366,7 +403,7 @@ int main()
         if (fps_i == FPS_COUNT)
             fps_i = 0;
 
-        printf("\r%f %f                         ", total, 1.0 / (t2 - t1));
+        printf("\r%f %f                         ", total, 1.0 / (t2 - t0));
 
         fflush(stdout);
     }
