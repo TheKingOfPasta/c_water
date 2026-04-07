@@ -30,15 +30,13 @@ vec2 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
     if (dist < 0.00001 || dist > c.particle_influence_radius)
         return vec2(0, 0);
 
-    float density = (densities[p2_index] + densities[p1_index]) / 2;
-    if (density < 0.00001)
-        return vec2(0, 0);
+    float shared_density = (densities[p2_index] + densities[p1_index]) / 2;
 
     dir = dir * (1.0 / dist);
 
     float slope = particle_compute_density_gradient(dist);
 
-    return dir * ((density - c.target_pressure) * slope / density);
+    return dir * ((shared_density - c.target_pressure) * slope / densities[p2_index]);
 }
 
 vec2 particle_compute_pressure(uint idx)
