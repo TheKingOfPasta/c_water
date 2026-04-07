@@ -147,7 +147,7 @@ char *read_shader(char *file)
 
     char *bindings = read_all_file("src/opengl/headers.h");
     char *f = read_all_file(file);
-    char *config = read_all_file("src/opengl/headers.glsl");
+    char *config = read_all_file("shaders/headers.glsl");
     char *f_cpy = read_shader_includes(file);
 
     char* res = calloc(strlen(version) + strlen(bindings) + strlen(config) + strlen(f_cpy) + 2, sizeof(char));

@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS += -Wall -Wextra -Werror -Wvla -pedantic -Wswitch
 CFLAGS += -Wno-error=unused-variable -Wno-error=unused-result
-# CFLAGS += -fsanitize=address
-CFLAGS += -O3 -std=c23 -fopenmp -Isrc -Iconfig -g
+# CFLAGS += -fsanitize=address -g
+CFLAGS += -O3 -std=c23 -fopenmp -Isrc -Iconfig
 LDFLAGS = -lglfw -lGL -lm -lGLEW -ldl
 
 ifeq ($(shell test -f /etc/NIXOS && echo yes),yes)
