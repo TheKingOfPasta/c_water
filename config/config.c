@@ -14,7 +14,7 @@ config c = {
     .particle_influence_radius = 10,
     .radius = 1,
     .gravity_multiplier = 0.2,
-    .viscosity_strength = 0.0000000001,
+    .viscosity_strength = 0, // 0.0000000001,
 
     .velocity_drag = 1,
     .velocity_collision_dampner = 0.9,

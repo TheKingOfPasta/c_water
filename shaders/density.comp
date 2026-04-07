@@ -49,6 +49,8 @@ void main()
             int nx = cx + dx;
             int ny = cy + dy;
             int start = start_chunks[nx + ny * c.nb_chunk_x];
+			if (start >= NB_PARTICLES)
+				continue;
             int chunk_idx = pairs[start].chunk_idx;
 
             for (int i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
