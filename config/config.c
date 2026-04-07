@@ -9,11 +9,11 @@ config c = {
     .sy = 1080,
 #endif
 
-    .pressure_force = 0.001,
-    .target_pressure = -60,
+    .pressure_force = 0.1,
+    .target_pressure = -2,
     .particle_influence_radius = 10,
     .radius = 1,
-    .gravity_multiplier = 1.0,
+    .gravity_multiplier = 0.2,
 
     .velocity_drag = 1,
     .velocity_collision_dampner = 0.9,
