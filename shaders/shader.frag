@@ -8,11 +8,11 @@ void main()
     if(dot(pt, pt) > 1.0)
         discard;
 
-    const float max_speed = 5.5;
+    const float max_speed = 10000;
     const vec4 base = vec4( 000, 000, 150, 1 );
     const vec4 mid  = vec4( 000, 200, 200, 1 );
     const vec4 high = vec4( 255, 255, 255, 1 );
-    const float mid_point = 0.1;
+    const float mid_point = 0.5;
 
     float t = speed / max_speed;
 
