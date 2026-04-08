@@ -59,7 +59,7 @@ void main()
             }
         }
 
-    p.velo += res * s.dt;
+    p.velo += res * s.dt * c.viscosity_strength;
 
     particles[idx] = p;
 

@@ -9,12 +9,12 @@ config c = {
     .sy = 1080,
 #endif
 
-    .pressure_force = 3000,
-    .target_pressure = -2,
+    .pressure_force = 300,
+    .target_pressure = -50,
     .particle_influence_radius = 10,
     .radius = 5,
     .gravity_multiplier = 3000,
-    .viscosity_strength = 0, // 0.0000000001,
+    .viscosity_strength = 10,
 
     .velocity_drag = 1,
     .velocity_collision_dampner = 0.9,

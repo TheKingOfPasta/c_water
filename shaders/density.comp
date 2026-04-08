@@ -37,8 +37,8 @@ void main()
 
     int radius = 1;
 
-    int cx = (int(pos.x) / c.chunk_size < 0 ? 0 : int(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1 : int(pos.x) / c.chunk_size);
-    int cy = (int(pos.y) / c.chunk_size < 0 ? 0 : int(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1 : int(pos.y) / c.chunk_size);
+    int cx = clamp(int(floor(pos.x / c.chunk_size)), 0, c.nb_chunk_x - 1);
+    int cy = clamp(int(floor(pos.y / c.chunk_size)), 0, c.nb_chunk_y - 1);
 
     for (int dx = -radius; dx <= radius; dx++)
         for (int dy = -radius; dy <= radius; dy++)
