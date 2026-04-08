@@ -1,27 +1,26 @@
 #include <float.h>
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
+// glad
 #include <GL/gl.h>
+#include <GLFW/glfw3.h>
 #include <assert.h>
 #include <math.h>
-#include <string.h>
-#include <time.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
-#include <stdarg.h>
 
 #include "config_reloader.h"
 #include "opengl/shader_simulation.h"
-#include "utils/utils.h"
 #include "simulation/simulation.h"
-#include "opengl/utils.h"
 #include "opengl/headers.h"
+#include "opengl/utils.h"
 
 void print_densities(GLuint densities_ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, densities_ssbo);
-    float *densities = (float *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    float* densities = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     if (!densities)
     {
@@ -38,7 +37,7 @@ void print_densities(GLuint densities_ssbo)
 void print_predicted_positions(GLuint ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    Vec2* densities = (Vec2 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    Vec2* densities = (Vec2*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     if (!densities)
     {
@@ -59,7 +58,7 @@ void print_predicted_positions(GLuint ssbo)
 void print_particles(GLuint ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    Particle* densities = (Particle *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    Particle* densities = (Particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     if (!densities)
     {
@@ -80,7 +79,7 @@ void print_particles(GLuint ssbo)
 void print_start_chunks(GLuint ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    uint32_t* densities = (uint32_t *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    uint32_t* densities = (uint32_t*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     if (!densities)
     {
@@ -99,7 +98,8 @@ void print_start_chunks(GLuint ssbo)
 void print_pairs(GLuint ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    chunk_particle_idx_pair* densities = (chunk_particle_idx_pair*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    chunk_particle_idx_pair* densities =
+        (chunk_particle_idx_pair*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     if (!densities)
     {
@@ -133,7 +133,7 @@ void sort_pairs(GLuint loc_passStep, GLuint loc_passStage)
     {
         for (int step = stage; step >= 2; step >>= 1)
         {
-            glUniform1i(loc_passStep,  step);
+            glUniform1i(loc_passStep, step);
             glUniform1i(loc_passStage, stage);
 
             int groups = (numThreads + 255) / 256;
@@ -162,8 +162,7 @@ static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
     state->mouse_y = ypos;
 }
 
-static void key_callback(GLFWwindow* window, int key,
-                         [[maybe_unused]] int scancode, int action,
+static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action,
                          [[maybe_unused]] int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -214,7 +213,7 @@ void init_particles(GLuint particles_ssbo)
 
         particles[i].pos = (Vec2){
             .x = c->sx / 2.0f + ((i % pts_x) - pts_x / 2.0f) * padding + rx,
-            .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry
+            .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry,
         };
     }
 
@@ -240,14 +239,15 @@ int main()
     reload_config();
     s = calloc(1, sizeof(shader_simulation));
 
-    GLFWwindow *win = init_window();
-    //glfwSwapInterval(0);
+    GLFWwindow* win = init_window();
+    // glfwSwapInterval(0);
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);
     glfwSetCursorPosCallback(win, cursor_callback);
 
-    GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/predicted_positions.comp");
+    GLuint predicted_positions_prog =
+        compile_shader(GL_COMPUTE_SHADER, "shaders/predicted_positions.comp");
     GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/chunks.comp");
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density.comp");
     GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/pressure.comp");
@@ -255,6 +255,7 @@ int main()
     GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/sort.comp");
     GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_chunks.comp");
     GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/viscosity.comp");
+    GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, "shaders/shader.vert");
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, "shaders/shader.frag");
@@ -276,11 +277,15 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(Particle) * NB_PARTICLES, NULL, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BINDING_PARTICLES, particles_buffer);
 
-    //GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES, BINDING_PARTICLES);
-    GLuint pred_pos_ssbo = opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
+    // GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES,
+    // BINDING_PARTICLES);
+    GLuint pred_pos_ssbo =
+        opengl_add_array(NULL, sizeof(Vec2) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
-    GLuint start_chunks_ssbo = opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_START_CHUNKS);
-    GLuint pairs_ssbo = opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
+    GLuint start_chunks_ssbo = opengl_add_array(
+        NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y, BINDING_START_CHUNKS);
+    GLuint pairs_ssbo =
+        opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
 
     init_particles(particles_buffer);
 
@@ -291,14 +296,11 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, particles_buffer);
 
     glBindVertexArray(vao);
-    glVertexAttribPointer(
-        LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0
-    );
+    glVertexAttribPointer(LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
     glEnableVertexAttribArray(LOCATION_POS);
 
-    glVertexAttribPointer(
-        LOCATION_VELO, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(Vec2))
-    );
+    glVertexAttribPointer(LOCATION_VELO, 2, GL_FLOAT, GL_FALSE, sizeof(Particle),
+                          (void*)(sizeof(Vec2)));
     glEnableVertexAttribArray(LOCATION_VELO);
 
     bind_uniform_buffer(&s->config_ubo, BINDING_CONFIG, c, sizeof(config));
@@ -310,14 +312,14 @@ int main()
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    #define FPS_COUNT 100
+#define FPS_COUNT 100
 
     double total = 0.0;
 
     double FPS[FPS_COUNT] = { 0 };
     size_t fps_i = 0;
 
-    while(!glfwWindowShouldClose(win))
+    while (!glfwWindowShouldClose(win))
     {
         double t0 = glfwGetTime();
 
@@ -351,10 +353,10 @@ int main()
             opengl_launch_program(chunks_prog, s, NB_PARTICLES);
             END_TIME(chunks);
 
-            //print_pairs(pairs_ssbo);
-            //printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
+            // print_pairs(pairs_ssbo);
+            // printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
 
-            //print_particles(particles_ssbo);
+            // print_particles(particles_ssbo);
 
             START_TIME(density);
             opengl_launch_program(density_prog, s, NB_PARTICLES);
@@ -362,18 +364,21 @@ int main()
             // print_densities(densities_ssbo);
             // print_predicted_positions(pred_pos_ssbo);
 
-            START_TIME(viscosity);
-            opengl_launch_program(viscosity_prog, s, NB_PARTICLES);
-            END_TIME(viscosity);
-
             START_TIME(pressure);
             opengl_launch_program(pressure_prog, s, NB_PARTICLES);
             END_TIME(pressure);
 
+            START_TIME(viscosity);
+            opengl_launch_program(viscosity_prog, s, NB_PARTICLES);
+            END_TIME(viscosity);
+
+            START_TIME(update_pos);
+            opengl_launch_program(update_pos_prog, s, NB_PARTICLES);
+            END_TIME(update_pos);
+
             state.step = false;
             glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
         }
-
 
         double t1 = glfwGetTime();
 

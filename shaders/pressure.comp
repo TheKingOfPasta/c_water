@@ -80,39 +80,10 @@ void main()
     if (i >= NB_PARTICLES)
         return;
 
-    Particle p = particles[i];
-
     vec2 grad = particle_compute_pressure(i);
     grad = -grad;
 
     grad *= c.pressure_force / densities[i];
 
-    p.velo += grad;
-    p.pos += p.velo;
-    p.velo *= c.velocity_drag;
-
-    if (p.pos.x > c.sx)
-    {
-        p.pos.x = c.sx - (p.pos.x - c.sx);
-        p.velo.x *= -c.velocity_drag;
-    }
-    else if (p.pos.x < 0.0)
-    {
-        p.pos.x = -p.pos.x;
-        p.velo.x *= -c.velocity_drag;
-    }
-
-    /*if (p.pos.y > c.sy)
-    {
-        p.pos.y = c.sy - (p.pos.y - c.sy);
-        p.velo.y *= -c.velocity_drag;
-    }
-    else */
-    if (p.pos.y < 0)
-    {
-        p.pos.y *= -1.0;
-        p.velo.y *= -c.velocity_drag;
-    }
-
-    particles[i] = p;
+    particles[i].velo += grad;
 }
