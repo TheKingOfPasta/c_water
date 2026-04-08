@@ -59,7 +59,7 @@ void main()
             }
         }
 
-    p.velo += res;
+    p.velo += res * s.dt;
 
     particles[idx] = p;
 

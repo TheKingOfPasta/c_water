@@ -240,7 +240,7 @@ int main()
     s = calloc(1, sizeof(shader_simulation));
 
     GLFWwindow* win = init_window();
-    // glfwSwapInterval(0);
+    glfwSwapInterval(0);
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);

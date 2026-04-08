@@ -85,5 +85,5 @@ void main()
 
     grad *= c.pressure_force / densities[i];
 
-    particles[i].velo += grad;
+    particles[i].velo += grad * s.dt;
 }
