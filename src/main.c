@@ -15,7 +15,7 @@
 #include "opengl/headers.h"
 #include "opengl/shader_simulation.h"
 #include "opengl/utils.h"
-#include "simulation/simulation.h"
+#include "opengl/shader_particle.h"
 
 void print_densities(GLuint densities_ssbo)
 {
@@ -58,7 +58,7 @@ void print_predicted_positions(GLuint ssbo)
 void print_particles(GLuint ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    Particle* densities = (Particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    shader_particle* densities = (shader_particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     if (!densities)
     {
@@ -196,7 +196,7 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 void init_particles(GLuint particles_ssbo)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
-    Particle* particles = (Particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+    shader_particle* particles = (shader_particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
 
     int pts_x = (int)ceil(sqrt(NB_PARTICLES));
     int pts_y = (NB_PARTICLES + pts_x - 1) / pts_x;
@@ -274,7 +274,7 @@ int main()
     glGenBuffers(1, &particles_buffer);
 
     glBindBuffer(GL_ARRAY_BUFFER, particles_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Particle) * NB_PARTICLES, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(shader_particle) * NB_PARTICLES, NULL, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BINDING_PARTICLES, particles_buffer);
 
     // GLuint particles_ssbo = opengl_add_array(NULL, sizeof(Particle) * NB_PARTICLES,
@@ -296,10 +296,10 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, particles_buffer);
 
     glBindVertexArray(vao);
-    glVertexAttribPointer(LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)0);
+    glVertexAttribPointer(LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(shader_particle), (void*)0);
     glEnableVertexAttribArray(LOCATION_POS);
 
-    glVertexAttribPointer(LOCATION_VELO, 2, GL_FLOAT, GL_FALSE, sizeof(Particle),
+    glVertexAttribPointer(LOCATION_VELO, 2, GL_FLOAT, GL_FALSE, sizeof(shader_particle),
                           (void*)(sizeof(Vec2)));
     glEnableVertexAttribArray(LOCATION_VELO);
 
