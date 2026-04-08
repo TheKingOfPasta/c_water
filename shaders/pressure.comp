@@ -91,26 +91,27 @@ void main()
     p.pos += p.velo;
     p.velo *= c.velocity_drag;
 
-    if (p.pos.x > 1920.0)
+    if (p.pos.x > c.sx)
     {
-        p.pos.x = 1920;
-        p.velo.x *= -0.9;
+        p.pos.x = c.sx - (p.pos.x - c.sx);
+        p.velo.x *= -c.velocity_drag;
     }
     else if (p.pos.x < 0.0)
     {
         p.pos.x = -p.pos.x;
-        p.velo.x *= -0.9;
+        p.velo.x *= -c.velocity_drag;
     }
 
-    if (p.pos.y > 1080.0)
+    /*if (p.pos.y > c.sy)
     {
-        p.pos.y = 1080;
-        p.velo.y *= -0.9;
+        p.pos.y = c.sy - (p.pos.y - c.sy);
+        p.velo.y *= -c.velocity_drag;
     }
-    else if (p.pos.y < 0.0)
+    else */
+    if (p.pos.y < 0)
     {
         p.pos.y *= -1.0;
-        p.velo.y *= -0.9;
+        p.velo.y *= -c.velocity_drag;
     }
 
     particles[i] = p;
