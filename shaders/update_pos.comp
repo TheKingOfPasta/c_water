@@ -1,0 +1,44 @@
+#include "shaders/particle.glsl"
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+uniform int NB_PARTICLES;
+
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= NB_PARTICLES)
+        return;
+
+    Particle p = particles[i];
+
+    p.velo *= c.velocity_drag;
+
+    p.pos += p.velo;
+
+
+    if (p.pos.x > c.sx)
+    {
+        p.pos.x = c.sx - (p.pos.x - c.sx);
+        p.velo.x *= -c.velocity_drag;
+    }
+    else if (p.pos.x < 0.0)
+    {
+        p.pos.x = -p.pos.x;
+        p.velo.x *= -c.velocity_drag;
+    }
+
+    /*if (p.pos.y > c.sy)
+    {
+        p.pos.y = c.sy - (p.pos.y - c.sy);
+        p.velo.y *= -c.velocity_drag;
+    }
+    else */
+    if (p.pos.y < 0)
+    {
+        p.pos.y *= -1.0;
+        p.velo.y *= -c.velocity_drag;
+    }
+
+    particles[i] = p;
+}
