@@ -64,8 +64,10 @@ GLuint create_compute_program(GLuint s, const char *src)
     return p;
 }
 
-GLuint compile_shader(GLenum type, const char* src)
+GLuint compile_shader(GLenum type, char* file_name)
 {
+    const char *src = read_shader(file_name);
+
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
     glCompileShader(s);

@@ -245,31 +245,19 @@ int main()
     glfwSetKeyCallback(win, key_callback);
     glfwSetCursorPosCallback(win, cursor_callback);
 
-    const char* predicted_positions_src = read_shader("shaders/predicted_positions.comp");
-    const char* chunks_src = read_shader("shaders/chunks.comp");
-    const char* density_src = read_shader("shaders/density.comp");
-    const char* pressure_src = read_shader("shaders/pressure.comp");
-    const char* init_pairs_src = read_shader("shaders/init_pairs.comp");
-    const char* sort_src = read_shader("shaders/sort.comp");
-    const char* init_chunks_src = read_shader("shaders/init_chunks.comp");
-    const char* viscosity_src = read_shader("shaders/viscosity.comp");
-    const char* update_pos_src = read_shader("shaders/update_pos.comp");
+    GLuint predicted_positions_prog =
+        compile_shader(GL_COMPUTE_SHADER, "shaders/predicted_positions.comp");
+    GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/chunks.comp");
+    GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density.comp");
+    GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/pressure.comp");
+    GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_pairs.comp");
+    GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/sort.comp");
+    GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_chunks.comp");
+    GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/viscosity.comp");
+    GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");
 
-    const char* frag_src = read_shader("shaders/shader.frag");
-    const char* vert_src = read_shader("shaders/shader.vert");
-
-    GLuint predicted_positions_prog = compile_shader(GL_COMPUTE_SHADER, predicted_positions_src);
-    GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, chunks_src);
-    GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, density_src);
-    GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, pressure_src);
-    GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, init_pairs_src);
-    GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, sort_src);
-    GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, init_chunks_src);
-    GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, viscosity_src);
-    GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, update_pos_src);
-
-    GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
-    GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
+    GLuint vs = compile_shader(GL_VERTEX_SHADER, "shaders/shader.vert");
+    GLuint fs = compile_shader(GL_FRAGMENT_SHADER, "shaders/shader.frag");
     GLuint render_prog = create_program(vs, fs);
 
     c->chunk_size = c->particle_influence_radius;
