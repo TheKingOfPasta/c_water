@@ -7,12 +7,14 @@
 #include "simulation/simulation.h"
 #include "utils/utils.h"
 
-void opengl_add_config(GLuint program, GLuint ubo)
+void opengl_add_config(GLuint program, shader_simulation *s)
 {
     glUniform1i(glGetUniformLocation(program, "NB_PARTICLES"), NB_PARTICLES);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
+    glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
 }
 
 GLuint opengl_add_array(void *array, int size, int index)
@@ -26,10 +28,18 @@ GLuint opengl_add_array(void *array, int size, int index)
     return ssbo;
 }
 
-void opengl_prepare_program(GLuint program, GLuint ubo)
+void bind_uniform_buffer(GLuint *ubo, GLuint binding, void *ptr, size_t elt_size)
+{
+    glGenBuffers(1, ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, *ubo);
+    glBufferData(GL_UNIFORM_BUFFER, elt_size, ptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, binding, *ubo);
+}
+
+void opengl_prepare_program(GLuint program, shader_simulation *s)
 {
     glUseProgram(program);
-    opengl_add_config(program, ubo);
+    opengl_add_config(program, s);
 }
 
 void opengl_launch_last_prepared_program(size_t elt_count)
@@ -39,9 +49,9 @@ void opengl_launch_last_prepared_program(size_t elt_count)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 }
 
-void opengl_launch_program(GLuint program, GLuint ubo, size_t elt_count)
+void opengl_launch_program(GLuint program, shader_simulation *s, size_t elt_count)
 {
-    opengl_prepare_program(program, ubo);
+    opengl_prepare_program(program, s);
     opengl_launch_last_prepared_program(elt_count);
 }
 

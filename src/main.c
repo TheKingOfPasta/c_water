@@ -12,6 +12,7 @@
 #include <stdarg.h>
 
 #include "config_reloader.h"
+#include "opengl/shader_simulation.h"
 #include "utils/utils.h"
 #include "simulation/simulation.h"
 #include "opengl/utils.h"
@@ -237,6 +238,7 @@ int main()
     srand(time(NULL));
 
     reload_config();
+    s = calloc(1, sizeof(shader_simulation));
 
     GLFWwindow *win = init_window();
     //glfwSwapInterval(0);
@@ -299,11 +301,8 @@ int main()
     );
     glEnableVertexAttribArray(LOCATION_VELO);
 
-    GLuint ubo;
-    glGenBuffers(1, &ubo);
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(config), c, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, BINDING_CONFIG, ubo);
+    bind_uniform_buffer(&s->config_ubo, BINDING_CONFIG, c, sizeof(config));
+    bind_uniform_buffer(&s->simulation_ubo, BINDING_SIMULATION, s, sizeof(shader_simulation));
 
     GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
     GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
@@ -331,25 +330,25 @@ int main()
 
         if (!state.step_mode || state.step)
         {
-            opengl_launch_program(init_chunks_prog, ubo, c->nb_chunk_x * c->nb_chunk_y);
+            opengl_launch_program(init_chunks_prog, s, c->nb_chunk_x * c->nb_chunk_y);
 
             printf("\n");
             START_TIME(predicted_positions);
-            opengl_launch_program(predicted_positions_prog, ubo, NB_PARTICLES);
+            opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
             END_TIME(predicted_positions);
 
             START_TIME(init_pairs);
-            opengl_launch_program(init_pairs_prog, ubo, NB_PARTICLES);
+            opengl_launch_program(init_pairs_prog, s, NB_PARTICLES);
             END_TIME(init_pairs);
 
             START_TIME(sort);
-            opengl_prepare_program(sort_prog, ubo);
+            opengl_prepare_program(sort_prog, s);
             glUniform1i(loc_next_p2, n2);
             sort_pairs(loc_passStep, loc_passStage);
             END_TIME(sort);
 
             START_TIME(chunks);
-            opengl_launch_program(chunks_prog, ubo, NB_PARTICLES);
+            opengl_launch_program(chunks_prog, s, NB_PARTICLES);
             END_TIME(chunks);
 
             //print_pairs(pairs_ssbo);
@@ -358,17 +357,17 @@ int main()
             //print_particles(particles_ssbo);
 
             START_TIME(density);
-            opengl_launch_program(density_prog, ubo, NB_PARTICLES);
+            opengl_launch_program(density_prog, s, NB_PARTICLES);
             END_TIME(density);
             // print_densities(densities_ssbo);
             // print_predicted_positions(pred_pos_ssbo);
 
             START_TIME(viscosity);
-            opengl_launch_program(viscosity_prog, ubo, NB_PARTICLES);
+            opengl_launch_program(viscosity_prog, s, NB_PARTICLES);
             END_TIME(viscosity);
 
             START_TIME(pressure);
-            opengl_launch_program(pressure_prog, ubo, NB_PARTICLES);
+            opengl_launch_program(pressure_prog, s, NB_PARTICLES);
             END_TIME(pressure);
 
             state.step = false;
@@ -398,6 +397,7 @@ int main()
             fps_i = 0;
 
         printf("\r%f %f                         ", total, 1.0 / (t2 - t0));
+        s->dt = t2 - t0;
 
         fflush(stdout);
     }
