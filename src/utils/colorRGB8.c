@@ -41,8 +41,7 @@ inline uint8_t clamp_u8(int v)
 
 inline RGB8 rgb8_lerp(RGB8 a, RGB8 b, float y)
 {
-    return (RGB8){ (uint8_t)(a.r * (1.0f - y) + b.r * y),
-                   (uint8_t)(a.g * (1.0f - y) + b.g * y),
+    return (RGB8){ (uint8_t)(a.r * (1.0f - y) + b.r * y), (uint8_t)(a.g * (1.0f - y) + b.g * y),
                    (uint8_t)(a.b * (1.0f - y) + b.b * y) };
 }
 
@@ -53,8 +52,7 @@ inline float rgb8_norm(RGB8 c)
 
 inline RGB8 rgb8_add(RGB8 a, RGB8 b)
 {
-    return (RGB8){ clamp_u8(a.r + b.r), clamp_u8(a.g + b.g),
-                   clamp_u8(a.b + b.b) };
+    return (RGB8){ clamp_u8(a.r + b.r), clamp_u8(a.g + b.g), clamp_u8(a.b + b.b) };
 }
 
 inline RGB8 rgb8_mul(RGB8 c, float l)

@@ -25,10 +25,9 @@ Simulation simulation_gen()
 
         s.particles[i].velo = vec2_zero();
 
-        s.particles[i].pos = (Vec2){
-            .x = c->sx / 2.0f + ((i % pts_x) - pts_x / 2.0f) * padding + rx,
-            .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry
-        };
+        s.particles[i].pos =
+            (Vec2){ .x = c->sx / 2.0f + ((i % pts_x) - pts_x / 2.0f) * padding + rx,
+                    .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry };
     }
 
     s.chunk_size = c->radius * CHUNK_SIZE_SCALE_COMPARED_TO_PARTICLE_RADIUS;
@@ -109,7 +108,8 @@ static inline void simulation_update_chunks(Simulation* s, Vec2 predicted_positi
     }
 }
 
-float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t index)
+float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PARTICLES],
+                                 size_t index)
 {
     const float mass = 1.0f;
 
@@ -117,7 +117,8 @@ float simulation_compute_density(Simulation* s, Vec2 predicted_positions[NB_PART
 
     LOOP_NEIGHBOURS(predicted_positions[index], c->particle_influence_radius / s->chunk_size + 1)
     {
-        float dist = vec2_dist(predicted_positions[index], predicted_positions[s->pairs[i].particle_idx]);
+        float dist =
+            vec2_dist(predicted_positions[index], predicted_positions[s->pairs[i].particle_idx]);
         d += particle_density(dist);
     }
 
@@ -148,9 +149,7 @@ void simulation_step(Simulation* s)
     {
         Particle* p = s->particles + i;
 
-        vec2_add_inplace(
-            &p->velo,
-            (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier });
+        vec2_add_inplace(&p->velo, (Vec2){ .x = 0, .y = 0.0981f * c->gravity_multiplier });
 
         predicted_positions[i] = p->pos;
         vec2_add_inplace(predicted_positions + i, p->velo);
@@ -169,8 +168,7 @@ void simulation_step(Simulation* s)
 
         grad = vec2_neg(grad);
 
-        grad = vec2_mul_scalar(
-            grad, c->pressure_force / s->particle_densities[i]);
+        grad = vec2_mul_scalar(grad, c->pressure_force / s->particle_densities[i]);
 
         vec2_add_inplace(&p->velo, grad);
 
@@ -200,16 +198,13 @@ void simulation_step(Simulation* s)
             if (index < j)
                 continue;
 
-            float dist_sqrd =
-                vec2_dist_sqrd(positions[j], positions[index]);
+            float dist_sqrd = vec2_dist_sqrd(positions[j], positions[index]);
             if (dist_sqrd < rad4 && dist_sqrd > 0.0001)
             {
                 float dist = sqrtf(dist_sqrd);
 
                 Vec2 dir = vec2_sub(positions[j], positions[index]);
-                float dot = vec2_dot(vec2_sub(s->particles[j].velo,
-                                              s->particles[index].velo),
-                                     dir);
+                float dot = vec2_dot(vec2_sub(s->particles[j].velo, s->particles[index].velo), dir);
 
                 if (dot < 0)
                 {
@@ -222,13 +217,10 @@ void simulation_step(Simulation* s)
                     collided[index] = true;
                 }
 
-                Vec2 d2 =
-                    vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
+                Vec2 d2 = vec2_mul_scalar(dir, (2 * c->radius - dist) / dist);
 
-                vec2_add_inplace(positions + j,
-                                 vec2_mul_scalar(d2, 0.5f));
-                vec2_sub_inplace(positions + index,
-                                 vec2_mul_scalar(d2, 0.5f));
+                vec2_add_inplace(positions + j, vec2_mul_scalar(d2, 0.5f));
+                vec2_sub_inplace(positions + index, vec2_mul_scalar(d2, 0.5f));
             }
         }
     }

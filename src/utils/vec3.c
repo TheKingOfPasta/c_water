@@ -59,8 +59,7 @@ float vec3_dot(Vec3 a, Vec3 b)
 
 Vec3 vec3_cross(Vec3 a, Vec3 b)
 {
-    return (Vec3){ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
-                   a.x * b.y - a.y * b.x };
+    return (Vec3){ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
 }
 
 float vec3_norm_sqrd(Vec3 v)
@@ -94,8 +93,7 @@ Vec3 vec3_reflect(Vec3 I, Vec3 N)
 bool vec3_equal(Vec3 a, Vec3 b)
 {
     const float eps = 0.003f;
-    return fabsf(a.x - b.x) < eps && fabsf(a.y - b.y) < eps
-        && fabsf(a.z - b.z) < eps;
+    return fabsf(a.x - b.x) < eps && fabsf(a.y - b.y) < eps && fabsf(a.z - b.z) < eps;
 }
 
 void vec3_print(const Vec3* v)

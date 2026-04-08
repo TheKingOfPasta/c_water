@@ -1,13 +1,14 @@
 #include "opengl/utils.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "opengl/headers.h"
 #include "config_reloader.h"
+#include "opengl/headers.h"
 #include "simulation/simulation.h"
 #include "utils/utils.h"
 
-void opengl_add_config(GLuint program, shader_simulation *s)
+void opengl_add_config(GLuint program, shader_simulation* s)
 {
     glUniform1i(glGetUniformLocation(program, "NB_PARTICLES"), NB_PARTICLES);
 
@@ -17,7 +18,7 @@ void opengl_add_config(GLuint program, shader_simulation *s)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
 }
 
-GLuint opengl_add_array(void *array, int size, int index)
+GLuint opengl_add_array(void* array, int size, int index)
 {
     GLuint ssbo;
     glGenBuffers(1, &ssbo);
@@ -28,7 +29,7 @@ GLuint opengl_add_array(void *array, int size, int index)
     return ssbo;
 }
 
-void bind_uniform_buffer(GLuint *ubo, GLuint binding, void *ptr, size_t elt_size)
+void bind_uniform_buffer(GLuint* ubo, GLuint binding, void* ptr, size_t elt_size)
 {
     glGenBuffers(1, ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, *ubo);
@@ -36,7 +37,7 @@ void bind_uniform_buffer(GLuint *ubo, GLuint binding, void *ptr, size_t elt_size
     glBindBufferBase(GL_UNIFORM_BUFFER, binding, *ubo);
 }
 
-void opengl_prepare_program(GLuint program, shader_simulation *s)
+void opengl_prepare_program(GLuint program, shader_simulation* s)
 {
     glUseProgram(program);
     opengl_add_config(program, s);
@@ -44,18 +45,18 @@ void opengl_prepare_program(GLuint program, shader_simulation *s)
 
 void opengl_launch_last_prepared_program(size_t elt_count)
 {
-    glDispatchCompute((elt_count+255)/256,1,1);
+    glDispatchCompute((elt_count + 255) / 256, 1, 1);
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 }
 
-void opengl_launch_program(GLuint program, shader_simulation *s, size_t elt_count)
+void opengl_launch_program(GLuint program, shader_simulation* s, size_t elt_count)
 {
     opengl_prepare_program(program, s);
     opengl_launch_last_prepared_program(elt_count);
 }
 
-GLuint create_compute_program(GLuint s, const char *src)
+GLuint create_compute_program(GLuint s, const char* src)
 {
     GLuint p = glCreateProgram();
     glAttachShader(p, s);
@@ -76,7 +77,7 @@ GLuint create_compute_program(GLuint s, const char *src)
 
 GLuint compile_shader(GLenum type, char* file_name)
 {
-    const char *src = read_shader(file_name);
+    const char* src = read_shader(file_name);
 
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
@@ -84,7 +85,7 @@ GLuint compile_shader(GLenum type, char* file_name)
 
     int ok;
     glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
-    if(!ok)
+    if (!ok)
     {
         char log[1024];
         glGetShaderInfoLog(s, 1024, NULL, log);
@@ -101,20 +102,20 @@ GLuint compile_shader(GLenum type, char* file_name)
 GLuint create_program(GLuint s1, GLuint s2)
 {
     GLuint p = glCreateProgram();
-    glAttachShader(p,s1);
-    glAttachShader(p,s2);
+    glAttachShader(p, s1);
+    glAttachShader(p, s2);
     glLinkProgram(p);
 
     return p;
 }
 
-char *read_shader_includes(char *file)
+char* read_shader_includes(char* file)
 {
-    char *f = read_all_file(file);
+    char* f = read_all_file(file);
     size_t result_len = 1;
-    char *result = calloc(result_len, sizeof(char));
+    char* result = calloc(result_len, sizeof(char));
 
-    const char *include_text = "#include \"";
+    const char* include_text = "#include \"";
     size_t include_len = strlen(include_text);
     size_t f_i = 0;
     size_t len = strlen(f);
@@ -131,7 +132,7 @@ char *read_shader_includes(char *file)
                 file_name[file_name_size++] = f[f_i++];
             f_i++;
 
-            char *included = read_shader_includes(file_name);
+            char* included = read_shader_includes(file_name);
             size_t included_len = strlen(included);
 
             result = realloc(result, result_len + included_len + 1 + len);
@@ -153,16 +154,17 @@ char *read_shader_includes(char *file)
     return result;
 }
 
-char *read_shader(char *file)
+char* read_shader(char* file)
 {
-    char *version = "#version 430 core\n#line 1\n\n";
+    char* version = "#version 430 core\n#line 1\n\n";
 
-    char *bindings = read_all_file("src/opengl/headers.h");
-    char *f = read_all_file(file);
-    char *config = read_all_file("shaders/headers.glsl");
-    char *f_cpy = read_shader_includes(file);
+    char* bindings = read_all_file("src/opengl/headers.h");
+    char* f = read_all_file(file);
+    char* config = read_all_file("shaders/headers.glsl");
+    char* f_cpy = read_shader_includes(file);
 
-    char* res = calloc(strlen(version) + strlen(bindings) + strlen(config) + strlen(f_cpy) + 2, sizeof(char));
+    char* res = calloc(strlen(version) + strlen(bindings) + strlen(config) + strlen(f_cpy) + 2,
+                       sizeof(char));
     res = strcat(res, version);
     res = strcat(res, bindings);
     res = strcat(res, config);
@@ -182,7 +184,7 @@ char *read_shader(char *file)
 
 GLFWwindow* init_window()
 {
-    if(!glfwInit())
+    if (!glfwInit())
     {
         printf("glfwInit() failed\n");
         exit(1);

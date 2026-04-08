@@ -13,8 +13,7 @@ void reload_config(void)
     const char* cmd = "gcc -shared -fPIC -Iinclude config/config.c -o "
                       "config/config.so -D__NIXOS__";
 #else
-    const char* cmd =
-        "gcc -shared -fPIC -Iinclude config/config.c -o config/config.so";
+    const char* cmd = "gcc -shared -fPIC -Iinclude config/config.c -o config/config.so";
 #endif
 
     if (system(cmd) != 0)

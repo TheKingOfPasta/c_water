@@ -66,8 +66,7 @@ void image_draw_vector(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
     Vec2 dir = vec2_normalized((Vec2){ x1 - x0, y1 - y0 });
     Vec2 orth = (Vec2){ dir.y, -dir.x };
 
-    Vec2 midpoint =
-        vec2_add((Vec2){ x1, y1 }, vec2_mul_scalar(dir, -size_arrow));
+    Vec2 midpoint = vec2_add((Vec2){ x1, y1 }, vec2_mul_scalar(dir, -size_arrow));
 
     Vec2 left_wing = vec2_add(midpoint, vec2_mul_scalar(orth, -size_arrow));
     Vec2 right_wing = vec2_add(midpoint, vec2_mul_scalar(orth, size_arrow));
@@ -76,8 +75,7 @@ void image_draw_vector(Image* i, int x0, int y0, int x1, int y1, RGB8 c)
     image_draw_line(i, right_wing.x, right_wing.y, x1, y1, c);
 }
 
-void image_draw_square_alligned(Image* img, int x, int y, int size_x,
-                                int size_y, RGB8 col)
+void image_draw_square_alligned(Image* img, int x, int y, int size_x, int size_y, RGB8 col)
 {
     const int bb[4][2] = {
         { x, y },
@@ -88,7 +86,6 @@ void image_draw_square_alligned(Image* img, int x, int y, int size_x,
 
     for (int i = 0; i < 4; i++)
     {
-        image_draw_line(img, bb[i][0], bb[i][1], bb[(i + 1) % 4][0],
-                        bb[(i + 1) % 4][1], col);
+        image_draw_line(img, bb[i][0], bb[i][1], bb[(i + 1) % 4][0], bb[(i + 1) % 4][1], col);
     }
 }

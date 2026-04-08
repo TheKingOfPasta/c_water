@@ -64,12 +64,17 @@ void particle_interact_bounds(Particle* p)
 
 static inline float particle_compute_density_gradient(float dist)
 {
-    float slope = 2.0 * 6.0 / (M_PI * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius);
+    float slope = 2.0 * 6.0
+        / (M_PI * c->particle_influence_radius * c->particle_influence_radius
+           * c->particle_influence_radius * c->particle_influence_radius);
 
     return slope * (dist - c->particle_influence_radius);
 }
 
-static inline void particle_compute_pressure_other_particle(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t p1_index, size_t p2_index, Vec2 *res)
+static inline void particle_compute_pressure_other_particle(Simulation* s,
+                                                            Vec2 predicted_positions[NB_PARTICLES],
+                                                            size_t p1_index, size_t p2_index,
+                                                            Vec2* res)
 {
     if (p1_index == p2_index)
         return;
@@ -95,7 +100,8 @@ static inline void particle_compute_pressure_other_particle(Simulation* s, Vec2 
     vec2_add_inplace(res, vec2_mul_scalar(dir, (density - c->target_pressure) * slope / density));
 }
 
-Vec2 particle_compute_pressure(Simulation* s, Vec2 predicted_positions[NB_PARTICLES], size_t p1_index)
+Vec2 particle_compute_pressure(Simulation* s, Vec2 predicted_positions[NB_PARTICLES],
+                               size_t p1_index)
 {
     Vec2 res = vec2_zero();
 
@@ -116,7 +122,9 @@ float particle_density(float d)
     if (v < 0)
         return 0;
 
-    float vol = 6.0 / (M_PI * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius * c->particle_influence_radius);
+    float vol = 6.0
+        / (M_PI * c->particle_influence_radius * c->particle_influence_radius
+           * c->particle_influence_radius * c->particle_influence_radius);
 
     return v * v * vol;
 }

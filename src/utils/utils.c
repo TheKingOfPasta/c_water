@@ -8,7 +8,7 @@ float randf(void)
     return (float)(rand()) / RAND_MAX;
 }
 
-char* read_all_file(char *file)
+char* read_all_file(char* file)
 {
     FILE* f = fopen(file, "r");
     if (f == NULL)

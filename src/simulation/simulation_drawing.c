@@ -39,8 +39,7 @@ void simulation_draw_balls(Simulation* s, Image* img)
     }
 }
 
-void simulation_draw_field([[maybe_unused]] Simulation* s,
-                           [[maybe_unused]] Image* img)
+void simulation_draw_field([[maybe_unused]] Simulation* s, [[maybe_unused]] Image* img)
 {
     return;
 }
@@ -66,8 +65,7 @@ void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
 
             //     vec2_print(&p);
             //     printf("\n");
-            image_draw_circle(img, p.x, p.y, c->radius,
-                              (RGB8){ .r = 250, .b = 0, .g = 0 });
+            image_draw_circle(img, p.x, p.y, c->radius, (RGB8){ .r = 250, .b = 0, .g = 0 });
         }
     }
 
@@ -85,8 +83,8 @@ void simulation_draw_chunks(Simulation* s, Image* img, float x, float y)
 
     if (cx >= 0 && cy >= 0 && cx < s->nb_chunk_x && cy < s->nb_chunk_y)
     {
-        image_draw_square_alligned(img, cx * s->chunk_size, cy * s->chunk_size,
-                                   s->chunk_size, s->chunk_size, rgb8_white());
+        image_draw_square_alligned(img, cx * s->chunk_size, cy * s->chunk_size, s->chunk_size,
+                                   s->chunk_size, rgb8_white());
     }
 }
 
@@ -98,8 +96,7 @@ void simulation_print_chunks(Simulation* s)
     printf("pairs = [\n");
     for (int i = 0; i < NB_PARTICLES; i++)
     {
-        printf("    [%d] = %d - %d   \n", i, s->pairs[i].chunk_idx,
-               s->pairs[i].particle_idx);
+        printf("    [%d] = %d - %d   \n", i, s->pairs[i].chunk_idx, s->pairs[i].particle_idx);
     }
 
     printf("]\n start_idx =  [\n");
@@ -123,8 +120,7 @@ void simulation_print_chunks(Simulation* s)
     }
 }
 
-void simulation_draw_density([[maybe_unused]] Simulation* s,
-                             [[maybe_unused]] Image* img)
+void simulation_draw_density([[maybe_unused]] Simulation* s, [[maybe_unused]] Image* img)
 {
     /*Particle* p = calloc(1, sizeof(Particle));
 

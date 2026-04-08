@@ -12,10 +12,10 @@
 #include <time.h>
 
 #include "config_reloader.h"
-#include "opengl/shader_simulation.h"
-#include "simulation/simulation.h"
 #include "opengl/headers.h"
+#include "opengl/shader_simulation.h"
 #include "opengl/utils.h"
+#include "simulation/simulation.h"
 
 void print_densities(GLuint densities_ssbo)
 {
