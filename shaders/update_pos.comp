@@ -12,7 +12,7 @@ void main()
 
     Particle p = particles[i];
 
-    p.velo *= c.velocity_drag;
+    p.velo *= pow(c.velocity_drag, s.dt);
 
     p.pos += p.velo * s.dt;
 
