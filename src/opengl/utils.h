@@ -11,7 +11,7 @@ void opengl_launch_last_prepared_program(size_t elt_count);
 void opengl_launch_program(GLuint program, GLuint ubo, size_t elt_count);
 
 GLuint create_compute_program(GLuint s, const char *src);
-GLuint compile_shader(GLenum type, const char* src);
+GLuint compile_shader(GLenum type, char *file_name);
 GLuint create_program(GLuint s1, GLuint s2);
 char *read_shader_includes(char *file);
 char *read_shader(char *file);
