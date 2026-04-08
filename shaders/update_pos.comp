@@ -28,13 +28,12 @@ void main()
         p.velo.x *= -c.velocity_drag;
     }
 
-    /*if (p.pos.y > c.sy)
+    if (p.pos.y > c.sy)
     {
         p.pos.y = c.sy - (p.pos.y - c.sy);
         p.velo.y *= -c.velocity_drag;
     }
-    else */
-    if (p.pos.y < 0)
+    else if (p.pos.y < 0)
     {
         p.pos.y *= -1.0;
         p.velo.y *= -c.velocity_drag;
