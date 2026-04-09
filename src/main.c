@@ -105,22 +105,54 @@ void init_particles(GLuint particles_ssbo)
 
     float padding = 2.0f * c->radius + 1.0f;
 
+    srand(time(NULL));
+
     for (int i = 0; i < NB_PARTICLES; i++)
     {
-        float rx = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 1.3f;
-        float ry = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * c->radius * 1.3f;
+        particles[i].velo.x = 0;
+        particles[i].velo.y = 0;
+        particles[i].velo.z = 0;
 
-        /*particles[i].velo.x = 0;
-        particles[i].velo.y = 0;*/
-
-        particles[i].pos = (Vec3){
-            .x = c->sx / 2.0f + ((i % pts_x) - pts_x / 2.0f) * padding + rx,
-            .y = c->sy / 2.0f + ((int)(i / pts_y) - pts_y / 2.0f) * padding + ry,
-            .z = 50 * (float)rand() / RAND_MAX,
+        particles[i].pos = (Vec3)
+        {
+            .x = c->sx * i % NB_PARTICLES,
+            .y = 0,
+            .z = c->sz * i / NB_PARTICLES,
         };
+
+        /*particles[i].pos = (Vec3){
+            .x = c->sx * (float)rand() / RAND_MAX,
+            .y = c->sy * (float)rand() / RAND_MAX,
+            .z = c->sz * (float)rand() / RAND_MAX,
+        };*/
     }
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+#define PRINT_SSBO(ssbo, type, nb_elts, print_func)\
+    do\
+    {\
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);\
+        type* arr = (type*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);\
+        for (int i = 0; i < nb_elts; i++)\
+        {\
+            if (print_func(arr + i))\
+                break;\
+        }\
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);\
+    }\
+    while (0)
+
+bool print_particle(shader_particle* p)
+{
+    if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x) || !isnormal(p->velo.y) || !isnormal(p->velo.z) )
+    {
+        printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z, p->velo.x, p->velo.y, p->velo.z);
+        return true;
+    }
+
+    return false;
 }
 
 static inline int pair_sort(const void* p1, const void* p2)
@@ -149,7 +181,7 @@ int main()
     glfwSetKeyCallback(win, key_callback);
     glfwSetCursorPosCallback(win, cursor_callback);
 
-    /*GLuint predicted_positions_prog =
+    GLuint predicted_positions_prog =
         compile_shader(GL_COMPUTE_SHADER, "shaders/predicted_positions.comp");
     GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/chunks.comp");
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density.comp");
@@ -158,7 +190,7 @@ int main()
     GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/sort.comp");
     GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_chunks.comp");
     GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/viscosity.comp");
-    GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");*/
+    GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, "shaders/shader.vert");
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, "shaders/shader.frag");
@@ -208,19 +240,13 @@ int main()
 
     glEnableVertexAttribArray(LOCATION_POS);
     glVertexAttribPointer(LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
-    /*glEnableVertexAttribArray(LOCATION_POS);
-    glVertexAttribPointer(LOCATION_POS, 3, GL_FLOAT, GL_FALSE, sizeof(shader_particle), (void*)0);
-
-    glVertexAttribPointer(LOCATION_VELO, 3, GL_FLOAT, GL_FALSE, sizeof(shader_particle),
-                          (void*)(sizeof(Vec3)));*/
-    glEnableVertexAttribArray(LOCATION_VELO);
 
     bind_uniform_buffer(&s->config_ubo, BINDING_CONFIG, c, sizeof(config));
     bind_uniform_buffer(&s->simulation_ubo, BINDING_SIMULATION, s, sizeof(shader_simulation));
 
-    /*GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
+    GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
     GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
-    GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");*/
+    GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
     GLuint loc_NB_PARTICLES = glGetUniformLocation(render_prog, "NB_PARTICLES");
 
 #define FPS_COUNT 100
@@ -243,9 +269,8 @@ int main()
 
         if (!state.step_mode || state.step)
         {
-            /*opengl_launch_program(init_chunks_prog, s, c->nb_chunk_x * c->nb_chunk_y);
+            opengl_launch_program(init_chunks_prog, s, c->nb_chunk_x * c->nb_chunk_y);
 
-            printf("\n");
             START_TIME(predicted_positions);
             opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
             END_TIME(predicted_positions);
@@ -285,7 +310,7 @@ int main()
 
             START_TIME(update_pos);
             opengl_launch_program(update_pos_prog, s, NB_PARTICLES);
-            END_TIME(update_pos);*/
+            END_TIME(update_pos);
 
             state.step = false;
             glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
@@ -296,6 +321,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUniform1i(loc_NB_PARTICLES, NB_PARTICLES);
+        glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
+        glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
         glUseProgram(render_prog);
 
         glBindVertexArray(quadVAO);

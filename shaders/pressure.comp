@@ -14,9 +14,14 @@ uniform int NB_PARTICLES;
 
 float particle_compute_density_gradient(float dist)
 {
-    float slope = 2.0 * 6.0 / (3.14159265359 * c.particle_influence_radius * c.particle_influence_radius * c.particle_influence_radius * c.particle_influence_radius);
+    float v = c.particle_influence_radius - dist;
 
-    return slope * (dist - c.particle_influence_radius);
+    if (v < 0)
+        return 0;
+
+    float scale = 15.0 / (pow(c.particle_influence_radius, 5) * 3.14159265359);
+
+    return -v * scale;
 }
 
 vec3 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
@@ -27,7 +32,7 @@ vec3 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
     vec3 dir = predicted_positions[p1_index] - predicted_positions[p2_index];
     float dist = length(dir);
 
-    if (dist < 0.00001 || dist > c.particle_influence_radius)
+    if (dist < 0.00001 || dist > c.particle_influence_radius || densities[p2_index] < 0.00001)
         return vec3(0, 0, 0);
 
     float shared_density = (densities[p2_index] + densities[p1_index]) / 2;

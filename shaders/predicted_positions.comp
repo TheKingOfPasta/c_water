@@ -10,14 +10,14 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
-    if (idx > predicted_positions.length())
+    if (idx >= predicted_positions.length())
         return;
 
     Particle p = particles[idx];
 
     p.velo.y -= 0.0981 * c.gravity_multiplier * s.dt;
 
-    predicted_positions[idx] = p.pos + p.velo * s.dt;
+    predicted_positions[idx] = p.pos + c.velocity_drag * p.velo * s.dt;
 
     particles[idx] = p;
 }

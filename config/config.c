@@ -8,15 +8,15 @@ config c = {
 #else
     .sy = 1080,
 #endif
-    .sz = 100,
+    .sz = 1000,
 
-    .pressure_force = 3000,
+    .pressure_force = 000,
     .target_pressure = -2,
     .particle_influence_radius = 10,
-    .radius = 5,
-    .gravity_multiplier = 3000,
+    .radius = 2,
+    .gravity_multiplier = 000,
     .viscosity_strength = 0, // 0.0000000001,
 
-    .velocity_drag = 1,
-    .velocity_collision_dampner = 0.9,
+    .velocity_drag = 1.0,
+    .velocity_collision_dampner = 1.0,
 };

@@ -14,8 +14,11 @@ float viscosityKernel(float d)
 {
 	if (d > c.particle_influence_radius)
 		return 0;
+
+    float scale = 315.0 / (64.0 * 3.14159265359 * pow(abs(c.particle_influence_radius), 9));
     float v = c.particle_influence_radius * c.particle_influence_radius - d * d;
-	return v * v * v  * 4 / (3.14159265359 * 100000000);
+
+	return v * v * v  * scale;
 }
 
 vec3 particle_calculate_viscosity(uint idx, uint i)
@@ -59,7 +62,7 @@ void main()
             }
         }
 
-    p.velo += res * s.dt;
+    p.velo += c.viscosity_strength * res * s.dt;
 
     particles[idx] = p;
 
