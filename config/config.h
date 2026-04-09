@@ -4,6 +4,8 @@ typedef struct
 {
     int sx;
     int sy;
+    int sz;
+
 
     float pressure_force;
     float target_pressure;

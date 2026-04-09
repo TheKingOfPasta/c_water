@@ -12,12 +12,17 @@ void main()
 
     Particle p = particles[i];
 
-    p.velo *= c.velocity_drag;
+    p.pos.x += 0.1;
+    p.pos.y += 0.1;
+    p.pos.z += 0.1;
+    //p.velo = vec3(0, 0, 0);
 
-    p.pos += p.velo * s.dt;
+    //p.velo *= c.velocity_drag;*/
+
+    //p.pos += vec3(p.velo.x, p.velo.y, 0) * s.dt;
 
 
-    if (p.pos.x > c.sx)
+    /*if (p.pos.x > c.sx)
     {
         p.pos.x = c.sx - (p.pos.x - c.sx);
         p.velo.x *= -c.velocity_drag;
@@ -37,7 +42,7 @@ void main()
     {
         p.pos.y *= -1.0;
         p.velo.y *= -c.velocity_drag;
-    }
+    }*/
 
     particles[i] = p;
 }

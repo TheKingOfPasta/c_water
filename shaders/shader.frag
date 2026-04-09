@@ -1,26 +1,58 @@
-in float speed;
+#include "shaders/particle.glsl"
+
 out vec4 FragColor;
+
+uniform int NB_PARTICLES;
+
+vec3 get_dir()
+{
+    float x = (gl_FragCoord.x / c.sx) * 2.0 - 1;
+    float y = (gl_FragCoord.y / c.sy) * 2.0 - 1;
+
+    vec3 right = vec3(1, 0, 0);
+    vec3 up = vec3(0, 1, 0);
+    vec3 di = vec3(0, 0, 1);
+
+    float aspect = c.sx / float(c.sy);
+
+    vec3 dir = normalize(right * x * aspect + up * y + di / tan(radians(80) * 0.5));
+    return dir;
+}
+
+bool hit_particle(vec3 pos, vec3 dir)
+{
+    vec3 cam_pos = vec3(c.sx / 2.0, c.sy / 2.0, -300);
+    vec3 oc = cam_pos - pos;
+
+    float A = dot(dir, dir);
+    float B = 2.0 * dot(oc, dir);
+    float C = dot(oc, oc) - c.radius * c.radius;
+
+    float D = B * B - 4 * A * C;
+
+    if (D < 0)
+        return false;
+
+    float sqrtD = sqrt(D);
+
+    float t1 = (-B - sqrtD) / (2 * A);
+    float t2 = (-B + sqrtD) / (2 * A);
+
+    return t1 >= 0 || t2 >= 0;
+}
 
 void main()
 {
-    vec2 pt = gl_PointCoord * 2.0 - 1.0;
+    vec3 dir = get_dir();
 
-    if(dot(pt, pt) > 1.0)
-        discard;
+    for (int i = 0; i < NB_PARTICLES; i++)
+    {
+        if (hit_particle(particles[i].pos, dir))
+        {
+            FragColor = vec4(1, 1, 1, 1);
+            return;
+        }
+    }
 
-    const float max_speed = 10000;
-    const vec4 base = vec4( 000, 000, 150, 1 );
-    const vec4 mid  = vec4( 000, 200, 200, 1 );
-    const vec4 high = vec4( 255, 255, 255, 1 );
-    const float mid_point = 0.5;
-
-    float t = speed / max_speed;
-
-    if (t > 1.0f)
-        t = 1.0f;
-
-    if (t < mid_point)
-        FragColor = base * (1 - t / mid_point) + mid * (t / mid_point);
-    else
-        FragColor = mid * (1 - (t - mid_point) / (1 - mid_point)) + high * ((t - mid_point) / (1 - mid_point));
+    FragColor = vec4(0, 0, 0, 1);
 }

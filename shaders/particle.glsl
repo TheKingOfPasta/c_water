@@ -1,7 +1,7 @@
 struct Particle
 {
-    vec2 pos;
-    vec2 velo;
+    vec3 pos;
+    vec3 velo;
 };
 
 layout(std430, binding = BINDING_PARTICLES) buffer ParticleBuffer

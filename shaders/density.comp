@@ -3,7 +3,7 @@
 
 layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
-    vec2 predicted_positions[];
+    vec3 predicted_positions[];
 };
 layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
 {
@@ -33,7 +33,7 @@ void main()
         return;
 
     float d = 0.0f;
-    vec2 pos = predicted_positions[idx];
+    vec3 pos = predicted_positions[idx];
 
     int radius = 1;
 

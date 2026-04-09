@@ -8,6 +8,7 @@ config c = {
 #else
     .sy = 1080,
 #endif
+    .sz = 100,
 
     .pressure_force = 3000,
     .target_pressure = -2,

@@ -2,14 +2,13 @@
 
 #include <stdint.h>
 #include "utils/vec3.h"
-#include "utils/vec2.h"
 
-#define NB_PARTICLES 8000
+#define NB_PARTICLES 800
 
 typedef struct
 {
-    Vec2 pos;
-    Vec2 velo;
+    Vec3 pos;
+    Vec3 velo;
 } shader_particle;
 
 typedef struct

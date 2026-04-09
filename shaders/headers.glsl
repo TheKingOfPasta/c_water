@@ -1,6 +1,7 @@
 layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     int sx;
     int sy;
+    int sz;
 
     float pressure_force;
     float target_pressure;
