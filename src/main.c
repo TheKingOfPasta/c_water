@@ -115,9 +115,9 @@ void init_particles(GLuint particles_ssbo)
 
         particles[i].pos = (Vec3)
         {
-            .x = c->sx * i % NB_PARTICLES,
-            .y = 0,
-            .z = c->sz * i / NB_PARTICLES,
+            .x = c->sx * 0.5f,
+            .y = c->sy * 0.5f,
+            .z = c->sz * 0.5f,
         };
 
         /*particles[i].pos = (Vec3){
@@ -146,7 +146,8 @@ void init_particles(GLuint particles_ssbo)
 
 bool print_particle(shader_particle* p)
 {
-    if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x) || !isnormal(p->velo.y) || !isnormal(p->velo.z) )
+    if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x) || !isnormal(p->velo.y) || !isnormal(p->velo.z))
+    if (p->pos.x != 0 && p->pos.y != 0 && p->pos.z != 0 && p->velo.x != 0 && p->velo.y != 0 && p->velo.z != 0)
     {
         printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z, p->velo.x, p->velo.y, p->velo.z);
         return true;
@@ -181,6 +182,7 @@ int main()
     glfwSetKeyCallback(win, key_callback);
     glfwSetCursorPosCallback(win, cursor_callback);
 
+    GLuint init_particles_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_particles.comp");
     GLuint predicted_positions_prog =
         compile_shader(GL_COMPUTE_SHADER, "shaders/predicted_positions.comp");
     GLuint chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/chunks.comp");
@@ -221,7 +223,7 @@ int main()
     GLuint pairs_ssbo =
         opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
 
-    init_particles(particles_ssbo);
+    //init_particles(particles_ssbo);
 
     float vertices[] = {
         -1.0f, -1.0f,
@@ -255,6 +257,8 @@ int main()
 
     double FPS[FPS_COUNT] = { 0 };
     size_t fps_i = 0;
+
+    opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
 
     while (!glfwWindowShouldClose(win))
     {
@@ -311,6 +315,8 @@ int main()
             START_TIME(update_pos);
             opengl_launch_program(update_pos_prog, s, NB_PARTICLES);
             END_TIME(update_pos);
+
+            PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
             state.step = false;
             glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);

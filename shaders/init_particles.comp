@@ -1,0 +1,18 @@
+#include "shaders/particle.glsl"
+
+uniform int NB_PARTICLES;
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= NB_PARTICLES)
+        return;
+
+    int s = int(sqrt(NB_PARTICLES));
+
+    particles[idx].pos = vec3(c.sx, c.sy, c.sz) * vec3(float(idx % s) / s, 0.5, float(idx / s) / s);
+
+    particles[idx].velo = vec3(0, 0, 0);
+}

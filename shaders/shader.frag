@@ -21,7 +21,7 @@ vec3 get_dir()
 
 bool hit_particle(vec3 pos, vec3 dir)
 {
-    vec3 cam_pos = vec3(c.sx / 2.0, c.sy / 2.0, -300);
+    vec3 cam_pos = vec3(c.sx / 2.0, c.sy / 2.0 + 10, -300);
     vec3 oc = cam_pos - pos;
 
     float A = dot(dir, dir);

@@ -10,11 +10,11 @@ config c = {
 #endif
     .sz = 1000,
 
-    .pressure_force = 000,
+    .pressure_force = 3000,
     .target_pressure = -2,
     .particle_influence_radius = 10,
-    .radius = 2,
-    .gravity_multiplier = 000,
+    .radius = 5,
+    .gravity_multiplier = 3000,
     .viscosity_strength = 0, // 0.0000000001,
 
     .velocity_drag = 1.0,
