@@ -16,6 +16,7 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
 
     int nb_chunk_x;
     int nb_chunk_y;
+    int nb_chunk_z;
 } c;
 
 layout(std140, binding = BINDING_SIMULATION) uniform SimulationBlock {

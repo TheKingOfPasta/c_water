@@ -13,7 +13,7 @@ config c = {
     .pressure_force = 3,
     .target_pressure = -2,
     .particle_influence_radius = 20,
-    .radius = 5,
+    .radius = 15,
     .gravity_multiplier = 1000,
     .viscosity_strength = 0, // 0.0000000001,
 

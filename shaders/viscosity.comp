@@ -42,25 +42,29 @@ void main()
 
     int cx = clamp(int(floor(pos.x / c.chunk_size)), 0, c.nb_chunk_x - 1);
     int cy = clamp(int(floor(pos.y / c.chunk_size)), 0, c.nb_chunk_y - 1);
+    int cz = clamp(int(floor(pos.z / c.chunk_size)), 0, c.nb_chunk_z - 1);
 
     for (int dx = -radius; dx <= radius; dx++)
         for (int dy = -radius; dy <= radius; dy++)
-        {
-            if (cx + dx < 0 || cy + dy < 0 || cx + dx >= c.nb_chunk_x || cy + dy >= c.nb_chunk_y)
-                continue;
-
-            uint nx = cx + dx;
-            uint ny = cy + dy;
-            uint start = start_chunks[nx + ny * c.nb_chunk_x];
-			if (start >= NB_PARTICLES)
-				continue;
-            uint chunk_idx = pairs[start].chunk_idx;
-
-            for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+            for (int dz = -radius; dz <= radius; dz++)
             {
-                res += particle_calculate_viscosity(idx, pairs[i].particle_idx);
+                int nx = cx + dx;
+                int ny = cy + dy;
+                int nz = cz + dz;
+
+                if (nx < 0 || ny < 0 || nz < 0 || nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
+                    continue;
+
+                int start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
+                if (start == -1 || start >= NB_PARTICLES)
+                    continue;
+                uint chunk_idx = pairs[start].chunk_idx;
+
+                for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+                {
+                    res += particle_calculate_viscosity(idx, pairs[i].particle_idx);
+                }
             }
-        }
 
     p.velo += c.viscosity_strength * res * s.dt;
 

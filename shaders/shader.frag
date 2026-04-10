@@ -50,17 +50,21 @@ void main()
 
     bool is_inside = false;
 
+    dir = vec3(dir.x * c.nb_chunk_x, dir.y * c.nb_chunk_y, dir.z * c.nb_chunk_z) * 0.125;
+
     while (!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz))
     {
+        float min_dist = 472832374.0;
         if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)
         {
             int cx = (int(pos.x) / c.chunk_size < 0 ? 0 : int(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1 : int(pos.x) / c.chunk_size);
             int cy = (int(pos.y) / c.chunk_size < 0 ? 0 : int(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1 : int(pos.y) / c.chunk_size);
+            int cz = (int(pos.z) / c.chunk_size < 0 ? 0 : int(pos.z) / c.chunk_size >= c.nb_chunk_z ? c.nb_chunk_z - 1 : int(pos.z) / c.chunk_size);
 
-            int start = start_chunks[cx + cy * c.nb_chunk_x];
+            int start = start_chunks[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x];
             if (start != -1 && start < NB_PARTICLES)
             {
-                int chunk_idx = pairs[start].chunk_idx;
+                uint chunk_idx = pairs[start].chunk_idx;
                 for (int i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                 {
                     vec3 diff = particles[i].pos - pos;
@@ -70,12 +74,19 @@ void main()
                         FragColor = vec4(1, 1, 1, 1);
                         return;
                     }
+                    else if (sqr_dist < min_dist)
+                        min_dist = sqr_dist;
                 }
+
+                pos += dir * sqrt(min_dist);
             }
+            else
+                pos += dir;
 
             is_inside = true;
         }
-        pos += dir * c.chunk_size;
+        else
+            pos += dir;
     }
 
     FragColor = vec4(0, 0, 0, 1);

@@ -15,8 +15,8 @@ typedef struct
 
 typedef struct
 {
-    uint32_t chunk_idx;
-    uint32_t particle_idx;
+    unsigned int chunk_idx;
+    unsigned int particle_idx;
 } chunk_particle_idx_pair;
 
 #define CHUNK_EMPTY_IDX 0xFFFF

@@ -20,7 +20,7 @@ char *read_shader_includes(char *file);
 char *read_shader(char *file);
 GLFWwindow* init_window();
 
-#define ENABLE_PRINTS false
+#define ENABLE_PRINTS true
 
 #if ENABLE_PRINTS == true
 

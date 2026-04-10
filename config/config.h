@@ -20,4 +20,5 @@ typedef struct
 
     int nb_chunk_x;
     int nb_chunk_y;
+    int nb_chunk_z;
 } config;

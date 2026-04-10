@@ -5,7 +5,7 @@
 
 #include "config_reloader.h"
 #include "opengl/headers.h"
-#include "simulation/simulation.h"
+#include "opengl/shader_particle.h"
 #include "utils/utils.h"
 
 void opengl_add_config(GLuint program, shader_simulation* s)
