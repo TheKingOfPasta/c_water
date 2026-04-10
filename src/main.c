@@ -249,7 +249,8 @@ int main()
     GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
     GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
     GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
-    GLuint loc_NB_PARTICLES = glGetUniformLocation(render_prog, "NB_PARTICLES");
+
+    GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
 
 #define FPS_COUNT 100
 
@@ -326,7 +327,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUniform1i(loc_NB_PARTICLES, NB_PARTICLES);
+        glUniform1i(loc_NB_PARTICLES_render, NB_PARTICLES);
         glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
         glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);

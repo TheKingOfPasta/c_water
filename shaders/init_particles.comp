@@ -4,6 +4,11 @@ uniform int NB_PARTICLES;
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
+float rand(uint idx)
+{
+    return abs(cos(pow(s.dt, idx)));
+}
+
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
@@ -12,7 +17,7 @@ void main()
 
     int s = int(sqrt(NB_PARTICLES));
 
-    particles[idx].pos = vec3(c.sx, c.sy, c.sz) * vec3(float(idx % s) / s, 0.5, float(idx / s) / s);
+    particles[idx].pos = vec3(c.sx, c.sy, c.sz) * vec3(float(idx % s) / s, rand(idx), float(idx / s) / s);
 
     particles[idx].velo = vec3(0, 0, 0);
 }
