@@ -55,6 +55,7 @@ typedef struct AppState
     bool reset;
     double mouse_x;
     double mouse_y;
+    shader_simulation* s;
 } AppState;
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
@@ -93,6 +94,15 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     if (key == GLFW_KEY_C)
         reload_config();
+
+    if (key == GLFW_KEY_W)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, 1});
+    if (key == GLFW_KEY_S)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, -1});
+    if (key == GLFW_KEY_D)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){1, 0, 0});
+    if (key == GLFW_KEY_A)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){-1, 0, 0});
 }
 
 void init_particles(GLuint particles_ssbo)
@@ -166,15 +176,22 @@ void print_chunk(uint32_t* c, int index)
 
 int main()
 {
-    AppState state = {
-        .step = false,
-        .step_mode = true,
-    };
-
     srand(time(NULL));
 
     reload_config();
     s = calloc(1, sizeof(shader_simulation));
+
+    AppState state = {
+        .step = false,
+        .step_mode = true,
+        .s = s,
+    };
+
+    s->cam_pos = (Vec3){
+        .x = c->sx / 2,
+        .y = c->sy / 2,
+        .z = -30,
+    };
 
     GLFWwindow* win = init_window();
     glfwSwapInterval(0);
@@ -253,6 +270,7 @@ int main()
     GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
 
     GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
+    GLuint loc_src = glGetUniformLocation(render_prog, "src");
 
 #define FPS_COUNT 100
 
@@ -337,6 +355,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glUniform3f(loc_src, s->cam_pos.x, s->cam_pos.y, s->cam_pos.z);
         glUniform1i(loc_NB_PARTICLES_render, NB_PARTICLES);
         glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
