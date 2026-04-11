@@ -16,36 +16,36 @@ void main()
 
     p.pos += p.velo * s.dt;
 
-    if (p.pos.x > c.sx)
+    if (p.pos.x > c.sx - c.chunk_size)
     {
-        p.pos.x = c.sx - (p.pos.x - c.sx);
+        p.pos.x = 2 * (c.sx - c.chunk_size) - p.pos.x;
         p.velo.x *= -c.velocity_drag;
     }
-    else if (p.pos.x < 0.0)
+    else if (p.pos.x < c.chunk_size)
     {
-        p.pos.x = -p.pos.x;
+        p.pos.x = 2 * (c.chunk_size) - p.pos.x;
         p.velo.x *= -c.velocity_drag;
     }
 
-    if (p.pos.y > c.sy)
+    if (p.pos.y > c.sy - c.chunk_size)
     {
-        p.pos.y = c.sy - (p.pos.y - c.sy);
+        p.pos.y = 2 * (c.sy - c.chunk_size) - p.pos.y;
         p.velo.y *= -c.velocity_drag;
     }
-    else if (p.pos.y < 0)
+    else if (p.pos.y < c.chunk_size)
     {
-        p.pos.y *= -1.0;
+        p.pos.y = 2 * (c.chunk_size) - p.pos.y;
         p.velo.y *= -c.velocity_drag;
     }
 
-    if (p.pos.z > c.sz)
+    if (p.pos.z > c.sz - c.chunk_size)
     {
-        p.pos.z = c.sz - (p.pos.z - c.sz);
+        p.pos.z = 2 * (c.chunk_size) - p.pos.z;
         p.velo.z *= -c.velocity_drag;
     }
-    else if (p.pos.z < 0)
+    else if (p.pos.z < c.chunk_size)
     {
-        p.pos.z *= -1.0;
+        p.pos.z = 2 * (c.chunk_size) - p.pos.z;
         p.velo.z *= -c.velocity_drag;
     }
 
