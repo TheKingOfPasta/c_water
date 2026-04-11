@@ -73,13 +73,26 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     AppState* state = ((AppState*)glfwGetWindowUserPointer(window));
 
+    if (key == GLFW_KEY_W)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, 5});
+    if (key == GLFW_KEY_S)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, -5});
+    if (key == GLFW_KEY_D)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){5, 0, 0});
+    if (key == GLFW_KEY_A)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){-5, 0, 0});
+    if (key == GLFW_KEY_SPACE)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 5, 0});
+    if (key == GLFW_KEY_LEFT_SHIFT)
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, -5, 0});
+
     if (action != GLFW_PRESS)
         return;
 
     if (key == GLFW_KEY_N)
         state->step = true;
 
-    if (key == GLFW_KEY_P || key == GLFW_KEY_SPACE)
+    if (key == GLFW_KEY_P || key == GLFW_KEY_ENTER)
         state->step_mode = !state->step_mode;
 
     if (key == GLFW_KEY_R)
@@ -94,15 +107,6 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     if (key == GLFW_KEY_C)
         reload_config();
-
-    if (key == GLFW_KEY_W)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, 1});
-    if (key == GLFW_KEY_S)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, -1});
-    if (key == GLFW_KEY_D)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){1, 0, 0});
-    if (key == GLFW_KEY_A)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){-1, 0, 0});
 }
 
 void init_particles(GLuint particles_ssbo)
@@ -355,13 +359,13 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUniform3f(loc_src, s->cam_pos.x, s->cam_pos.y, s->cam_pos.z);
+        glUseProgram(render_prog);
         glUniform1i(loc_NB_PARTICLES_render, NB_PARTICLES);
         glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
         glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
-        glUseProgram(render_prog);
+        glUniform3f(loc_src, s->cam_pos.x, s->cam_pos.y, s->cam_pos.z);
 
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
