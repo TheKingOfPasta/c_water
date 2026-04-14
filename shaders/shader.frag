@@ -73,7 +73,9 @@ void main()
     int radius = 1;
     bool is_inside = false;
 
-    while (!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz))
+    int counter = 0;
+
+    while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 3000)
     {
         float min_dist = 472832374.0;
         if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)
@@ -104,14 +106,20 @@ void main()
                         for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                         {
                             vec3 diff = particles[i].pos - pos;
+                            if (dot(diff, dir) <= 0)
+                                continue;
                             float sqr_dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
                             if (sqr_dist <= c.radius * c.radius)
                             {
-                                FragColor = vec4(1, 1, 1, 1);
+                                FragColor = vec4(0, 0.7, 0.7, 1);
                                 return;
                             }
-                            else if (sqr_dist - c.radius * c.radius < min_dist)
-                                min_dist = sqr_dist - c.radius * c.radius;
+                            else
+                            {
+                                sqr_dist = sqrt(sqr_dist) - c.radius;
+                                if (sqr_dist < min_dist)
+                                    min_dist = sqr_dist;
+                            }
                         }
                     }
 
@@ -124,7 +132,7 @@ void main()
                 pos += dir * t;
             }
             else
-                pos += dir * sqrt(min_dist);
+                pos += dir * min_dist;
 
             is_inside = true;
         }
@@ -136,6 +144,8 @@ void main()
 
             pos += dir * t;
         }
+
+        counter += 1;
     }
 
     FragColor = vec4(0, 0, 0, 1);
