@@ -6,7 +6,7 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 float rand(uint idx)
 {
-    return abs(cos(pow(s.dt, idx)));
+    return abs(cos(pow(s.dt, -idx)));
 }
 
 void main()
@@ -17,7 +17,9 @@ void main()
 
     int s = int(sqrt(NB_PARTICLES));
 
-    particles[idx].pos = vec3(c.sx, c.sy, c.sz) * vec3(float(idx % s) / s, rand(idx), float(idx / s) / s);
+    //particles[idx].pos = vec3(c.chunk_size, c.chunk_size, c.chunk_size) + vec3(c.sx - 2 * c.chunk_size, c.sy - 2 * c.chunk_size, c.sz - 2 * c.chunk_size) * vec3(float(idx % s) / s, rand(idx), float(idx / s) / s);
+
+    particles[idx].pos = s * vec3(idx % s, 0, idx / s);
 
     particles[idx].velo = vec3(0, 0, 0);
 }

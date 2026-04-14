@@ -157,12 +157,13 @@ void init_particles(GLuint particles_ssbo)
     }\
     while (0)
 
-void print_particle(shader_particle* p)
+void print_particle(shader_particle* p, int index)
 {
+    p = p + index;
+    printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z, p->velo.x, p->velo.y, p->velo.z);
     if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x) || !isnormal(p->velo.y) || !isnormal(p->velo.z))
     if (p->pos.x != 0 && p->pos.y != 0 && p->pos.z != 0 && p->velo.x != 0 && p->velo.y != 0 && p->velo.z != 0)
     {
-        printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z, p->velo.x, p->velo.y, p->velo.z);
     }
 }
 
@@ -285,6 +286,8 @@ int main()
 
     opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
 
+    opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
+
     while (!glfwWindowShouldClose(win))
     {
         double t0 = glfwGetTime();
@@ -292,38 +295,41 @@ int main()
         if (state.reset)
         {
             reload_config();
-            init_particles(particles_ssbo);
+            opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
             state.reset = false;
         }
 
+        START_TIME(init_chunks);
+        opengl_launch_program(init_chunks_prog, s, c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z);
+        END_TIME(init_chunks);
+
         if (!state.step_mode || state.step)
         {
-            START_TIME(init_chunks);
-            opengl_launch_program(init_chunks_prog, s, c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z);
-            END_TIME(init_chunks);
-
             START_TIME(predicted_positions);
             opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
             END_TIME(predicted_positions);
+        }
 
-            START_TIME(init_pairs);
-            opengl_launch_program(init_pairs_prog, s, NB_PARTICLES);
-            END_TIME(init_pairs);
+        START_TIME(init_pairs);
+        opengl_launch_program(init_pairs_prog, s, NB_PARTICLES);
+        END_TIME(init_pairs);
 
-            //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
+        //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
 
-            START_TIME(sort);
-            opengl_prepare_program(sort_prog, s);
-            glUniform1ui(loc_next_p2, n2);
-            sort_pairs(loc_passStep, loc_passStage);
-            END_TIME(sort);
+        START_TIME(sort);
+        opengl_prepare_program(sort_prog, s);
+        glUniform1ui(loc_next_p2, n2);
+        sort_pairs(loc_passStep, loc_passStage);
+        END_TIME(sort);
 
-            //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
+        //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
 
-            START_TIME(chunks);
-            opengl_launch_program(chunks_prog, s, NB_PARTICLES);
-            END_TIME(chunks);
+        START_TIME(chunks);
+        opengl_launch_program(chunks_prog, s, NB_PARTICLES);
+        END_TIME(chunks);
 
+        if (!state.step_mode || state.step)
+        {
             //PRINT_SSBO(start_chunks_ssbo, uint32_t, c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z, print_chunk);
 
             // print_pairs(pairs_ssbo);
