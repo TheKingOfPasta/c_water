@@ -75,7 +75,18 @@ void main()
 
     int counter = 0;
 
-    while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 3000)
+    int xstart = dir.x > 0 ? 0 : -radius;
+    int xend = dir.x < 0 ? 0 : radius;
+
+    int ystart = dir.y > 0 ? 0 : -radius;
+    int yend = dir.y < 0 ? 0 : radius;
+
+    int zstart = dir.z > 0 ? 0 : -radius;
+    int zend = dir.z < 0 ? 0 : radius;
+
+    float r2 = c.radius * c.radius;
+
+    while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 100)
     {
         float min_dist = 472832374.0;
         if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)
@@ -85,9 +96,9 @@ void main()
             int cz = clamp(int(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
 
             bool only_empty_chunks = true;
-            for (int dx = -radius; dx <= radius; dx++)
-                for (int dy = -radius; dy <= radius; dy++)
-                    for (int dz = -radius; dz <= radius; dz++)
+            for (int dx = xstart; dx <= xend; dx++)
+                for (int dy = ystart; dy <= yend; dy++)
+                    for (int dz = zstart; dz <= zend; dz++)
                     {
                         int nx = cx + dx;
                         int ny = cy + dy;
@@ -105,18 +116,19 @@ void main()
 
                         for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                         {
-                            vec3 diff = particles[i].pos - pos;
-                            if (dot(diff, dir) <= 0)
-                                continue;
-                            float sqr_dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-                            if (sqr_dist <= c.radius * c.radius)
+                            vec3 diff = particles[i].pos - src;
+                            float d = dot(diff, dir);
+                            float d2 = dot(diff, diff) - d * d;
+                            if (d2 <= r2 && d > 0)
                             {
                                 FragColor = vec4(0, 0.7, 0.7, 1);
                                 return;
                             }
                             else
                             {
-                                sqr_dist = sqrt(sqr_dist) - c.radius;
+                                vec3 diff = particles[i].pos - pos;
+                                float sqr_dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+
                                 if (sqr_dist < min_dist)
                                     min_dist = sqr_dist;
                             }
@@ -132,7 +144,7 @@ void main()
                 pos += dir * t;
             }
             else
-                pos += dir * min_dist;
+                pos += dir * (sqrt(min_dist) - c.radius);
 
             is_inside = true;
         }
