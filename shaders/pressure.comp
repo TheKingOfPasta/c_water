@@ -31,7 +31,7 @@ vec2 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
         return vec2(0, 0);
 
     float shared_density = (densities[p2_index] + densities[p1_index]) / 2;
-	if (shared_density < 0.0001) return vec2(0, 0);
+//	if (shared_density < 0) return vec2(0, 0); // should not be null
 
 
     dir = dir * (1.0 / dist);
@@ -85,7 +85,7 @@ void main()
     vec2 grad = particle_compute_pressure(i);
     grad = -grad;
 
-	if (densities[i] < 0.0001) return;
+	//if (densities[i] < 0.0001) return; // should not be null
 
     grad *= c.pressure_force / densities[i];
 

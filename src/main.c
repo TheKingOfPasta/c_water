@@ -319,9 +319,14 @@ int main()
     double FPS[FPS_COUNT] = { 0 };
     size_t fps_i = 0;
 
+    double last_t = glfwGetTime();
+
     while (!glfwWindowShouldClose(win))
     {
         double t0 = glfwGetTime();
+
+        s->dt = (float)(t0 - last_t);
+        last_t = t0;
 
         if (state.reset)
         {
@@ -334,7 +339,6 @@ int main()
         {
             opengl_launch_program(init_chunks_prog, s, c->nb_chunk_x * c->nb_chunk_y);
 
-            printf("\n");
             START_TIME(predicted_positions);
             opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
             END_TIME(predicted_positions);
@@ -402,7 +406,6 @@ int main()
             fps_i = 0;
 
         printf("\r%f %f                         ", total, 1.0 / (t2 - t0));
-        s->dt = t2 - t0;
 
         fflush(stdout);
     }
