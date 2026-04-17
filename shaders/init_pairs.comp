@@ -1,6 +1,7 @@
 #include "shaders/chunks.h"
 
 uniform int NB_PARTICLES;
+uniform int N2;
 
 layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
@@ -9,19 +10,13 @@ layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsB
 
 uint particle_get_chunk_idx(vec2 pos)
 {
-    uint cx = uint(pos.x) / c.chunk_size;
-    uint cy = uint(pos.y) / c.chunk_size;
+    int cx = int(floor(pos.x / float(c.chunk_size)));
+    int cy = int(floor(pos.y / float(c.chunk_size)));
 
-    if (cx < 0)
-        cx = 0;
-    if (cy < 0)
-        cy = 0;
-    if (cx >= c.nb_chunk_x)
-        cx = c.nb_chunk_x - 1;
-    if (cy >= c.nb_chunk_y)
-        cy = c.nb_chunk_y - 1;
+    cx = clamp(cx, 0, c.nb_chunk_x - 1);
+    cy = clamp(cy, 0, c.nb_chunk_y - 1);
 
-    return cy * c.nb_chunk_x + cx;
+    return uint(cy) * uint(c.nb_chunk_x) + uint(cx);
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -29,9 +24,16 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
     int i = int(gl_GlobalInvocationID.x);
-    if (i >= NB_PARTICLES)
+    if (i >= N2)
         return;
 
-    pairs[i].chunk_idx = particle_get_chunk_idx(predicted_positions[i]);
-    pairs[i].particle_idx = i;
+    if (i >= NB_PARTICLES)
+    {
+        pairs[i].chunk_idx    = 0xFFFFFFFFu;
+        pairs[i].particle_idx = 0xFFFFFFFFu;
+        return;
+    }
+
+    pairs[i].chunk_idx    = particle_get_chunk_idx(predicted_positions[i]);
+    pairs[i].particle_idx = uint(i);
 }

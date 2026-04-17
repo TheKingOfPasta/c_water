@@ -310,6 +310,7 @@ int main()
     GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
     GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
     GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
+    GLuint loc_init_pairs_n2 = glGetUniformLocation(init_pairs_prog, "N2");
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -345,7 +346,9 @@ int main()
             END_TIME(predicted_positions);
 
             START_TIME(init_pairs);
-            opengl_launch_program(init_pairs_prog, s, NB_PARTICLES);
+            opengl_prepare_program(init_pairs_prog, s);
+            glUniform1i(loc_init_pairs_n2, n2);
+            opengl_launch_last_prepared_program(n2);
             END_TIME(init_pairs);
 
             START_TIME(sort);
@@ -353,13 +356,15 @@ int main()
             glUniform1i(loc_next_p2, n2);
             sort_pairs(loc_passStep, loc_passStage);
             END_TIME(sort);
+            // glFinish();
 
             START_TIME(chunks);
             opengl_launch_program(chunks_prog, s, NB_PARTICLES);
             END_TIME(chunks);
 
+            // printf("\npairs chunkidx - particleidx : \n");
             // print_pairs(pairs_ssbo);
-            // printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
+            // print_start_chunks(start_chunks_ssbo);
 
             // print_particles(particles_ssbo);
 
