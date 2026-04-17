@@ -8,7 +8,9 @@
 typedef struct
 {
     Vec3 pos;
+    float padding_0;// Since glsl vectors are converted to vec4s???
     Vec3 velo;
+    float padding_1;
 } shader_particle;
 
 typedef struct
