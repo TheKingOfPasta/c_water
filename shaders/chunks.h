@@ -1,7 +1,7 @@
 struct chunk_particle_idx_pair
 {
-    int chunk_idx;
-    int particle_idx;
+    uint chunk_idx;
+    uint particle_idx;
 };
 
 layout(std430, binding = BINDING_PAIRS) buffer PairsBuffer
