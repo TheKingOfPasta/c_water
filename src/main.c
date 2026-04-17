@@ -275,7 +275,7 @@ int main()
     GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
 
     GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
-    GLuint loc_src = glGetUniformLocation(render_prog, "src");
+    GLuint loc_cam_pos = glGetUniformLocation(render_prog, "cam_pos");
 
 #define FPS_COUNT 100
 
@@ -371,7 +371,7 @@ int main()
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
         glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
-        glUniform3f(loc_src, s->cam_pos.x, s->cam_pos.y, s->cam_pos.z);
+        glUniform3f(loc_cam_pos, s->cam_pos.x, s->cam_pos.y, s->cam_pos.z);
 
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);

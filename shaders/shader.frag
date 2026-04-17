@@ -4,7 +4,7 @@
 out vec4 FragColor;
 
 uniform int NB_PARTICLES;
-uniform vec3 src;
+uniform vec3 cam_pos;
 
 vec3 get_dir()
 {
@@ -68,7 +68,7 @@ void main()
 {
     vec3 dir = get_dir();
 
-    vec3 pos = src;
+    vec3 pos = cam_pos;
 
     int radius = 1;
     bool is_inside = false;
@@ -116,7 +116,7 @@ void main()
 
                         for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                         {
-                            vec3 diff = particles[i].pos - src;
+                            vec3 diff = particles[i].pos - cam_pos;
                             float d = dot(diff, dir);
                             float d2 = dot(diff, diff) - d * d;
                             if (d2 <= r2 && d > 0)
