@@ -158,7 +158,7 @@ char* read_shader_includes(char* file)
 
 char* read_shader(char* file)
 {
-    char* version = "#version 430 core\n#line 1\n\n";
+    char* version = "#version 430 core\n#line 1\n#pragma optionNV(optimize on)\n#pragma optionNV(fastmath on)\n#pragma optionNV(fastprecision on)\n#pragma optionNV(unroll all)\n#pragma optimize(on)\n\n";
 
     char* bindings = read_all_file("src/opengl/headers.h");
     char* f = read_all_file(file);
