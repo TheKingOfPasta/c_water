@@ -40,19 +40,22 @@ void main()
 
     int radius = 1;
 
-    int cx = clamp(int(floor(pos.x / c.chunk_size)), 0, c.nb_chunk_x - 1);
-    int cy = clamp(int(floor(pos.y / c.chunk_size)), 0, c.nb_chunk_y - 1);
-    int cz = clamp(int(floor(pos.z / c.chunk_size)), 0, c.nb_chunk_z - 1);
+    uint cx = clamp(uint(floor(pos.x / c.chunk_size)), 0, c.nb_chunk_x - 1);
+    uint cy = clamp(uint(floor(pos.y / c.chunk_size)), 0, c.nb_chunk_y - 1);
+    uint cz = clamp(uint(floor(pos.z / c.chunk_size)), 0, c.nb_chunk_z - 1);
 
     for (int dx = -radius; dx <= radius; dx++)
         for (int dy = -radius; dy <= radius; dy++)
             for (int dz = -radius; dz <= radius; dz++)
             {
-                int nx = cx + dx;
-                int ny = cy + dy;
-                int nz = cz + dz;
+                if ((cx == 0 && dx < 0) || (cy == 0 && dy < 0) || (cz == 0 && dz < 0))
+                    continue;
 
-                if (nx < 0 || ny < 0 || nz < 0 || nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
+                uint nx = cx + dx;
+                uint ny = cy + dy;
+                uint nz = cz + dz;
+
+                if (nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
                     continue;
 
                 uint start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];

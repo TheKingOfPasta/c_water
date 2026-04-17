@@ -12,6 +12,6 @@ void main()
 
     if (idx == 0 || pairs[idx].chunk_idx != pairs[idx - 1].chunk_idx)
     {
-        start_chunks[pairs[idx].chunk_idx] = int(idx);
+        start_chunks[pairs[idx].chunk_idx] = idx;
     }
 }

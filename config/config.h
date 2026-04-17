@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef struct
 {
     int sx;
@@ -18,7 +20,7 @@ typedef struct
 
     int chunk_size;
 
-    int nb_chunk_x;
-    int nb_chunk_y;
-    int nb_chunk_z;
+    uint32_t nb_chunk_x;
+    uint32_t nb_chunk_y;
+    uint32_t nb_chunk_z;
 } config;

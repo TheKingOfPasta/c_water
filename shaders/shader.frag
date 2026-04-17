@@ -27,9 +27,9 @@ float next_chunk_t(vec3 pos, vec3 dir)
     int dy = dir.y < 0 ? -1 : 1;
     int dz = dir.z < 0 ? -1 : 1;
 
-    int cx = clamp(int(pos.x) / c.chunk_size, 0, c.nb_chunk_x - 1);
-    int cy = clamp(int(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
-    int cz = clamp(int(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
+    uint cx = clamp(uint(pos.x) / c.chunk_size, 0, c.nb_chunk_x - 1);
+    uint cy = clamp(uint(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
+    uint cz = clamp(uint(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
 
     float t_x = -1;
     float t_y = -1;
@@ -91,20 +91,23 @@ void main()
         float min_dist = 472832374.0;
         if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)
         {
-            int cx = clamp(int(pos.x) / c.chunk_size, 0, c.nb_chunk_x - 1);
-            int cy = clamp(int(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
-            int cz = clamp(int(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
+            uint cx = clamp(uint(pos.x) / c.chunk_size, 0, c.nb_chunk_x - 1);
+            uint cy = clamp(uint(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
+            uint cz = clamp(uint(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
 
             bool only_empty_chunks = true;
             for (int dx = xstart; dx <= xend; dx++)
                 for (int dy = ystart; dy <= yend; dy++)
                     for (int dz = zstart; dz <= zend; dz++)
                     {
-                        int nx = cx + dx;
-                        int ny = cy + dy;
-                        int nz = cz + dz;
+                        if ((cx == 0 && dx < 0) || (cy == 0 && dy < 0) || (cz == 0 && dz < 0))
+                            continue;
 
-                        if (nx < 0 || ny < 0 || nz < 0 || nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
+                        uint nx = cx + dx;
+                        uint ny = cy + dy;
+                        uint nz = cz + dz;
+
+                        if (nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
                             continue;
 
                         uint start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];

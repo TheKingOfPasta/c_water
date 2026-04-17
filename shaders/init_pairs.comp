@@ -7,18 +7,12 @@ layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsB
     vec3 predicted_positions[];
 };
 
-int particle_get_chunk_idx(vec3 pos)
+uint particle_get_chunk_idx(vec3 pos)
 {
-    int cx = int(pos.x) / c.chunk_size;
-    int cy = int(pos.y) / c.chunk_size;
-    int cz = int(pos.z) / c.chunk_size;
+    uint cx = uint(pos.x) / c.chunk_size;
+    uint cy = uint(pos.y) / c.chunk_size;
+    uint cz = uint(pos.z) / c.chunk_size;
 
-    if (cx < 0)
-        cx = 0;
-    if (cy < 0)
-        cy = 0;
-    if (cz < 0)
-        cz = 0;
     if (cx >= c.nb_chunk_x)
         cx = c.nb_chunk_x - 1;
     if (cy >= c.nb_chunk_y)
@@ -38,5 +32,5 @@ void main()
         return;
 
     pairs[idx].chunk_idx = particle_get_chunk_idx(predicted_positions[idx]);
-    pairs[idx].particle_idx = int(idx);
+    pairs[idx].particle_idx = idx;
 }
