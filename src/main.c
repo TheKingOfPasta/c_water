@@ -89,7 +89,8 @@ void print_start_chunks(GLuint ssbo)
 
     for (int i = 0; i < c->nb_chunk_x * c->nb_chunk_y; i++)
     {
-        printf("%i : %u\n", i, densities[i]);
+        if (densities[i] != 0xFFFFFFFF)
+            printf("start_pos  [%i] = %u\n", i, densities[i]);
     }
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
