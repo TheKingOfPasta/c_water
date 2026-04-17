@@ -10,5 +10,5 @@ layout(std430, binding = BINDING_PAIRS) buffer PairsBuffer
 };
 layout(std430, binding = BINDING_START_CHUNKS) buffer StartChunksBuffer
 {
-    int start_chunks[];
+    uint start_chunks[];
 };

@@ -52,12 +52,12 @@ void main()
                 if (nx < 0 || ny < 0 || nz < 0 || nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
                     continue;
 
-                int start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
+                uint start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
                 if (start == -1 || start >= NB_PARTICLES)
                     continue;
                 uint chunk_idx = pairs[start].chunk_idx;
 
-                for (int i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+                for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                 {
                     float dist = length(pos - predicted_positions[pairs[i].particle_idx]);
                     d += particle_density(dist);
