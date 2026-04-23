@@ -10,7 +10,7 @@
 
 void opengl_add_config(GLuint program, shader_simulation* s)
 {
-    glUniform1i(glGetUniformLocation(program, "NB_PARTICLES"), NB_PARTICLES);
+    glUniform1ui(glGetUniformLocation(program, "NB_PARTICLES"), NB_PARTICLES);
 
     glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);

@@ -10,13 +10,13 @@ config c = {
 #endif
     .sz = 1000,
 
-    .pressure_force = 0.01,
-    .target_pressure = -2,
-    .particle_influence_radius = 50,
-    .radius = 15,
-    .gravity_multiplier = 1000,
-    .viscosity_strength = 0, // 0.0000000001,
+    .pressure_force = 10,
+    .target_pressure = 10,
+    .particle_influence_radius = 32,
+    .radius = 5,
+    .gravity_multiplier = 0,
+    .viscosity_strength = 10,
 
-    .velocity_drag = 1.0,
-    .velocity_collision_dampner = 1.0,
+    .velocity_drag = 0.99,
+    .velocity_collision_dampner = 0.9,
 };

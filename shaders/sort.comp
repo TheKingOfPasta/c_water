@@ -1,12 +1,12 @@
 #include "shaders/chunks.h"
 
-uniform int NB_PARTICLES;
+uniform uint NB_PARTICLES;
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 uniform int passStep;
 uniform int passStage;
-uniform int next_p2;
+uniform uint next_p2;
 
 void main()
 {

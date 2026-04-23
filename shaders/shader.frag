@@ -3,7 +3,7 @@
 
 out vec4 FragColor;
 
-uniform int NB_PARTICLES;
+uniform uint NB_PARTICLES;
 uniform vec3 cam_pos;
 
 vec3 get_dir()

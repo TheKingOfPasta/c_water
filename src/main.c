@@ -149,6 +149,7 @@ void init_particles(GLuint particles_ssbo)
     {\
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);\
         type* arr = (type*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);\
+        printf("%s\n", #ssbo);\
         for (int i = 0; i < nb_elts; i++)\
         {\
             print_func(arr, i);\
@@ -170,13 +171,18 @@ void print_particle(shader_particle* p, int index)
 void print_pair(chunk_particle_idx_pair* arr, int index)
 {
     chunk_particle_idx_pair* p = arr + index;
-    printf("%i :  %u - %u\n", index, p->chunk_idx, p->particle_idx);
+    printf("%i : chunk_idx =  %u - particle_idx = %u\n", index, p->chunk_idx, p->particle_idx);
 }
 
 void print_chunk(uint32_t* c, int index)
 {
     if (c[index] != -1u)
         printf("%i : %i\n", index, c[index]);
+}
+
+void print_float(float *arr, int index)
+{
+    printf("%i : %f\n", index, arr[index]);
 }
 
 int main()
@@ -226,9 +232,9 @@ int main()
     c->nb_chunk_y = c->sy / c->chunk_size + 1;
     c->nb_chunk_z = c->sz / c->chunk_size + 1;
 
-    int n2 = next_p2(NB_PARTICLES);
+    unsigned int n2 = next_p2(NB_PARTICLES);
     chunk_particle_idx_pair* pairs = malloc(n2 * sizeof(chunk_particle_idx_pair));
-    for (int i = 0; i < n2; i++)
+    for (unsigned int i = 0; i < n2; i++)
         pairs[i].chunk_idx = INT32_MAX;
 
     /*GLuint particles_buffer;
@@ -273,6 +279,7 @@ int main()
     GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
     GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
     GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
+    GLuint loc_init_pairs_n2 = glGetUniformLocation(init_pairs_prog, "N2");
 
     GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
     GLuint loc_cam_pos = glGetUniformLocation(render_prog, "cam_pos");
@@ -288,9 +295,14 @@ int main()
 
     opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
 
+    double last_t = glfwGetTime();
+
     while (!glfwWindowShouldClose(win))
     {
         double t0 = glfwGetTime();
+
+        s->dt = (float)(t0 - last_t);
+        last_t = t0;
 
         if (state.reset)
         {
@@ -311,7 +323,9 @@ int main()
         }
 
         START_TIME(init_pairs);
-        opengl_launch_program(init_pairs_prog, s, NB_PARTICLES);
+        opengl_prepare_program(init_pairs_prog, s);
+        glUniform1ui(loc_init_pairs_n2, n2);
+        opengl_launch_last_prepared_program(NB_PARTICLES);
         END_TIME(init_pairs);
 
         //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
@@ -321,6 +335,20 @@ int main()
         glUniform1ui(loc_next_p2, n2);
         sort_pairs(loc_passStep, loc_passStage);
         END_TIME(sort);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pairs_ssbo);
+        chunk_particle_idx_pair* arr = (chunk_particle_idx_pair*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+        for (int i = 0; i < NB_PARTICLES; i++)
+        for (int j = i + 1; j < NB_PARTICLES; j++)
+        {
+            if (arr[i].chunk_idx > arr[j].chunk_idx)
+            {
+                chunk_particle_idx_pair tmp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = tmp;
+            }
+        }
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
         //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
 
@@ -332,8 +360,9 @@ int main()
         {
             //PRINT_SSBO(start_chunks_ssbo, uint32_t, c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z, print_chunk);
 
+            // printf("\npairs chunkidx - particleidx : \n");
             // print_pairs(pairs_ssbo);
-            // printf("\n\n\n\n-----------------------------------------------------------------------------------------------------------------\n");
+            // print_start_chunks(start_chunks_ssbo);
 
             // print_particles(particles_ssbo);
 
@@ -358,8 +387,13 @@ int main()
             //PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
             state.step = false;
-            glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+            PRINT_SSBO(densities_ssbo, float, NB_PARTICLES, print_float);
+
+            PRINT_SSBO(start_chunks_ssbo, unsigned, (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
+            PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
         }
+
+        PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
         double t1 = glfwGetTime();
 
@@ -389,7 +423,6 @@ int main()
             fps_i = 0;
 
         printf("\r%f %f                         ", total, 1.0 / (t2 - t0));
-        s->dt = t2 - t0;
 
         fflush(stdout);
     }

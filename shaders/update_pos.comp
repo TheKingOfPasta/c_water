@@ -2,7 +2,7 @@
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-uniform int NB_PARTICLES;
+uniform uint NB_PARTICLES;
 
 void main()
 {
@@ -12,7 +12,7 @@ void main()
 
     Particle p = particles[idx];
 
-    p.velo *= c.velocity_drag;
+    p.velo *= pow(c.velocity_drag, s.dt);
 
     p.pos += p.velo * s.dt;
 

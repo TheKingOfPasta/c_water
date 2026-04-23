@@ -10,7 +10,7 @@ layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
     float densities[];
 };
 
-uniform int NB_PARTICLES;
+uniform uint NB_PARTICLES;
 
 float particle_compute_density_gradient(float dist)
 {
@@ -36,6 +36,8 @@ vec3 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
         return vec3(0, 0, 0);
 
     float shared_density = (densities[p2_index] + densities[p1_index]) / 2;
+//	if (shared_density < 0) return vec2(0, 0); // should not be null
+
 
     dir = dir * (1.0 / dist);
 
@@ -52,9 +54,9 @@ vec3 particle_compute_pressure(uint idx)
 
     int radius = 1;
 
-    uint cx = (uint(pos.x) / c.chunk_size < 0 ? 0 : uint(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1 : uint(pos.x) / c.chunk_size);
-    uint cy = (uint(pos.y) / c.chunk_size < 0 ? 0 : uint(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1 : uint(pos.y) / c.chunk_size);
-    uint cz = (uint(pos.z) / c.chunk_size < 0 ? 0 : uint(pos.z) / c.chunk_size >= c.nb_chunk_z ? c.nb_chunk_z - 1 : uint(pos.z) / c.chunk_size);
+    uint cx = clamp(uint(floor(pos.x / c.chunk_size)), 0, c.nb_chunk_x - 1);
+    uint cy = clamp(uint(floor(pos.y / c.chunk_size)), 0, c.nb_chunk_y - 1);
+    uint cz = clamp(uint(floor(pos.z / c.chunk_size)), 0, c.nb_chunk_z - 1);
 
     for (int dx = -radius; dx <= radius; dx++)
         for (int dy = -radius; dy <= radius; dy++)
@@ -94,6 +96,8 @@ void main()
 
     vec3 grad = particle_compute_pressure(i);
     grad = -grad;
+
+	//if (densities[i] < 0.0001) return; // should not be null
 
     grad *= c.pressure_force / densities[i];
 

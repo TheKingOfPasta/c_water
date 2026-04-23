@@ -1,6 +1,6 @@
 #include "shaders/chunks.h"
 
-uniform int NB_PARTICLES;
+uniform uint NB_PARTICLES;
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
@@ -10,8 +10,13 @@ void main()
     if (idx >= NB_PARTICLES)
         return;
 
-    if (idx == 0 || pairs[idx].chunk_idx != pairs[idx - 1].chunk_idx)
+    uint ci = pairs[idx].chunk_idx;
+
+    if (ci >= c.nb_chunk_x * c.nb_chunk_y * c.nb_chunk_z)
+        return;
+
+    if (idx == 0u || ci != pairs[idx - 1u].chunk_idx)
     {
-        start_chunks[pairs[idx].chunk_idx] = idx;
+        start_chunks[ci] = idx;
     }
 }

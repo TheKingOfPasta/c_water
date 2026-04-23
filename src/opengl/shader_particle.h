@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "utils/vec3.h"
 
-#define NB_PARTICLES 3600
+#define NB_PARTICLES 3
 
 typedef struct
 {
