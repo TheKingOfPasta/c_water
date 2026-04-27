@@ -389,18 +389,17 @@ int main()
             state.step = false;
             PRINT_SSBO(densities_ssbo, float, NB_PARTICLES, print_float);
 
-            PRINT_SSBO(start_chunks_ssbo, unsigned, (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
+            PRINT_SSBO(start_chunks_ssbo, uint32_t, (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
             PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
+            PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
         }
-
-        PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
         double t1 = glfwGetTime();
 
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(render_prog);
-        glUniform1i(loc_NB_PARTICLES_render, NB_PARTICLES);
+        glUniform1ui(loc_NB_PARTICLES_render, NB_PARTICLES);
         glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
         glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);

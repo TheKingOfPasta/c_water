@@ -1,7 +1,7 @@
 layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
-    int sx;
-    int sy;
-    int sz;
+    uint sx;
+    uint sy;
+    uint sz;
 
     float pressure_force;
     float target_pressure;
@@ -12,7 +12,7 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     float velocity_drag;
     float viscosity_strength;
 
-    int chunk_size;
+    uint chunk_size;
 
     uint nb_chunk_x;
     uint nb_chunk_y;

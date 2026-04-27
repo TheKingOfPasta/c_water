@@ -10,7 +10,7 @@ config c = {
 #endif
     .sz = 1000,
 
-    .pressure_force = 10,
+    .pressure_force = 0.01,
     .target_pressure = 10,
     .particle_influence_radius = 32,
     .radius = 5,
