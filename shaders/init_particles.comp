@@ -19,7 +19,7 @@ void main()
 
     //particles[idx].pos = vec3(c.chunk_size, c.chunk_size, c.chunk_size) + vec3(c.sx - 2 * c.chunk_size, c.sy - 2 * c.chunk_size, c.sz - 2 * c.chunk_size) * vec3(float(idx % s) / s, rand(idx), float(idx / s) / s);
 
-    particles[idx].pos = s * vec3(idx % s, 0, idx / s);
+    particles[idx].pos = s * vec3(c.sx / 2 + 3 * idx * c.radius, c.sy / 2, c.sz / 2);
 
     particles[idx].velo = vec3(0, 0, 0);
 }

@@ -201,7 +201,7 @@ int main()
     s->cam_pos = (Vec3){
         .x = c->sx / 2,
         .y = c->sy / 2,
-        .z = -30,
+        .z = c->sz / 2 - 30,
     };
 
     GLFWwindow* win = init_window();
