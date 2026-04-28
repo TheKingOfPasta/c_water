@@ -20,7 +20,7 @@ vec3 get_dir()
     vec3 up = vec3(0, 1, 0);
     vec3 di = vec3(0, 0, 1);
 
-    float aspect = c.sx / float(c.sy);
+    float aspect = c.screen_width / float(c.screen_height);
 
     vec3 dir = normalize(right * x * aspect + up * y + di / tan(radians(80) * 0.5));
     return dir;
