@@ -13,8 +13,8 @@ uniform vec3 cam_pos;
 
 vec3 get_dir()
 {
-    float x = (gl_FragCoord.x / c.sx) * 2.0 - 1;
-    float y = (gl_FragCoord.y / c.sy) * 2.0 - 1;
+    float x = (gl_FragCoord.x / c.screen_width) * 2.0 - 1;
+    float y = (gl_FragCoord.y / c.screen_height) * 2.0 - 1;
 
     vec3 right = vec3(1, 0, 0);
     vec3 up = vec3(0, 1, 0);

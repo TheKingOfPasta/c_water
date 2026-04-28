@@ -196,7 +196,7 @@ GLFWwindow* init_window()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* win = glfwCreateWindow(1920, c->screen_height, "C Water", NULL, NULL);
+    GLFWwindow* win = glfwCreateWindow(c->screen_width, c->screen_height, "C Water", NULL, NULL);
 
     glfwMakeContextCurrent(win);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))

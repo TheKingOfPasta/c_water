@@ -15,6 +15,8 @@ config c = {
     .velocity_drag = 0.99,
     .velocity_collision_dampner = 0.9,
 
+    .screen_width = 1920,
+
 #if defined(__NIXOS__)
     .screen_height = 1200,
 #else

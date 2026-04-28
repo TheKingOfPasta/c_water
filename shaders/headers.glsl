@@ -18,6 +18,7 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     uint nb_chunk_y;
     uint nb_chunk_z;
 
+    uint screen_width;
     uint screen_height;
 } c;
 
