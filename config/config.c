@@ -1,22 +1,23 @@
 #include "config.h"
 
 config c = {
-    .sx = 1920,
-
-#if defined(__NIXOS__)
-    .sy = 1200,
-#else
-    .sy = 1080,
-#endif
-    .sz = 1000,
+    .sx = 500,
+    .sy = 500,
+    .sz = 500,
 
     .pressure_force = 0.01,
     .target_pressure = 10,
-    .particle_influence_radius = 32,
+    .particle_influence_radius = 5,
     .radius = 5,
     .gravity_multiplier = 0,
     .viscosity_strength = 10,
 
     .velocity_drag = 0.99,
     .velocity_collision_dampner = 0.9,
+
+#if defined(__NIXOS__)
+    .screen_height = 1200,
+#else
+    .screen_height = 1080,
+#endif
 };

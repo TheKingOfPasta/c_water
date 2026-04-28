@@ -17,6 +17,8 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     uint nb_chunk_x;
     uint nb_chunk_y;
     uint nb_chunk_z;
+
+    uint screen_height;
 } c;
 
 layout(std140, binding = BINDING_SIMULATION) uniform SimulationBlock {

@@ -1,0 +1,65 @@
+#include "shaders/particle.glsl"
+#include "shaders/chunks.h"
+
+layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
+{
+    vec3 predicted_positions[];
+};
+layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
+{
+    float densities[];
+};
+layout(std430, binding = BINDING_DENSITY_FIELD) buffer DensityFieldBuffer
+{
+    uint density_field[];
+};
+
+uniform uint NB_PARTICLES;
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= c.nb_chunk_x * c.nb_chunk_y * c.nb_chunk_z)
+        return;
+
+    uint cx = idx % c.nb_chunk_x;
+    uint cy = idx / (c.nb_chunk_x * c.nb_chunk_z);
+    uint cz = (idx / c.nb_chunk_x) % c.nb_chunk_y;
+
+    int radius = 2;
+
+    for (int dx = -radius; dx <= radius; dx++)
+        for (int dy = -radius; dy <= radius; dy++)
+            for (int dz = -radius; dz <= radius; dz++)
+            {
+                if ((cx == 0 && dx < 0) || (cy == 0 && dy < 0) || (cz == 0 && dz < 0))
+                    continue;
+
+                uint nx = cx + dx;
+                uint ny = cy + dy;
+                uint nz = cz + dz;
+
+                if (nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
+                    continue;
+
+                uint start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
+                if (start == -1 || start >= NB_PARTICLES)
+                    continue;
+
+                uint chunk_idx = pairs[start].chunk_idx;
+
+                for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+                {
+                    vec3 diff = particles[pairs[i].particle_idx].pos - vec3((float(cx)+0.5) * c.chunk_size, (float(cy)+0.5) * c.chunk_size, (float(cz)+0.5) * c.chunk_size);
+                    if (dot(diff, diff) < c.particle_influence_radius * c.particle_influence_radius)
+                    {
+                        density_field[idx] = 1;
+                        return;
+                    }
+                }
+            }
+
+    density_field[idx] = 0;
+}
