@@ -107,6 +107,11 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     if (key == GLFW_KEY_C)
         reload_config();
+
+    if (key == GLFW_KEY_UP)
+        c->particle_density_threshold += 1;
+    if (key == GLFW_KEY_DOWN && c->particle_density_threshold != 0)
+        c->particle_density_threshold -= 1;
 }
 
 #define PRINT_SSBO(ssbo, type, nb_elts, print_func)\

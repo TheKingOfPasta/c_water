@@ -106,20 +106,10 @@ uint detect(vec3 pos, vec3 dir)
 
                 for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                 {
-                    /*vec3 diff = particles[pairs[i].particle_idx].pos - cam_pos;
-                    float d = dot(diff, dir);
-                    float d2 = dot(diff, diff) - d * d;
-                    if (d2 <= r2 && d > 0)
-                    {
+                    vec3 diff = particles[pairs[i].particle_idx].pos - pos;
+                    float sqr_dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+                    if (sqr_dist <= c.particle_influence_radius * c.particle_influence_radius)
                         return 1;
-                    }
-                    else*/
-                    //{
-                        vec3 diff = particles[pairs[i].particle_idx].pos - pos;
-                        float sqr_dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-                        if (sqr_dist <= c.particle_influence_radius * c.particle_influence_radius)
-                            return 1;
-                    //}
                 }
             }
 
@@ -136,44 +126,33 @@ void main()
 
     int counter = 0;
 
-    vec3 color = vec3(0, 0, 0);
+    uint particle_count = 0;
 
-    uint count = 0;
     while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 300)
     {
-        uint scalar = 0;
+        uint found_particle = 0;
 
         float min_dist = 472832374.0;
         if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)
         {
-            scalar = detect(pos, dir);
-            /*if (scalar == 2)
-            {
-                FragColor = vec4(0, 0.7, 0.7, 1);
-                return;
-            }*/
-
+            found_particle = detect(pos, dir);
 
             is_inside = true;
         }
-        else
-        {
-            /*float t = next_chunk_t(pos, dir);
-            if (t == -1)
-                break;
 
-            pos += dir * t;*/
-        }
         pos += dir * 0.25;
 
-        counter += 1;
-        count += scalar;
+        if (is_inside)
+        {
+            counter += 1;
+            particle_count += found_particle;
+        }
     }
 
     vec3 max_col = vec3(0, 0, 1);
     vec3 dark = vec3(0, 0, 0.2);
 
-    if (count == 0)
+    if (particle_count == 0)
     {
         FragColor = vec4(0, 0, 0, 1);
         return;
@@ -182,10 +161,5 @@ void main()
     if (counter == 0)
         FragColor = vec4(1, 1, 1, 1);
     else
-        FragColor = vec4(mix(dark, max_col, float(count) / counter), 1);
-
-    //FragColor = vec4(max_col * count / counter, 1);
-    return;
-
-    FragColor = vec4(color, 1);
+        FragColor = vec4(mix(dark, max_col, float(particle_count) / c.particle_density_threshold), 1);
 }
