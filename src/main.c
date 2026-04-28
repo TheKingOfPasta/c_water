@@ -109,41 +109,6 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
         reload_config();
 }
 
-void init_particles(GLuint particles_ssbo)
-{
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, particles_ssbo);
-    shader_particle* particles = (shader_particle*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-
-    int pts_x = (int)ceil(sqrt(NB_PARTICLES));
-    int pts_y = (NB_PARTICLES + pts_x - 1) / pts_x;
-
-    float padding = 2.0f * c->radius + 1.0f;
-
-    srand(time(NULL));
-
-    for (int i = 0; i < NB_PARTICLES; i++)
-    {
-        particles[i].velo.x = 0;
-        particles[i].velo.y = 0;
-        particles[i].velo.z = 0;
-
-        particles[i].pos = (Vec3)
-        {
-            .x = c->sx * 0.5f,
-            .y = c->sy * 0.5f,
-            .z = c->sz * 0.5f,
-        };
-
-        /*particles[i].pos = (Vec3){
-            .x = c->sx * (float)rand() / RAND_MAX,
-            .y = c->sy * (float)rand() / RAND_MAX,
-            .z = c->sz * (float)rand() / RAND_MAX,
-        };*/
-    }
-
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-}
-
 #define PRINT_SSBO(ssbo, type, nb_elts, print_func)\
     do\
     {\
