@@ -56,6 +56,22 @@ void opengl_launch_program(GLuint program, shader_simulation* s, size_t elt_coun
     opengl_launch_last_prepared_program(elt_count);
 }
 
+void print_error(char *error_name, const char *src, char *error_text)
+{
+    printf("%s:\n%s\n%s\n\n", error_name, src, error_text);
+
+    size_t line_count = 0;
+    for (; *src; src++)
+    {
+        printf("%c", *src);
+
+        if (*src == '\n')
+            printf("%5zu | ", line_count++);
+    }
+
+    printf("%s\n", error_text);
+}
+
 GLuint create_compute_program(GLuint s, const char* src)
 {
     GLuint p = glCreateProgram();
@@ -68,7 +84,7 @@ GLuint create_compute_program(GLuint s, const char* src)
     {
         char log[1024];
         glGetProgramInfoLog(p, 1024, NULL, log);
-        printf("program link error:\n%s\n%s\n", src, log);
+        print_error("program link error", src, log);
         exit(1);
     }
 
@@ -78,8 +94,6 @@ GLuint create_compute_program(GLuint s, const char* src)
 GLuint compile_shader(GLenum type, char* file_name)
 {
     const char* src = read_shader(file_name);
-
-    printf("Compiled :\n%s\n", src);
 
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
@@ -91,7 +105,7 @@ GLuint compile_shader(GLenum type, char* file_name)
     {
         char log[1024];
         glGetShaderInfoLog(s, 1024, NULL, log);
-        printf("shader error\n%s\n:\n%s\n", src, log);
+        print_error("shader error", src, log);
         exit(1);
     }
 
