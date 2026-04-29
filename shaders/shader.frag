@@ -22,7 +22,7 @@ vec3 get_dir()
 
     float aspect = c.screen_width / float(c.screen_height);
 
-    vec3 dir = normalize(right * x * aspect + up * y + di / tan(radians(80) * 0.5));
+    vec3 dir = normalize(right * x * aspect + up * y + di / tan(radians(180-90) * 0.5));
     return dir;
 }
 
@@ -82,8 +82,6 @@ uint detect(vec3 pos, vec3 dir)
     if (density == 0)
         return 0;
 
-    //vec3 chunk_pos = vec3((float(cx)+0.5) * c.chunk_size, (float(cy)+0.5) * c.chunk_size, (float(cz)+0.5) * c.chunk_size);
-
     for (int dx = -radius; dx <= radius; dx++)
         for (int dy = -radius; dy <= radius; dy++)
             for (int dz = -radius; dz <= radius; dz++)
@@ -127,8 +125,10 @@ void main()
     int counter = 0;
 
     uint particle_count = 0;
-
-    while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 300)
+    /*while ((dir.x > 0 || pos.x > 0) && (dir.x <= 0 || pos.x < c.sx) &&
+             (dir.y > 0 || pos.y > 0) && (dir.y <= 0 || pos.y < c.sy) &&
+             (dir.z > 0 || pos.z > 0) && (dir.z <= 0 || pos.z < c.sz))*/
+    while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 1000)
     {
         uint found_particle = 0;
 
@@ -140,7 +140,14 @@ void main()
             is_inside = true;
         }
 
-        pos += dir * 0.25;
+        float t = 0.25;
+
+        if (found_particle == 0)
+        {
+            //t = next_chunk_t(pos, dir);
+        }
+
+        pos += dir * t;
 
         if (is_inside)
         {
