@@ -13,9 +13,9 @@
 
 #include "config_reloader.h"
 #include "opengl/headers.h"
+#include "opengl/shader_particle.h"
 #include "opengl/shader_simulation.h"
 #include "opengl/utils.h"
-#include "opengl/shader_particle.h"
 
 int next_p2(int n)
 {
@@ -74,17 +74,17 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
     AppState* state = ((AppState*)glfwGetWindowUserPointer(window));
 
     if (key == GLFW_KEY_W)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, 5});
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, 0, 5 });
     if (key == GLFW_KEY_S)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 0, -5});
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, 0, -5 });
     if (key == GLFW_KEY_D)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){5, 0, 0});
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 5, 0, 0 });
     if (key == GLFW_KEY_A)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){-5, 0, 0});
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){ -5, 0, 0 });
     if (key == GLFW_KEY_SPACE)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, 5, 0});
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, 5, 0 });
     if (key == GLFW_KEY_LEFT_SHIFT)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){0, -5, 0});
+        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, -5, 0 });
 
     if (action != GLFW_PRESS)
         return;
@@ -114,28 +114,30 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
         c->particle_density_threshold -= 1;
 }
 
-#define PRINT_SSBO(ssbo, type, nb_elts, print_func)\
-    do\
-    {\
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);\
-        type* arr = (type*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);\
-        printf("%s\n", #ssbo);\
-        for (int i = 0; i < nb_elts; i++)\
-        {\
-            print_func(arr, i);\
-        }\
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);\
-    }\
-    while (0)
+#define PRINT_SSBO(ssbo, type, nb_elts, print_func)                                                \
+    do                                                                                             \
+    {                                                                                              \
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);                                              \
+        type* arr = (type*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);                    \
+        printf("%s\n", #ssbo);                                                                     \
+        for (int i = 0; i < nb_elts; i++)                                                          \
+        {                                                                                          \
+            print_func(arr, i);                                                                    \
+        }                                                                                          \
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);                                                   \
+    } while (0)
 
 void print_particle(shader_particle* p, int index)
 {
     p = p + index;
-    printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z, p->velo.x, p->velo.y, p->velo.z);
-    if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x) || !isnormal(p->velo.y) || !isnormal(p->velo.z))
-    if (p->pos.x != 0 && p->pos.y != 0 && p->pos.z != 0 && p->velo.x != 0 && p->velo.y != 0 && p->velo.z != 0)
-    {
-    }
+    printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z,
+           p->velo.x, p->velo.y, p->velo.z);
+    if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x)
+        || !isnormal(p->velo.y) || !isnormal(p->velo.z))
+        if (p->pos.x != 0 && p->pos.y != 0 && p->pos.z != 0 && p->velo.x != 0 && p->velo.y != 0
+            && p->velo.z != 0)
+        {
+        }
 }
 
 void print_pair(chunk_particle_idx_pair* arr, int index)
@@ -150,7 +152,7 @@ void print_chunk(uint32_t* c, int index)
         printf("%i : %i\n", index, c[index]);
 }
 
-void print_float(float *arr, int index)
+void print_float(float* arr, int index)
 {
     printf("%i : %f\n", index, arr[index]);
 }
@@ -215,21 +217,21 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(shader_particle) * NB_PARTICLES, NULL, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BINDING_PARTICLES, particles_buffer);*/
 
-    GLuint particles_ssbo = opengl_add_array(NULL, sizeof(shader_particle) * NB_PARTICLES, BINDING_PARTICLES);
+    GLuint particles_ssbo =
+        opengl_add_array(NULL, sizeof(shader_particle) * NB_PARTICLES, BINDING_PARTICLES);
     GLuint pred_pos_ssbo =
         opengl_add_array(NULL, sizeof(Vec3) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
-    GLuint start_chunks_ssbo = opengl_add_array(
-        NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z, BINDING_START_CHUNKS);
+    GLuint start_chunks_ssbo =
+        opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
+                         BINDING_START_CHUNKS);
     GLuint pairs_ssbo =
         opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
-    GLuint density_field_ssbo = opengl_add_array(NULL, sizeof(GLuint) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z, BINDING_DENSITY_FIELD);
+    GLuint density_field_ssbo =
+        opengl_add_array(NULL, sizeof(GLuint) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
+                         BINDING_DENSITY_FIELD);
 
-    float vertices[] = {
-        -1.0f, -1.0f,
-         3.0f, -1.0f,
-        -1.0f,  3.0f
-    };
+    float vertices[] = { -1.0f, -1.0f, 3.0f, -1.0f, -1.0f, 3.0f };
 
     unsigned int quadVAO, quadVBO;
 
@@ -298,7 +300,7 @@ int main()
         opengl_launch_last_prepared_program(NB_PARTICLES);
         END_TIME(init_pairs);
 
-        //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
+        // PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
 
         START_TIME(sort);
         opengl_prepare_program(sort_prog, s);
@@ -306,29 +308,14 @@ int main()
         sort_pairs(loc_passStep, loc_passStage);
         END_TIME(sort);
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pairs_ssbo);
-        chunk_particle_idx_pair* arr = (chunk_particle_idx_pair*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-        for (int i = 0; i < NB_PARTICLES; i++)
-        for (int j = i + 1; j < NB_PARTICLES; j++)
-        {
-            if (arr[i].chunk_idx > arr[j].chunk_idx)
-            {
-                chunk_particle_idx_pair tmp = arr[i];
-                arr[i] = arr[j];
-                arr[j] = tmp;
-            }
-        }
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-        //PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
-
         START_TIME(chunks);
         opengl_launch_program(chunks_prog, s, NB_PARTICLES);
         END_TIME(chunks);
 
         if (!state.step_mode || state.step)
         {
-            //PRINT_SSBO(start_chunks_ssbo, uint32_t, c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z, print_chunk);
+            // PRINT_SSBO(start_chunks_ssbo, uint32_t, c->nb_chunk_x * c->nb_chunk_y *
+            // c->nb_chunk_z, print_chunk);
 
             // printf("\npairs chunkidx - particleidx : \n");
             // print_pairs(pairs_ssbo);
@@ -354,14 +341,18 @@ int main()
             opengl_launch_program(update_pos_prog, s, NB_PARTICLES);
             END_TIME(update_pos);
 
-            //PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
+            // PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
             state.step = false;
-            PRINT_SSBO(densities_ssbo, float, NB_PARTICLES, print_float);
 
-            PRINT_SSBO(start_chunks_ssbo, uint32_t, (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
-            PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
-            PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
+            if (state.step_mode)
+            {
+                PRINT_SSBO(densities_ssbo, float, NB_PARTICLES, print_float);
+                PRINT_SSBO(start_chunks_ssbo, uint32_t,
+                           (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
+                PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
+                PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
+            }
         }
 
         START_TIME(density_field);
@@ -395,9 +386,12 @@ int main()
         if (fps_i == FPS_COUNT)
             fps_i = 0;
 
-        printf("\r%f %f                         ", total, 1.0 / (t2 - t0));
-
-        fflush(stdout);
+        if (fps_i % 10 == 0)
+        {
+            printf("\r%s : %f %f                         ",
+                   state.step_mode ? "PAUSED  " : "UNPAUSED", total, 1.0 / (t2 - t0));
+            fflush(stdout);
+        }
     }
 
     glfwTerminate();
