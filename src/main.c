@@ -62,8 +62,8 @@ static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 {
     AppState* state = (AppState*)glfwGetWindowUserPointer(window);
 
-    state->s->cam_yaw += (state->mouse_x - xpos) / c->screen_width;
-    state->s->cam_pitch += (state->mouse_y - ypos) / c->screen_height;
+    state->s->cam_yaw += (xpos - state->mouse_x) / c->screen_width;
+    state->s->cam_pitch += (ypos - state->mouse_y) / c->screen_height;
 
     state->mouse_x = xpos;
     state->mouse_y = ypos;
@@ -77,18 +77,43 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     AppState* state = ((AppState*)glfwGetWindowUserPointer(window));
 
+    float cos_pitch = cosf(s->cam_pitch);
+    float sin_pitch = sinf(s->cam_pitch);
+    float cos_yaw = cosf(s->cam_yaw);
+    float sin_yaw = sinf(s->cam_yaw);
+
+    Vec3 fwd = {
+        .x = sin_yaw * cos_pitch * 5,
+        .y = sin_pitch * 5,
+        .z = cos_yaw * cos_pitch * 5
+    };
+
+    Vec3 right = {
+        .x = cos_yaw * 5,
+        .y = 0,
+        .z = -sin_yaw * 5
+    };
+
+    Vec3 up = {
+        .x = 0,
+        .y = 5,
+        .z = 0
+    };
+
     if (key == GLFW_KEY_W)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, 0, 5 });
+        vec3_add_inplace(&state->s->cam_pos, fwd);
     if (key == GLFW_KEY_S)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, 0, -5 });
+        vec3_sub_inplace(&state->s->cam_pos, fwd);
+
     if (key == GLFW_KEY_D)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 5, 0, 0 });
+        vec3_add_inplace(&state->s->cam_pos, right);
     if (key == GLFW_KEY_A)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){ -5, 0, 0 });
+        vec3_sub_inplace(&state->s->cam_pos, right);
+
     if (key == GLFW_KEY_SPACE)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, 5, 0 });
+        vec3_add_inplace(&state->s->cam_pos, up);
     if (key == GLFW_KEY_LEFT_SHIFT)
-        vec3_add_inplace(&state->s->cam_pos, (Vec3){ 0, -5, 0 });
+        vec3_sub_inplace(&state->s->cam_pos, up);
 
     if (action != GLFW_PRESS)
         return;

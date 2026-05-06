@@ -26,14 +26,14 @@ vec3 get_dir()
 
     mat3 pitchMat = mat3(
         1, 0, 0,
-        0, cosPitch, -sinPitch,
-        0, sinPitch, cosPitch
+        0, cosPitch, sinPitch,
+        0, -sinPitch, cosPitch
     );
 
     mat3 yawMat = mat3(
-         cosYaw, 0, sinYaw,
-         0, 1, 0,
-        -sinYaw, 0, cosYaw
+        cosYaw, 0, -sinYaw,
+        0, 1, 0,
+        sinYaw, 0, cosYaw
     );
 
     return yawMat * pitchMat * dir;
