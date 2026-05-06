@@ -19,7 +19,7 @@ float particle_compute_density_gradient(float dist)
     if (v < 0)
         return 0;
 
-    float scale = 15.0 / (pow(c.particle_influence_radius, 5) * 3.14159265359);
+	float scale = 30.0 / (3.14159265359 * pow(c.particle_influence_radius, 5));
 
     return -v * scale;
 }
