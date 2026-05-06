@@ -19,7 +19,7 @@ float particle_density(float d)
     if (v < 0)
         return 0;
 
-    float scale = 15.0 / (2.0 * 3.14159265359 * pow(c.particle_influence_radius, 5));
+	float scale = 15.0 / (3.14159265359 * pow(c.particle_influence_radius, 5));
 
     return v * v * scale;
 }
