@@ -16,6 +16,8 @@ typedef struct
     float padding;
 
     Vec3 cam_pos;
+    float cam_pitch;
+    float cam_yaw;
 } shader_simulation;
 
 extern shader_simulation *s;

@@ -1,5 +1,6 @@
 #include "opengl/utils.h"
 
+#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -220,6 +221,8 @@ GLFWwindow* init_window()
         printf("glad failed to load\n");
         exit(1);
     }
+
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     return win;
 }

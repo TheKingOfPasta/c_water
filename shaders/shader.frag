@@ -18,7 +18,25 @@ vec3 get_dir()
     float aspect = c.screen_width / float(c.screen_height);
 
     vec3 dir = normalize(vec3(x * aspect, y, 1 / tan(radians(180-90) * 0.5)));
-    return dir;
+
+    float cosPitch = cos(s.cam_pitch);
+    float sinPitch = sin(s.cam_pitch);
+    float cosYaw = cos(s.cam_yaw);
+    float sinYaw = sin(s.cam_yaw);
+
+    mat3 pitchMat = mat3(
+        1, 0, 0,
+        0, cosPitch, -sinPitch,
+        0, sinPitch, cosPitch
+    );
+
+    mat3 yawMat = mat3(
+         cosYaw, 0, sinYaw,
+         0, 1, 0,
+        -sinYaw, 0, cosYaw
+    );
+
+    return yawMat * pitchMat * dir;
 }
 
 float next_chunk_t(vec3 pos, vec3 dir)

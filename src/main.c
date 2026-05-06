@@ -61,6 +61,10 @@ typedef struct AppState
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 {
     AppState* state = (AppState*)glfwGetWindowUserPointer(window);
+
+    state->s->cam_yaw += (state->mouse_x - xpos) / c->screen_width;
+    state->s->cam_pitch += (state->mouse_y - ypos) / c->screen_height;
+
     state->mouse_x = xpos;
     state->mouse_y = ypos;
 }
