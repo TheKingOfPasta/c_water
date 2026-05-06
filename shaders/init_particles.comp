@@ -4,22 +4,25 @@ uniform uint NB_PARTICLES;
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-float rand(uint idx)
-{
-    return abs(cos(pow(s.dt, -idx)));
-}
-
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
     if (idx >= NB_PARTICLES)
         return;
 
-    int s = int(sqrt(NB_PARTICLES));
+    uint n = uint(ceil(pow(float(NB_PARTICLES), 1.0 / 3.0)));
 
-    //particles[idx].pos = vec3(c.chunk_size, c.chunk_size, c.chunk_size) + vec3(c.sx - 2 * c.chunk_size, c.sy - 2 * c.chunk_size, c.sz - 2 * c.chunk_size) * vec3(float(idx % s) / s, rand(idx), float(idx / s) / s);
+    uint ix = idx % n;
+    uint iz = (idx / n) % n;
+    uint iy = idx / (n * n);
 
-    particles[idx].pos = s * vec3(c.sx / 2 + 3 * idx * c.radius, c.sy / 2, c.sz / 2);
+    float spacing = 2 * c.radius;
 
-    particles[idx].velo = vec3(0, 0, 0);
+    float extent = float(n - 1u) * spacing;
+
+    vec3 center = 0.5 * vec3(float(c.sx), float(c.sy), float(c.sz));
+    vec3 origin = center - 0.5 * vec3(extent, extent, extent);
+
+    particles[idx].pos = origin + spacing * vec3(float(ix), float(iy), float(iz));
+    particles[idx].velo = vec3(0.0);
 }

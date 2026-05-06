@@ -40,7 +40,7 @@ void main()
 
     if (p.pos.z > c.sz - c.chunk_size)
     {
-        p.pos.z = 2 * (c.chunk_size) - p.pos.z;
+        p.pos.z = 2 * (c.sz - c.chunk_size) - p.pos.z;
         p.velo.z *= -c.velocity_drag;
     }
     else if (p.pos.z < c.chunk_size)
