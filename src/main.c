@@ -53,17 +53,39 @@ typedef struct AppState
     bool draw_densities;
     bool draw_chunks;
     bool reset;
+    bool mouse_initialized;
     double mouse_x;
     double mouse_y;
     shader_simulation* s;
 } AppState;
 
+#define CAM_MOUSE_SENSITIVITY 0.0025f
+#define CAM_MOVE_SPEED 50.0f
+#define CAM_PITCH_LIMIT 1.55334f
+
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
 {
     AppState* state = (AppState*)glfwGetWindowUserPointer(window);
 
-    state->s->cam_yaw += (xpos - state->mouse_x) / c->screen_width;
-    state->s->cam_pitch += (ypos - state->mouse_y) / c->screen_height;
+    if (!state->mouse_initialized)
+    {
+        // first move is not jank
+        state->mouse_x = xpos;
+        state->mouse_y = ypos;
+        state->mouse_initialized = true;
+        return;
+    }
+
+    double dx = xpos - state->mouse_x;
+    double dy = ypos - state->mouse_y;
+
+    state->s->cam_yaw += (float)dx * CAM_MOUSE_SENSITIVITY;
+    state->s->cam_pitch += (float)dy * CAM_MOUSE_SENSITIVITY;
+
+    if (state->s->cam_pitch > CAM_PITCH_LIMIT)
+        state->s->cam_pitch = CAM_PITCH_LIMIT;
+    if (state->s->cam_pitch < -CAM_PITCH_LIMIT)
+        state->s->cam_pitch = -CAM_PITCH_LIMIT;
 
     state->mouse_x = xpos;
     state->mouse_y = ypos;
@@ -77,44 +99,6 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     AppState* state = ((AppState*)glfwGetWindowUserPointer(window));
 
-    float cos_pitch = cosf(s->cam_pitch);
-    float sin_pitch = sinf(s->cam_pitch);
-    float cos_yaw = cosf(s->cam_yaw);
-    float sin_yaw = sinf(s->cam_yaw);
-
-    Vec3 fwd = {
-        .x = sin_yaw * cos_pitch * 5,
-        .y = sin_pitch * 5,
-        .z = cos_yaw * cos_pitch * 5
-    };
-
-    Vec3 right = {
-        .x = cos_yaw * 5,
-        .y = 0,
-        .z = -sin_yaw * 5
-    };
-
-    Vec3 up = {
-        .x = 0,
-        .y = 5,
-        .z = 0
-    };
-
-    if (key == GLFW_KEY_W)
-        vec3_add_inplace(&state->s->cam_pos, fwd);
-    if (key == GLFW_KEY_S)
-        vec3_sub_inplace(&state->s->cam_pos, fwd);
-
-    if (key == GLFW_KEY_D)
-        vec3_add_inplace(&state->s->cam_pos, right);
-    if (key == GLFW_KEY_A)
-        vec3_sub_inplace(&state->s->cam_pos, right);
-
-    if (key == GLFW_KEY_SPACE)
-        vec3_add_inplace(&state->s->cam_pos, up);
-    if (key == GLFW_KEY_LEFT_SHIFT)
-        vec3_sub_inplace(&state->s->cam_pos, up);
-
     if (action != GLFW_PRESS)
         return;
 
@@ -127,12 +111,8 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
     if (key == GLFW_KEY_R)
         state->reset = true;
 
-    if (key == GLFW_KEY_D)
-        state->draw_densities = !state->draw_densities;
-
     if (key == GLFW_KEY_G)
         state->draw_chunks = !state->draw_chunks;
-    // simulation_print_chunks(state->s);
 
     if (key == GLFW_KEY_C)
         reload_config();
@@ -141,6 +121,49 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
         c->particle_density_threshold += 1;
     if (key == GLFW_KEY_DOWN && c->particle_density_threshold != 0)
         c->particle_density_threshold -= 1;
+}
+
+static void update_camera(GLFWwindow* window, AppState* state, float dt)
+{
+    float cos_pitch = cosf(state->s->cam_pitch);
+    float sin_pitch = sinf(state->s->cam_pitch);
+    float cos_yaw = cosf(state->s->cam_yaw);
+    float sin_yaw = sinf(state->s->cam_yaw);
+
+    float step = CAM_MOVE_SPEED * dt;
+
+    Vec3 fwd = {
+        .x = sin_yaw * cos_pitch * step,
+        .y = sin_pitch * step,
+        .z = cos_yaw * cos_pitch * step,
+    };
+
+    Vec3 right = {
+        .x = cos_yaw * step,
+        .y = 0,
+        .z = -sin_yaw * step,
+    };
+
+    Vec3 up = {
+        .x = 0,
+        .y = step,
+        .z = 0,
+    };
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        vec3_add_inplace(&state->s->cam_pos, fwd);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        vec3_sub_inplace(&state->s->cam_pos, fwd);
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        vec3_add_inplace(&state->s->cam_pos, right);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        vec3_sub_inplace(&state->s->cam_pos, right);
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        vec3_add_inplace(&state->s->cam_pos, up);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        vec3_sub_inplace(&state->s->cam_pos, up);
 }
 
 #define PRINT_SSBO(ssbo, type, nb_elts, print_func)                                                \
@@ -196,6 +219,7 @@ int main()
     AppState state = {
         .step = false,
         .step_mode = true,
+        .mouse_initialized = false,
         .s = s,
     };
 
@@ -303,6 +327,8 @@ int main()
 
         s->dt = (float)(t0 - last_t);
         last_t = t0;
+
+        update_camera(win, &state, s->dt);
 
         if (state.reset)
         {

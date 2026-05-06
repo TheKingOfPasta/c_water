@@ -17,7 +17,7 @@ vec3 get_dir()
 
     float aspect = c.screen_width / float(c.screen_height);
 
-    vec3 dir = normalize(vec3(x * aspect, y, 1 / tan(radians(180-90) * 0.5)));
+    vec3 dir = normalize(vec3(x * aspect, y, 1.0 / tan(radians(60.0) * 0.5)));
 
     float cosPitch = cos(s.cam_pitch);
     float sinPitch = sin(s.cam_pitch);
