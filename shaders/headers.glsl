@@ -26,6 +26,8 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
 layout(std140, binding = BINDING_SIMULATION) uniform SimulationBlock {
     float dt;
 
-    int config_ubo;
-    int simulation_ubo;
+    uint config_ubo;
+    uint simulation_ubo;
+
+    vec3 cam_pos;
 } s;

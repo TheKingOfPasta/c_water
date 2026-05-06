@@ -9,8 +9,12 @@
 typedef struct
 {
     float dt;
+
     GLuint config_ubo;
     GLuint simulation_ubo;
+
+    float padding;
+
     Vec3 cam_pos;
 } shader_simulation;
 
