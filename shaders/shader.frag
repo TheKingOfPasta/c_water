@@ -214,9 +214,11 @@ void main()
     vec3 max_col = vec3(0, 0, 1);
     vec3 dark = vec3(0, 0, 0.2);
 
+    vec3 back = background(pos_or, dir);
+
     if (particle_count == 0)
     {
-        FragColor = vec4(background(pos_or, dir), 1.0);
+        FragColor = vec4(back, 1.0);
         return;
     }
 
@@ -224,5 +226,5 @@ void main()
         FragColor = vec4(1, 1, 1, 1);
     else
         FragColor =
-            vec4(mix(dark, max_col, float(particle_count) / c.particle_density_threshold), 1);
+            vec4(mix(back, max_col, float(particle_count) / c.particle_density_threshold), 1);
 }
