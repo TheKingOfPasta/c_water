@@ -4,13 +4,13 @@
 
 #include "utils/vec3.h"
 
-#define NB_PARTICLES 360
+#define NB_PARTICLES 30
 #define NB_CHUNKS (c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z)
 
 typedef struct
 {
     Vec3 pos;
-    float padding_0;// Since glsl vectors are converted to vec4s???
+    float padding_0; // Since glsl vectors are converted to vec4s???
     Vec3 velo;
     float padding_1;
 } shader_particle;

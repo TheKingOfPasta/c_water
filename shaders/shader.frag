@@ -1,12 +1,28 @@
 #include "shaders/chunks.h"
 #include "shaders/particle.glsl"
 
-layout(std430, binding = BINDING_DENSITY_FIELD) buffer DensityFieldBuffer
+layout(std430, binding = BINDING_EXISTENCE_FIELD) buffer ExistenceFieldBuffer
 {
-    uint density_field[];
+    uint existence_field[];
 };
 
 out vec4 FragColor;
+
+#define MAX_STEPS 500
+#define STEP_LEN 1.0
+#define SURFACE_THRESHOLD 0.55 // beetween 0 and 1 // K-value
+#define SURFACE_SEARCH_ITERATION 7
+
+#define INNER_STEPS (MAX_STEPS/2)
+#define INNER_STEP_LEN 1.5 // higher steps size for sub marching
+
+#define FLUID_TINT vec3(0.40, 0.42, 0.12) // absorption colour of the water
+#define ABSORPTION 0.020 // higher = less transparent
+#define INDEX_OF_REFLECTION 1.333
+#define BASE_REFLECTANCE 0.02
+#define REFLECTION_GAIN 1.0 // scale the reflected sky contribution
+#define SPECULAR_POWER 90.0
+#define SPECULAR_GAIN 1.4
 
 #define LIGHT_DIR normalize(vec3(0.45, 0.85, 0.30))
 #define LIGHT_COLOR vec3(1.0, 0.97, 0.92)
@@ -129,8 +145,8 @@ uint detect(vec3 pos, vec3 dir)
     uint cy = clamp(uint(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
     uint cz = clamp(uint(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
 
-    uint density = density_field[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x];
-    if (density == 0)
+    uint occ = existence_field[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x];
+    if (occ == 0u)
         return 0;
 
     for (int dx = -radius; dx <= radius; dx++)
@@ -166,6 +182,103 @@ uint detect(vec3 pos, vec3 dir)
     return 0;
 }
 
+
+bool inside_box(vec3 p)
+{
+    return p.x >= 0.0 && p.x <= c.sx
+        && p.y >= 0.0 && p.y <= c.sy
+        && p.z >= 0.0 && p.z <= c.sz;
+}
+
+float field(vec3 pos)
+{
+    uint cx = clamp(uint(pos.x) / c.chunk_size, 0u, c.nb_chunk_x - 1u);
+    uint cy = clamp(uint(pos.y) / c.chunk_size, 0u, c.nb_chunk_y - 1u);
+    uint cz = clamp(uint(pos.z) / c.chunk_size, 0u, c.nb_chunk_z - 1u);
+
+    if (existence_field[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x] == 0u)
+        return 0.0;
+
+    float r  = c.particle_influence_radius;
+    float r2 = r * r;
+    float sum = 0.0;
+
+    int lo_x = int((pos.x - r) / float(c.chunk_size));
+    int hi_x = int((pos.x + r) / float(c.chunk_size));
+    int lo_y = int((pos.y - r) / float(c.chunk_size));
+    int hi_y = int((pos.y + r) / float(c.chunk_size));
+    int lo_z = int((pos.z - r) / float(c.chunk_size));
+    int hi_z = int((pos.z + r) / float(c.chunk_size));
+
+    lo_x = max(lo_x, 0);  hi_x = min(hi_x, int(c.nb_chunk_x) - 1);
+    lo_y = max(lo_y, 0);  hi_y = min(hi_y, int(c.nb_chunk_y) - 1);
+    lo_z = max(lo_z, 0);  hi_z = min(hi_z, int(c.nb_chunk_z) - 1);
+
+    for (int nx = lo_x; nx <= hi_x; nx++)
+        for (int ny = lo_y; ny <= hi_y; ny++)
+            for (int nz = lo_z; nz <= hi_z; nz++)
+            {
+                uint start = start_chunks[uint(nx) + uint(ny) * c.nb_chunk_x * c.nb_chunk_z
+                                          + uint(nz) * c.nb_chunk_x];
+                if (start == uint(-1) || start >= NB_PARTICLES)
+                    continue;
+
+                uint chunk_idx = pairs[start].chunk_idx;
+
+                for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+                {
+                    vec3 d = particles[pairs[i].particle_idx].pos - pos;
+                    float sqr = dot(d, d);
+                    if (sqr < r2)
+                    {
+                        float x = 1.0 - sqr / r2;
+                        sum += x * x * x;
+                    }
+                }
+            }
+
+    return sum;
+}
+
+vec3 field_normal(vec3 p)
+{
+    float e = 0.9;
+    vec3 g = vec3(
+        field(p + vec3(e, 0, 0)) - field(p - vec3(e, 0, 0)),
+        field(p + vec3(0, e, 0)) - field(p - vec3(0, e, 0)),
+        field(p + vec3(0, 0, e)) - field(p - vec3(0, 0, e)));
+
+    if (dot(g, g) < 1e-12)
+        return vec3(0, 1, 0);
+    return normalize(-g);
+}
+
+vec3 trace_inside(vec3 ro, vec3 rd)
+{
+    vec3 p = ro;
+    float traveled = 0.0;
+    bool was_inside = true;
+
+    for (int i = 0; i < INNER_STEPS; i++)
+    {
+        p += rd * INNER_STEP_LEN;
+
+        if (!inside_box(p))
+            break;
+
+        bool in_fluid = field(p) > SURFACE_THRESHOLD;
+        if (in_fluid)
+            traveled += INNER_STEP_LEN;
+        was_inside = in_fluid;
+    }
+
+    vec3 back = background(p, rd);
+
+    // absorb more the more traveled
+    vec3 absorb = exp(-FLUID_TINT * ABSORPTION * traveled * 6.0);
+    return back * absorb;
+}
+
 void main()
 {
     vec3 dir = get_dir();
@@ -173,58 +286,89 @@ void main()
     vec3 pos_or = s.cam_pos;
     vec3 pos = s.cam_pos;
 
-    bool is_inside = false;
+    vec3 surf_pos    = vec3(0.0);
 
-    int counter = 0;
+    bool hit_smthng = false;
 
-    uint particle_count = 0;
-    while ((dir.x > 0 || pos.x > 0) && (dir.x <= 0 || pos.x < c.sx) && (dir.y > 0 || pos.y > 0)
-           && (dir.y <= 0 || pos.y < c.sy) && (dir.z > 0 || pos.z > 0)
-           && (dir.z <= 0 || pos.z < c.sz))
-    // while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >=
-    // 0 && pos.z <= c.sz)) && counter < 1000)
+    float prev_f      = field(pos);
+    vec3  prev_pos    = pos;
+
+    for (int i = 0; i < MAX_STEPS; i++)
     {
-        uint found_particle = 0;
+        if ((dir.x <= 0.0 && pos.x < 0.0) || (dir.x >= 0.0 && pos.x > c.sx)
+         || (dir.y <= 0.0 && pos.y < 0.0) || (dir.y >= 0.0 && pos.y > c.sy)
+         || (dir.z <= 0.0 && pos.z < 0.0) || (dir.z >= 0.0 && pos.z > c.sz))
+            break;
 
-        float min_dist = 472832374.0;
-        if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0
-            && pos.z <= c.sz)
+        float f = inside_box(pos) ? field(pos) : 0.0;
+
+        if (f > SURFACE_THRESHOLD && prev_f <= SURFACE_THRESHOLD)
         {
-            found_particle = detect(pos, dir);
+            hit_smthng = true;
 
-            is_inside = true;
+			vec3 a = prev_pos;
+            vec3 b = pos;
+            for (int k = 0; k < SURFACE_SEARCH_ITERATION; k++)
+            {
+                vec3 m = (a + b) * 0.5;
+                if (field(m) > SURFACE_THRESHOLD)
+                    b = m;
+                else
+                    a = m;
+            }
+            surf_pos = b;
+            break;
         }
 
-        float t = 1;
-
-        if (found_particle == 0)
-        {
-            // t = next_chunk_t(pos, dir);
-        }
-
-        pos += dir * t;
-
-        if (is_inside)
-        {
-            counter += 1;
-            particle_count += found_particle;
-        }
+        prev_f   = f;
+        prev_pos = pos;
+        pos     += dir * STEP_LEN;
     }
 
-    vec3 max_col = vec3(0, 0, 1);
-    vec3 dark = vec3(0, 0, 0.2);
-
-    vec3 back = background(pos_or, dir);
-
-    if (particle_count == 0)
+    if (!hit_smthng)
     {
-        FragColor = vec4(back, 1.0);
+        FragColor = vec4(background(pos_or, dir), 1.0);
         return;
     }
 
-    if (counter == 0)
-        FragColor = vec4(1, 1, 1, 1);
+    vec3 N = field_normal(surf_pos);
+    vec3 V = -dir;
+
+    if (dot(N, V) < 0.0)
+        N = -N;
+
+    // Fresnel : reflect vs refract
+    float cosTheta = clamp(dot(N, V), 0.0, 1.0);
+    float fres = BASE_REFLECTANCE + (1.0 - BASE_REFLECTANCE) * pow(1.0 - cosTheta, 5.0);
+
+    // reflection: bounce the view ray into the sky
+    vec3 R = reflect(dir, N);
+    vec3 reflection = background(surf_pos + N * 0.5, R) * REFLECTION_GAIN;
+
+    // transparency: refract in the fluid
+    vec3 T = refract(dir, N, 1.0 / INDEX_OF_REFLECTION);
+    vec3 refraction;
+    if (dot(T, T) < 1e-8)
+        refraction = reflection;
     else
-        FragColor =
-            vec4(mix(back, max_col, float(particle_count) / c.particle_density_threshold), 1);
+        refraction = trace_inside(surf_pos - N * 0.5, normalize(T));
+
+    // specular
+    vec3 H = normalize(LIGHT_DIR + V);
+    float spec = pow(max(dot(N, H), 0.0), SPECULAR_POWER);
+    vec3 specular = LIGHT_COLOR * spec * SPECULAR_GAIN;
+
+    // diffuse
+    float diff = max(dot(N, LIGHT_DIR), 0.0);
+    vec3 body = (AMBIENT_LIGHT + LIGHT_COLOR * diff * 0.25) * FLUID_TINT;
+
+    vec3 color = mix(refraction, reflection, fres); // Fresnel reflect & refract
+    color += body * (1.0 - fres) * 0.4;
+    color += specular;
+
+    // tonemap
+    color = color / (color + vec3(0.6));
+    color = pow(color, vec3(1.0 / 2.2));
+
+    FragColor = vec4(color, 1.0);
 }

@@ -254,7 +254,7 @@ int main()
     GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_chunks.comp");
     GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/viscosity.comp");
     GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");
-    GLuint density_field_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density_field.comp");
+    GLuint existence_field_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density_field.comp");
 
     GLuint vs = compile_shader(GL_VERTEX_SHADER, "shaders/shader.vert");
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, "shaders/shader.frag");
@@ -287,9 +287,9 @@ int main()
                          BINDING_START_CHUNKS);
     GLuint pairs_ssbo =
         opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
-    GLuint density_field_ssbo =
+    GLuint existence_field_ssbo =
         opengl_add_array(NULL, sizeof(GLuint) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
-                         BINDING_DENSITY_FIELD);
+                         BINDING_EXISTENCE_FIELD);
 
     float vertices[] = { -1.0f, -1.0f, 3.0f, -1.0f, -1.0f, 3.0f };
 
@@ -417,9 +417,9 @@ int main()
             }
         }
 
-        START_TIME(density_field);
-        opengl_launch_program(density_field_prog, s, NB_CHUNKS);
-        END_TIME(density_field);
+        START_TIME(existence_field);
+        opengl_launch_program(existence_field_prog, s, NB_CHUNKS);
+        END_TIME(existence_field);
 
         double t1 = glfwGetTime();
 

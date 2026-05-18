@@ -9,9 +9,9 @@ layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
 {
     float densities[];
 };
-layout(std430, binding = BINDING_DENSITY_FIELD) buffer DensityFieldBuffer
+layout(std430, binding = BINDING_EXISTENCE_FIELD) buffer ExistenceFieldBuffer
 {
-    uint density_field[];
+    uint existence_field[];
 };
 
 uniform uint NB_PARTICLES;
@@ -26,7 +26,11 @@ void main()
 
     uint cx = idx % c.nb_chunk_x;
     uint cy = idx / (c.nb_chunk_x * c.nb_chunk_z);
-    uint cz = (idx / c.nb_chunk_x) % c.nb_chunk_y;
+    uint cz = (idx / c.nb_chunk_x) % c.nb_chunk_z;
+
+    float r2 = c.particle_influence_radius * c.particle_influence_radius;
+    vec3 chunk_min = vec3(float(cx), float(cy), float(cz)) * float(c.chunk_size);
+    vec3 chunk_max = chunk_min + float(c.chunk_size);
 
     int radius = 2;
 
@@ -37,29 +41,31 @@ void main()
                 if ((cx == 0 && dx < 0) || (cy == 0 && dy < 0) || (cz == 0 && dz < 0))
                     continue;
 
-                uint nx = cx + dx;
-                uint ny = cy + dy;
-                uint nz = cz + dz;
+                uint nx = cx + uint(dx);
+                uint ny = cy + uint(dy);
+                uint nz = cz + uint(dz);
 
                 if (nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
                     continue;
 
                 uint start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
-                if (start == -1 || start >= NB_PARTICLES)
+                if (start == uint(-1) || start >= NB_PARTICLES)
                     continue;
 
                 uint chunk_idx = pairs[start].chunk_idx;
 
                 for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                 {
-                    vec3 diff = particles[pairs[i].particle_idx].pos - vec3((float(cx)+0.5) * c.chunk_size, (float(cy)+0.5) * c.chunk_size, (float(cz)+0.5) * c.chunk_size);
-                    if (dot(diff, diff) < c.particle_influence_radius * c.particle_influence_radius)
+                    vec3 ppos = particles[pairs[i].particle_idx].pos;
+                    vec3 nearest = clamp(ppos, chunk_min, chunk_max);
+                    vec3 diff = ppos - nearest;
+                    if (dot(diff, diff) < r2)
                     {
-                        density_field[idx] = 1;
+                        existence_field[idx] = 1;
                         return;
                     }
                 }
             }
 
-    density_field[idx] = 0;
+    existence_field[idx] = 0;
 }
