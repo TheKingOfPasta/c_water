@@ -127,21 +127,21 @@ static void update_camera(GLFWwindow* window, AppState* state, float dt)
 {
     float cos_pitch = cosf(state->s->cam_pitch);
     float sin_pitch = sinf(state->s->cam_pitch);
-    float cos_yaw = cosf(state->s->cam_yaw);
-    float sin_yaw = sinf(state->s->cam_yaw);
+    float cos_yaw = cosf(-state->s->cam_yaw);
+    float sin_yaw = sinf(-state->s->cam_yaw);
 
     float step = CAM_MOVE_SPEED * dt;
 
     Vec3 fwd = {
-        .x = sin_yaw * cos_pitch * step,
-        .y = sin_pitch * step,
+        .x = -sin_yaw * cos_pitch * step,
+        .y = -sin_pitch * step,
         .z = cos_yaw * cos_pitch * step,
     };
 
     Vec3 right = {
         .x = cos_yaw * step,
         .y = 0,
-        .z = -sin_yaw * step,
+        .z = sin_yaw * step,
     };
 
     Vec3 up = {
