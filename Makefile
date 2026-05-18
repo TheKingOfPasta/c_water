@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS += -Wall -Wextra -Werror -Wvla -pedantic -Wswitch
 CFLAGS += -Wno-error=unused-variable -Wno-error=unused-result
-# CFLAGS += -fsanitize=address -g
+# CFLAGS += -fsanitize=address,undefined -g
 CFLAGS += -O3 -std=c23 -fopenmp -Isrc -Iconfig
 LDFLAGS = -lglfw -lGL -lm -lGLEW -ldl
 
