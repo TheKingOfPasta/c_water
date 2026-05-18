@@ -2,7 +2,7 @@
 
 layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
-    vec3 predicted_positions[];
+    vec4 predicted_positions[];
 };
 
 uniform uint NB_PARTICLES;
@@ -19,7 +19,7 @@ void main()
 
     p.velo.y -= 0.0981 * c.gravity_multiplier * s.dt;
 
-    predicted_positions[idx] = p.pos + c.velocity_drag * p.velo * s.dt;
+    predicted_positions[idx] = vec4(p.pos + pow(c.velocity_drag, s.dt) * p.velo * s.dt, 0.0);
 
     particles[idx] = p;
 }

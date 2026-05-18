@@ -3,7 +3,7 @@
 
 layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsBuffer
 {
-    vec3 predicted_positions[];
+    vec4 predicted_positions[];
 };
 
 layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
@@ -30,7 +30,7 @@ vec3 particle_compute_pressure_other_particle(uint p1_index, uint p2_index)
     if (p1_index == p2_index)
         return vec3(0, 0, 0);
 
-    vec3 dir = predicted_positions[p1_index] - predicted_positions[p2_index];
+    vec3 dir = predicted_positions[p1_index].xyz - predicted_positions[p2_index].xyz;
     float dist = length(dir);
 
     if (dist < 0.00001 || dist > c.particle_influence_radius || densities[p2_index] < 0.00001)
@@ -51,7 +51,7 @@ vec3 particle_compute_pressure(uint idx)
 {
     vec3 res = vec3(0, 0, 0);
 
-    vec3 pos = predicted_positions[idx];
+    vec3 pos = predicted_positions[idx].xyz;
 
     int radius = 1;
 
@@ -80,7 +80,8 @@ vec3 particle_compute_pressure(uint idx)
 
                 for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
                 {
-                    res += particle_compute_pressure_other_particle(idx, pairs[i].particle_idx);
+                    if (pairs[i].particle_idx != idx)
+                        res += particle_compute_pressure_other_particle(idx, pairs[i].particle_idx);
                 }
             }
 
@@ -100,7 +101,7 @@ void main()
 
 	//if (densities[i] < 0.0001) return; // should not be null
 
-    grad *= c.pressure_force / densities[i];
+    grad *= c.pressure_force / clamp(densities[i], 0.1, 1);
 
     particles[i].velo += grad * s.dt;
 }

@@ -10,11 +10,9 @@ void main()
     if (idx >= NB_PARTICLES)
         return;
 
-    particles[idx].pos = vec3(float(c.sx) * fract(idx * 32361.3255389), float(c.sy) * fract(idx * 67289.217637), float(c.sz) * fract(idx * 3827.2321));
-    particles[idx].velo = vec3(0.0);
-    return;
+    vec3 center = 0.5 * vec3(c.sx, c.sy, c.sz);
 
-    /*uint n = uint(ceil(pow(float(NB_PARTICLES), 1.0 / 3.0)));
+    uint n = uint(ceil(pow(float(NB_PARTICLES), 1.0 / 3.0)));
 
     uint ix = idx % n;
     uint iz = (idx / n) % n;
@@ -27,5 +25,5 @@ void main()
     vec3 origin = center - 0.5 * vec3(extent, extent, extent);
 
     particles[idx].pos = origin + spacing * vec3(float(ix), float(iy), float(iz));
-    particles[idx].velo = vec3(0.0);*/
+    particles[idx].velo = vec3(0.0);
 }

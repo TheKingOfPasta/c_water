@@ -280,7 +280,7 @@ int main()
     GLuint particles_ssbo =
         opengl_add_array(NULL, sizeof(shader_particle) * NB_PARTICLES, BINDING_PARTICLES);
     GLuint pred_pos_ssbo =
-        opengl_add_array(NULL, sizeof(Vec3) * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
+        opengl_add_array(NULL,  16* NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
     GLuint start_chunks_ssbo =
         opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
@@ -414,8 +414,6 @@ int main()
                            (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
                 PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
                 PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
-
-                PRINT_SSBO(pred_pos_ssbo, Vec3, NB_PARTICLES, print_vec3);
             }
         }
 
