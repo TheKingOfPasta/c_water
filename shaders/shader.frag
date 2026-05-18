@@ -1,5 +1,5 @@
-#include "shaders/particle.glsl"
 #include "shaders/chunks.h"
+#include "shaders/particle.glsl"
 
 layout(std430, binding = BINDING_DENSITY_FIELD) buffer DensityFieldBuffer
 {
@@ -7,6 +7,10 @@ layout(std430, binding = BINDING_DENSITY_FIELD) buffer DensityFieldBuffer
 };
 
 out vec4 FragColor;
+
+#define LIGHT_DIR normalize(vec3(0.45, 0.85, 0.30))
+#define LIGHT_COLOR vec3(1.0, 0.97, 0.92)
+#define AMBIENT_LIGHT vec3(0.18, 0.22, 0.28)
 
 uniform uint NB_PARTICLES;
 
@@ -74,6 +78,43 @@ float next_chunk_t(vec3 pos, vec3 dir)
     return min(min(t_x, t_y), t_z);
 }
 
+vec3 background_sky(vec3 dir)
+{
+    vec3 skyBottom = vec3(54.0, 98.0, 227.0) / 255.0;
+    vec3 skyTop = vec3(168.0, 183.0, 227.0) / 255.0;
+
+    float t = smoothstep(0.0, 1.0, (dir.y + 1.0) * 0.5);
+    vec3 col = mix(skyBottom, skyTop, t);
+    return col;
+}
+
+vec3 background(vec3 pos, vec3 dir)
+{
+    if (dir.y < -0.0001)
+    {
+        float ground_height = -10;
+        float t = (ground_height - pos.y) / dir.y;
+        if (t > 0.0)
+        {
+            vec3 hit = pos + dir * t;
+
+            float grid_size = 42;
+            vec3 grid_col_A = vec3(0.1, 0.1, 0.1);
+            vec3 grid_col_B = vec3(0.8, 0.8, 0.8);
+
+            float cx = floor(hit.x / grid_size);
+            float cz = floor(hit.z / grid_size);
+            vec3 base = mix(grid_col_A, grid_col_B, mod(cx + cz, 2.0));
+
+            float lit = max(dot(vec3(0, 1, 0), LIGHT_DIR), 0.0);
+            base *= AMBIENT_LIGHT + LIGHT_COLOR * lit * 0.8;
+            float haze = clamp(t / 1000.0, 0.0, 1.0);
+            return mix(base, background_sky(dir), haze);
+        }
+    }
+    return background_sky(dir);
+}
+
 uint detect(vec3 pos, vec3 dir)
 {
     int radius = 1;
@@ -124,6 +165,7 @@ void main()
 {
     vec3 dir = get_dir();
 
+    vec3 pos_or = s.cam_pos;
     vec3 pos = s.cam_pos;
 
     bool is_inside = false;
@@ -169,11 +211,7 @@ void main()
 
     if (particle_count == 0)
     {
-        vec3 skyBottom = vec3(54.0, 98.0, 227.0) / 255.0;
-        vec3 skyTop = vec3(168.0, 183.0, 227.0) / 255.0;
-
-        float t = smoothstep(0.0, 1.0, (dir.y + 1.0) * 0.5);
-        FragColor = vec4(mix(skyBottom, skyTop, t), 1.0);
+        FragColor = vec4(background(pos_or, dir), 1.0);
         return;
     }
 
