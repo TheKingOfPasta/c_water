@@ -116,11 +116,6 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     if (key == GLFW_KEY_C)
         reload_config();
-
-    if (key == GLFW_KEY_UP)
-        c->particle_density_threshold += 1;
-    if (key == GLFW_KEY_DOWN && c->particle_density_threshold != 0)
-        c->particle_density_threshold -= 1;
 }
 
 static void update_camera(GLFWwindow* window, AppState* state, float dt)
@@ -164,6 +159,11 @@ static void update_camera(GLFWwindow* window, AppState* state, float dt)
         vec3_add_inplace(&state->s->cam_pos, up);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         vec3_sub_inplace(&state->s->cam_pos, up);
+
+    if (glfwGetKey(window, GLFW_KEY_UP))
+        c->particle_density_threshold += 1;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) && c->particle_density_threshold > 0)
+        c->particle_density_threshold -= 1;
 }
 
 #define PRINT_SSBO(ssbo, type, nb_elts, print_func)                                                \
