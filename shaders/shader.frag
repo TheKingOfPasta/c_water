@@ -138,10 +138,10 @@ void main()
     int counter = 0;
 
     uint particle_count = 0;
-    /*while ((dir.x > 0 || pos.x > 0) && (dir.x <= 0 || pos.x < c.sx) &&
+    while ((dir.x > 0 || pos.x > 0) && (dir.x <= 0 || pos.x < c.sx) &&
              (dir.y > 0 || pos.y > 0) && (dir.y <= 0 || pos.y < c.sy) &&
-             (dir.z > 0 || pos.z > 0) && (dir.z <= 0 || pos.z < c.sz))*/
-    while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 1000)
+             (dir.z > 0 || pos.z > 0) && (dir.z <= 0 || pos.z < c.sz))
+    //while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 1000)
     {
         uint found_particle = 0;
 
@@ -153,7 +153,7 @@ void main()
             is_inside = true;
         }
 
-        float t = 0.25;
+        float t = 1;
 
         if (found_particle == 0)
         {
