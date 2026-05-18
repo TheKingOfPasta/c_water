@@ -5,12 +5,12 @@ config c = {
     .sy = 200,
     .sz = 200,
 
-    .pressure_force = 0.01,
-    .target_pressure = 10,
+    .pressure_force = 1,
+    .target_pressure = 100,
     .particle_influence_radius = 5,
     .radius = 5,
-    .gravity_multiplier = 0,
-    .viscosity_strength = 10,
+    .gravity_multiplier = 10,
+    .viscosity_strength = 0,
     .particle_density_threshold = 1,
 
     .velocity_drag = 0.99,

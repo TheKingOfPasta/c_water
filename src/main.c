@@ -182,7 +182,7 @@ static void update_camera(GLFWwindow* window, AppState* state, float dt)
 void print_particle(shader_particle* p, int index)
 {
     p = p + index;
-    printf("                                 %f %f %f += %f %f %f\n", p->pos.x, p->pos.y, p->pos.z,
+    printf("arr[%i] = %f %f %f += %f %f %f\n", index, p->pos.x, p->pos.y, p->pos.z,
            p->velo.x, p->velo.y, p->velo.z);
     if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x)
         || !isnormal(p->velo.y) || !isnormal(p->velo.z))
@@ -207,6 +207,13 @@ void print_chunk(uint32_t* c, int index)
 void print_float(float* arr, int index)
 {
     printf("%i : %f\n", index, arr[index]);
+}
+
+void print_vec3(Vec3* arr, int index)
+{
+    printf("arr[%i] = ", index);
+    vec3_print(arr + index);
+    printf("\n");
 }
 
 int main()
@@ -316,6 +323,7 @@ int main()
     size_t fps_i = 0;
 
     opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
+    PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
     opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
 
@@ -406,6 +414,8 @@ int main()
                            (int)(c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z), print_chunk);
                 PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
                 PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
+
+                PRINT_SSBO(pred_pos_ssbo, Vec3, NB_PARTICLES, print_vec3);
             }
         }
 

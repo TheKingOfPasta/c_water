@@ -5,6 +5,7 @@ layout(std430, binding = BINDING_PREDICTED_POSITIONS) buffer PredictedPositionsB
 {
     vec3 predicted_positions[];
 };
+
 layout(std430, binding = BINDING_DENSITIES) buffer DensitiesBuffer
 {
     float densities[];
