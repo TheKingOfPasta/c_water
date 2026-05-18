@@ -37,15 +37,9 @@ void main()
 
     int radius = 1;
 
-    uint cx = (uint(pos.x) / c.chunk_size < 0                   ? 0
-                   : uint(pos.x) / c.chunk_size >= c.nb_chunk_x ? c.nb_chunk_x - 1
-                                                                : uint(pos.x) / c.chunk_size);
-    uint cy = (uint(pos.y) / c.chunk_size < 0                   ? 0
-                   : uint(pos.y) / c.chunk_size >= c.nb_chunk_y ? c.nb_chunk_y - 1
-                                                                : uint(pos.y) / c.chunk_size);
-    uint cz = (uint(pos.z) / c.chunk_size < 0                   ? 0
-                   : uint(pos.z) / c.chunk_size >= c.nb_chunk_z ? c.nb_chunk_z - 1
-                                                                : uint(pos.z) / c.chunk_size);
+    uint cx = uint(clamp(floor(pos.x / float(c.chunk_size)), 0.0, float(c.nb_chunk_x - 1)));
+    uint cy = uint(clamp(floor(pos.y / float(c.chunk_size)), 0.0, float(c.nb_chunk_y - 1)));
+    uint cz = uint(clamp(floor(pos.z / float(c.chunk_size)), 0.0, float(c.nb_chunk_z - 1)));
 
     for (int dx = -radius; dx <= radius; dx++)
         for (int dy = -radius; dy <= radius; dy++)

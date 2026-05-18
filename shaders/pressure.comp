@@ -101,7 +101,7 @@ void main()
 
 	//if (densities[i] < 0.0001) return; // should not be null
 
-    grad *= c.pressure_force / clamp(densities[i], 0.1, 1);
+    grad *= c.pressure_force / max(densities[i], 0.001);
 
     particles[i].velo += grad * s.dt;
 }

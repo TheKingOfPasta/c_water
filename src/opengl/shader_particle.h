@@ -4,7 +4,7 @@
 
 #include "utils/vec3.h"
 
-#define NB_PARTICLES 30
+#define NB_PARTICLES (c->nb_particles)
 #define NB_CHUNKS (c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z)
 
 typedef struct

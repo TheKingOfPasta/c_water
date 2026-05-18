@@ -6,7 +6,7 @@ config c = {
     .sz = 200,
 
     .pressure_force = 1,
-    .target_pressure = 100,
+    .target_pressure = -1,
     .particle_influence_radius = 20,
     .radius = 5,
     .gravity_multiplier = 0,
@@ -23,4 +23,6 @@ config c = {
 #else
     .screen_height = 1080,
 #endif
+
+    .nb_particles = 4,
 };
