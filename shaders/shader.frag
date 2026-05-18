@@ -84,8 +84,7 @@ vec3 background_sky(vec3 dir)
     vec3 skyTop = vec3(168.0, 183.0, 227.0) / 255.0;
 
     float t = smoothstep(0.0, 1.0, (dir.y + 1.0) * 0.5);
-    vec3 col = mix(skyBottom, skyTop, t);
-    return col;
+    return mix(skyBottom, skyTop, t);
 }
 
 vec3 background(vec3 pos, vec3 dir)
@@ -112,7 +111,13 @@ vec3 background(vec3 pos, vec3 dir)
             return mix(base, background_sky(dir), haze);
         }
     }
-    return background_sky(dir);
+
+    vec3 col = background_sky(dir);
+    float sun = max(dot(dir, LIGHT_DIR), 0.0);
+    col += LIGHT_COLOR * pow(sun, 350.0) * 1.2;
+    col += LIGHT_COLOR * pow(sun, 8.0) * 0.18;
+
+    return col;
 }
 
 uint detect(vec3 pos, vec3 dir)
