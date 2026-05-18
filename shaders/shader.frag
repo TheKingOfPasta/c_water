@@ -24,17 +24,9 @@ vec3 get_dir()
     float cosYaw = cos(s.cam_yaw);
     float sinYaw = sin(s.cam_yaw);
 
-    mat3 pitchMat = mat3(
-        1, 0, 0,
-        0, cosPitch, sinPitch,
-        0, -sinPitch, cosPitch
-    );
+    mat3 pitchMat = mat3(1, 0, 0, 0, cosPitch, sinPitch, 0, -sinPitch, cosPitch);
 
-    mat3 yawMat = mat3(
-        cosYaw, 0, -sinYaw,
-        0, 1, 0,
-        sinYaw, 0, cosYaw
-    );
+    mat3 yawMat = mat3(cosYaw, 0, -sinYaw, 0, 1, 0, sinYaw, 0, cosYaw);
 
     return yawMat * pitchMat * dir;
 }
@@ -109,7 +101,8 @@ uint detect(vec3 pos, vec3 dir)
                 if (nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
                     continue;
 
-                uint start = start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
+                uint start =
+                    start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
                 if (start == -1 || start >= NB_PARTICLES)
                     continue;
 
@@ -138,15 +131,17 @@ void main()
     int counter = 0;
 
     uint particle_count = 0;
-    while ((dir.x > 0 || pos.x > 0) && (dir.x <= 0 || pos.x < c.sx) &&
-             (dir.y > 0 || pos.y > 0) && (dir.y <= 0 || pos.y < c.sy) &&
-             (dir.z > 0 || pos.z > 0) && (dir.z <= 0 || pos.z < c.sz))
-    //while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)) && counter < 1000)
+    while ((dir.x > 0 || pos.x > 0) && (dir.x <= 0 || pos.x < c.sx) && (dir.y > 0 || pos.y > 0)
+           && (dir.y <= 0 || pos.y < c.sy) && (dir.z > 0 || pos.z > 0)
+           && (dir.z <= 0 || pos.z < c.sz))
+    // while ((!is_inside || (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >=
+    // 0 && pos.z <= c.sz)) && counter < 1000)
     {
         uint found_particle = 0;
 
         float min_dist = 472832374.0;
-        if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0 && pos.z <= c.sz)
+        if (pos.x >= 0 && pos.x <= c.sx && pos.y >= 0 && pos.y <= c.sy && pos.z >= 0
+            && pos.z <= c.sz)
         {
             found_particle = detect(pos, dir);
 
@@ -157,7 +152,7 @@ void main()
 
         if (found_particle == 0)
         {
-            //t = next_chunk_t(pos, dir);
+            // t = next_chunk_t(pos, dir);
         }
 
         pos += dir * t;
@@ -174,12 +169,17 @@ void main()
 
     if (particle_count == 0)
     {
-        FragColor = vec4(0, 0, 0, 1);
+        vec3 skyBottom = vec3(54.0, 98.0, 227.0) / 255.0;
+        vec3 skyTop = vec3(168.0, 183.0, 227.0) / 255.0;
+
+        float t = smoothstep(0.0, 1.0, (dir.y + 1.0) * 0.5);
+        FragColor = vec4(mix(skyBottom, skyTop, t), 1.0);
         return;
     }
 
     if (counter == 0)
         FragColor = vec4(1, 1, 1, 1);
     else
-        FragColor = vec4(mix(dark, max_col, float(particle_count) / c.particle_density_threshold), 1);
+        FragColor =
+            vec4(mix(dark, max_col, float(particle_count) / c.particle_density_threshold), 1);
 }
