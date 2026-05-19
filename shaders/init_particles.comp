@@ -4,6 +4,19 @@ uniform uint NB_PARTICLES;
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
+uint hash(uint x)
+{
+    x ^= x >> 16u;
+    x *= 0x45d9f3bu;
+    x ^= x >> 16u;
+    return x;
+}
+
+float rand(uint seed)
+{
+    return float(hash(seed)) / float(0xFFFFFFFFu);
+}
+
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
@@ -24,6 +37,8 @@ void main()
 
     vec3 origin = center - 0.5 * vec3(extent, extent, extent);
 
-    particles[idx].pos = origin + spacing * vec3(float(ix), float(iy), float(iz));
+    vec3 jitter = vec3(rand(idx * 3u + 0u), rand(idx * 3u + 1u), rand(idx * 3u + 2u)) - 0.5;
+
+    particles[idx].pos = origin + spacing * vec3(float(ix), float(iy), float(iz)) + jitter * spacing;
     particles[idx].velo = vec3(0.0);
 }

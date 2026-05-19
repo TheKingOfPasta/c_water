@@ -16,12 +16,12 @@ out vec4 FragColor;
 #define INNER_STEPS (MAX_STEPS/2)
 #define INNER_STEP_LEN 1.5 // higher steps size for sub marching
 
-#define FLUID_TINT vec3(0.40, 0.42, 0.12) // absorption colour of the water
-#define ABSORPTION 0.020 // higher = less transparent
+#define FLUID_TINT vec3(1.0, 1.0, 0.10) // absorption colour of the water
+#define ABSORPTION 0.01 // higher = less transparent
 #define INDEX_OF_REFLECTION 1.333
 #define BASE_REFLECTANCE 0.02
 #define REFLECTION_GAIN 1.0 // scale the reflected sky contribution
-#define SPECULAR_POWER 90.0
+#define SPECULAR_POWER 1000.0
 #define SPECULAR_GAIN 1.4
 
 #define LIGHT_DIR normalize(vec3(0.45, 0.85, 0.30))
