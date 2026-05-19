@@ -16,15 +16,16 @@ config c = {
     .velocity_drag = 0.99,
     .velocity_collision_dampner = 0.8,
 
-    .screen_width = 1920,
-
+    .static_config = {
+        .screen_width = 1920,
 #if defined(__NIXOS__)
-    .screen_height = 1200,
+        .screen_height = 1200,
 #else
-    .screen_height = 1080,
+        .screen_height = 1080,
 #endif
+        .render_scale = 0.4,
 
-    .render_scale = 0.4,
+    	.nb_particles = 40,
+    },
 
-    .nb_particles = 40,
 };

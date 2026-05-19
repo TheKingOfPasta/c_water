@@ -24,10 +24,13 @@ typedef struct
     uint32_t nb_chunk_y;
     uint32_t nb_chunk_z;
 
-    uint32_t screen_width;
-    uint32_t screen_height;
+    struct
+    {
+        uint32_t screen_width;
+        uint32_t screen_height;
+        float render_scale;
 
-    float render_scale;
+        int nb_particles;
+    } static_config;
 
-    int nb_particles;
 } config;

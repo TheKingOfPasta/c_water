@@ -182,8 +182,8 @@ static void update_camera(GLFWwindow* window, AppState* state, float dt)
 void print_particle(shader_particle* p, int index)
 {
     p = p + index;
-    printf("arr[%i] = %f %f %f += %f %f %f\n", index, p->pos.x, p->pos.y, p->pos.z,
-           p->velo.x, p->velo.y, p->velo.z);
+    printf("arr[%i] = %f %f %f += %f %f %f\n", index, p->pos.x, p->pos.y, p->pos.z, p->velo.x,
+           p->velo.y, p->velo.z);
     if (!isnormal(p->pos.x) || !isnormal(p->pos.y) || !isnormal(p->pos.z) || !isnormal(p->velo.x)
         || !isnormal(p->velo.y) || !isnormal(p->velo.z))
         if (p->pos.x != 0 && p->pos.y != 0 && p->pos.z != 0 && p->velo.x != 0 && p->velo.y != 0
@@ -239,14 +239,16 @@ int main()
     GLFWwindow* win = init_window();
     glfwSwapInterval(0);
 
-    uint32_t win_w = c->screen_width;
-    uint32_t win_h = c->screen_height;
-    uint32_t render_w = (uint32_t)((float)win_w * c->render_scale);
-    uint32_t render_h = (uint32_t)((float)win_h * c->render_scale);
-    if (render_w < 1) render_w = 1;
-    if (render_h < 1) render_h = 1;
-    c->screen_width  = render_w;
-    c->screen_height = render_h;
+    uint32_t win_w = c->static_config.screen_width;
+    uint32_t win_h = c->static_config.screen_height;
+    uint32_t render_w = (uint32_t)((float)win_w * c->static_config.render_scale);
+    uint32_t render_h = (uint32_t)((float)win_h * c->static_config.render_scale);
+    if (render_w < 1)
+        render_w = 1;
+    if (render_h < 1)
+        render_h = 1;
+    c->static_config.screen_width = render_w;
+    c->static_config.screen_height = render_h;
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);
@@ -288,8 +290,7 @@ int main()
 
     GLuint particles_ssbo =
         opengl_add_array(NULL, sizeof(shader_particle) * NB_PARTICLES, BINDING_PARTICLES);
-    GLuint pred_pos_ssbo =
-        opengl_add_array(NULL,  16* NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
+    GLuint pred_pos_ssbo = opengl_add_array(NULL, 16 * NB_PARTICLES, BINDING_PREDICTED_POSITIONS);
     GLuint densities_ssbo = opengl_add_array(NULL, sizeof(float) * NB_PARTICLES, BINDING_DENSITIES);
     GLuint start_chunks_ssbo =
         opengl_add_array(NULL, sizeof(uint32_t) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
@@ -319,7 +320,8 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glGenTextures(1, &fbo_tex);
     glBindTexture(GL_TEXTURE_2D, fbo_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, render_w, render_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, render_w, render_h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo_tex, 0);
@@ -460,8 +462,8 @@ int main()
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBlitFramebuffer(0, 0, render_w, render_h, 0, 0, win_w, win_h,
-                          GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        glBlitFramebuffer(0, 0, render_w, render_h, 0, 0, win_w, win_h, GL_COLOR_BUFFER_BIT,
+                          GL_LINEAR);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glfwSwapBuffers(win);
