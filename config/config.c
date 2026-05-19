@@ -23,9 +23,13 @@ config c = {
 #else
         .screen_height = 1080,
 #endif
-        .render_scale = 0.4,
+        .render_scale = 0.1,
 
     	.nb_particles = 27000,
     },
+
+    .cam_move_speed = 150.0,
+    .cam_mouse_sensitivity = 0.0025,
+    .sim_speed = 1.0,
 
 };

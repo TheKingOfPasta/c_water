@@ -33,4 +33,8 @@ typedef struct
         int nb_particles;
     } static_config;
 
+    float cam_move_speed;
+    float cam_mouse_sensitivity;
+    float sim_speed;
+
 } config;

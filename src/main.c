@@ -72,8 +72,6 @@ typedef struct AppState
     shader_simulation* s;
 } AppState;
 
-#define CAM_MOUSE_SENSITIVITY 0.0025f
-#define CAM_MOVE_SPEED 100.0f
 #define CAM_PITCH_LIMIT 1.55334f
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
@@ -92,8 +90,8 @@ static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
     double dx = xpos - state->mouse_x;
     double dy = ypos - state->mouse_y;
 
-    state->s->cam_yaw += (float)dx * CAM_MOUSE_SENSITIVITY;
-    state->s->cam_pitch += (float)dy * CAM_MOUSE_SENSITIVITY;
+    state->s->cam_yaw += (float)dx * c->cam_mouse_sensitivity;
+    state->s->cam_pitch += (float)dy * c->cam_mouse_sensitivity;
 
     if (state->s->cam_pitch > CAM_PITCH_LIMIT)
         state->s->cam_pitch = CAM_PITCH_LIMIT;
@@ -138,7 +136,7 @@ static void update_camera(GLFWwindow* window, AppState* state, float dt)
     float cos_yaw = cosf(-state->s->cam_yaw);
     float sin_yaw = sinf(-state->s->cam_yaw);
 
-    float step = CAM_MOVE_SPEED * dt;
+    float step = c->cam_move_speed * dt;
 
     Vec3 fwd = {
         .x = -sin_yaw * cos_pitch * step,
@@ -371,7 +369,7 @@ int main()
     {
         double t0 = glfwGetTime();
 
-        s->dt = (float)(t0 - last_t);
+        s->dt = (float)(t0 - last_t) * c->sim_speed;
         last_t = t0;
 
         update_camera(win, &state, s->dt);
