@@ -26,23 +26,36 @@ int next_p2(int n)
     return res;
 }
 
-void sort_pairs(GLuint loc_passStep, GLuint loc_passStage)
+static const uint32_t zero_histogram[256];
+
+void radix_sort_pairs(GLuint histogram_ssbo, GLuint count_prog, GLuint prefix_prog,
+                      GLuint scatter_prog, shader_simulation* s)
 {
-    int n = next_p2(NB_PARTICLES);
-    int numThreads = n / 2;
+    int groups = ((int)NB_PARTICLES + 255) / 256;
 
-    for (int stage = 2; stage <= n; stage <<= 1)
+    for (uint32_t pass = 0; pass < 4; pass++)
     {
-        for (int step = stage; step >= 2; step >>= 1)
-        {
-            glUniform1ui(loc_passStep, step);
-            glUniform1ui(loc_passStage, stage);
+        uint32_t reverse = pass & 1u;
 
-            int groups = (numThreads + 255) / 256;
-            glDispatchCompute(groups, 1, 1);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, histogram_ssbo);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 256 * sizeof(uint32_t), zero_histogram);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-        }
+        opengl_prepare_program(count_prog, s);
+        glUniform1ui(glGetUniformLocation(count_prog, "PASS"), pass);
+        glUniform1ui(glGetUniformLocation(count_prog, "REVERSE"), reverse);
+        glDispatchCompute(groups, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        opengl_prepare_program(prefix_prog, s);
+        glDispatchCompute(1, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        opengl_prepare_program(scatter_prog, s);
+        glUniform1ui(glGetUniformLocation(scatter_prog, "PASS"), pass);
+        glUniform1ui(glGetUniformLocation(scatter_prog, "REVERSE"), reverse);
+        glDispatchCompute(groups, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 }
 
@@ -60,7 +73,7 @@ typedef struct AppState
 } AppState;
 
 #define CAM_MOUSE_SENSITIVITY 0.0025f
-#define CAM_MOVE_SPEED 50.0f
+#define CAM_MOVE_SPEED 100.0f
 #define CAM_PITCH_LIMIT 1.55334f
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos)
@@ -261,7 +274,9 @@ int main()
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density.comp");
     GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/pressure.comp");
     GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_pairs.comp");
-    GLuint sort_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/sort.comp");
+    GLuint radix_count_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/radix_count.comp");
+    GLuint radix_prefix_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/radix_prefix.comp");
+    GLuint radix_scatter_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/radix_scatter.comp");
     GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_chunks.comp");
     GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/viscosity.comp");
     GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");
@@ -297,6 +312,10 @@ int main()
                          BINDING_START_CHUNKS);
     GLuint pairs_ssbo =
         opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
+    GLuint radix_histogram_ssbo =
+        opengl_add_array(NULL, 256 * sizeof(uint32_t), BINDING_RADIX_HISTOGRAM);
+    GLuint pairs_temp_ssbo =
+        opengl_add_array(NULL, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS_TEMP);
     GLuint existence_field_ssbo =
         opengl_add_array(NULL, sizeof(GLuint) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
                          BINDING_EXISTENCE_FIELD);
@@ -331,9 +350,6 @@ int main()
     bind_uniform_buffer(&s->config_ubo, BINDING_CONFIG, c, sizeof(config));
     bind_uniform_buffer(&s->simulation_ubo, BINDING_SIMULATION, s, sizeof(shader_simulation));
 
-    GLuint loc_passStep = glGetUniformLocation(sort_prog, "passStep");
-    GLuint loc_passStage = glGetUniformLocation(sort_prog, "passStage");
-    GLuint loc_next_p2 = glGetUniformLocation(sort_prog, "next_p2");
     GLuint loc_init_pairs_n2 = glGetUniformLocation(init_pairs_prog, "N2");
 
     GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
@@ -387,9 +403,8 @@ int main()
         // PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
 
         START_TIME(sort);
-        opengl_prepare_program(sort_prog, s);
-        glUniform1ui(loc_next_p2, n2);
-        sort_pairs(loc_passStep, loc_passStage);
+        radix_sort_pairs(radix_histogram_ssbo, radix_count_prog, radix_prefix_prog,
+                         radix_scatter_prog, s);
         END_TIME(sort);
 
         START_TIME(chunks);

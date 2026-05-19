@@ -1,0 +1,30 @@
+#include "shaders/chunks.h"
+
+layout(std430, binding = BINDING_RADIX_HISTOGRAM) buffer HistogramBuffer
+{
+    uint histogram[256];
+};
+layout(std430, binding = BINDING_PAIRS_TEMP) buffer PairsTempBuffer
+{
+    chunk_particle_idx_pair pairs_temp[];
+};
+
+uniform uint NB_PARTICLES;
+uniform uint PASS;
+uniform uint REVERSE;
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+void main()
+{
+    for (uint idx = 0u; idx < NB_PARTICLES; idx++)
+    {
+        chunk_particle_idx_pair elem = (REVERSE == 0u) ? pairs[idx] : pairs_temp[idx];
+        uint digit = (elem.chunk_idx >> (PASS * 8u)) & 0xFFu;
+        uint pos = histogram[digit]++;
+        if (REVERSE == 0u)
+            pairs_temp[pos] = elem;
+        else
+            pairs[pos] = elem;
+    }
+}
