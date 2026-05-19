@@ -346,7 +346,6 @@ int main()
     size_t fps_i = 0;
 
     opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
-    PRINT_SSBO(particles_ssbo, shader_particle, NB_PARTICLES, print_particle);
 
     opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
 
