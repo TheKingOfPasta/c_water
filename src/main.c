@@ -54,7 +54,7 @@ void radix_sort_pairs(GLuint histogram_ssbo, GLuint count_prog, GLuint prefix_pr
         opengl_prepare_program(scatter_prog, s);
         glUniform1ui(glGetUniformLocation(scatter_prog, "PASS"), pass);
         glUniform1ui(glGetUniformLocation(scatter_prog, "REVERSE"), reverse);
-        glDispatchCompute(groups, 1, 1);
+        glDispatchCompute(1, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 }
@@ -372,7 +372,9 @@ int main()
         s->dt = (float)(t0 - last_t) * c->sim_speed;
         last_t = t0;
 
+        START_TIME(camera);
         update_camera(win, &state, s->dt);
+        END_TIME(camera);
 
         if (state.reset)
         {
@@ -458,6 +460,7 @@ int main()
 
         double t1 = glfwGetTime();
 
+        START_TIME(render);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         glViewport(0, 0, render_w, render_h);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -477,9 +480,13 @@ int main()
         glBlitFramebuffer(0, 0, render_w, render_h, 0, 0, win_w, win_h, GL_COLOR_BUFFER_BIT,
                           GL_LINEAR);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        END_TIME(render);
 
+        START_TIME(swap);
         glfwSwapBuffers(win);
         glfwPollEvents();
+        END_TIME(swap);
+
         double t2 = glfwGetTime();
 
         total -= FPS[fps_i] / FPS_COUNT;

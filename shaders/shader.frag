@@ -8,15 +8,15 @@ layout(std430, binding = BINDING_EXISTENCE_FIELD) buffer ExistenceFieldBuffer
 
 out vec4 FragColor;
 
-#define MAX_STEPS 50
+#define MAX_STEPS 100
 #define STEP_LEN 25.0
 #define SURFACE_THRESHOLD 0.8 // beetween 0 and 1 // K-value
-#define SURFACE_SEARCH_ITERATION 7
+#define SURFACE_SEARCH_ITERATION 1
 
 #define INNER_STEPS (MAX_STEPS/2)
-#define INNER_STEP_LEN 1.5 // higher steps size for sub marching
+#define INNER_STEP_LEN 30.0 // higher steps size for sub marching
 
-#define FLUID_TINT vec3(1.0, 1.0, 0.10) // absorption colour of the water
+#define FLUID_TINT vec3(1.0, 1.0, 0.0) // absorption colour of the water
 #define ABSORPTION 0.01 // higher = less transparent
 #define INDEX_OF_REFLECTION 1.333
 #define BASE_REFLECTANCE 0.02
