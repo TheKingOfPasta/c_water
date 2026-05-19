@@ -51,49 +51,6 @@ vec3 get_dir()
     return yawMat * pitchMat * dir;
 }
 
-float next_chunk_t(vec3 pos, vec3 dir)
-{
-    int dx = dir.x < 0 ? -1 : 1;
-    int dy = dir.y < 0 ? -1 : 1;
-    int dz = dir.z < 0 ? -1 : 1;
-
-    uint cx = clamp(uint(pos.x) / c.chunk_size, 0, c.nb_chunk_x - 1);
-    uint cy = clamp(uint(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
-    uint cz = clamp(uint(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
-
-    float t_x = -1;
-    float t_y = -1;
-    float t_z = -1;
-
-    if (dir.x != 0 && ((dx == 1 && cx != c.nb_chunk_x - 1) || (dx == -1 && cx != 0)))
-        t_x = ((cx + dx) * c.chunk_size - pos.x) / dir.x;
-    if (dir.y != 0 && ((dy == 1 && cy != c.nb_chunk_y - 1) || (dy == -1 && cy != 0)))
-        t_y = ((cy + dy) * c.chunk_size - pos.y) / dir.y;
-    if (dir.z != 0 && ((dz == 1 && cz != c.nb_chunk_z - 1) || (dz == -1 && cz != 0)))
-        t_z = ((cz + dz) * c.chunk_size - pos.z) / dir.z;
-
-    if (t_x == -1)
-    {
-        if (t_y == -1)
-            return t_z;
-        if (t_z == -1)
-            return t_y;
-        return min(t_y, t_z);
-    }
-    else if (t_y == -1)
-    {
-        if (t_z == -1)
-            return t_x;
-        return min(t_x, t_z);
-    }
-    else if (t_z == -1)
-    {
-        return min(t_x, t_y);
-    }
-
-    return min(min(t_x, t_y), t_z);
-}
-
 vec3 background_sky(vec3 dir)
 {
     vec3 skyBottom = vec3(54.0, 98.0, 227.0) / 255.0;
@@ -135,53 +92,6 @@ vec3 background(vec3 pos, vec3 dir)
 
     return col;
 }
-
-uint detect(vec3 pos, vec3 dir)
-{
-    int radius = 1;
-    float r2 = c.radius * c.radius;
-
-    uint cx = clamp(uint(pos.x) / c.chunk_size, 0, c.nb_chunk_x - 1);
-    uint cy = clamp(uint(pos.y) / c.chunk_size, 0, c.nb_chunk_y - 1);
-    uint cz = clamp(uint(pos.z) / c.chunk_size, 0, c.nb_chunk_z - 1);
-
-    uint occ = existence_field[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x];
-    if (occ == 0u)
-        return 0;
-
-    for (int dx = -radius; dx <= radius; dx++)
-        for (int dy = -radius; dy <= radius; dy++)
-            for (int dz = -radius; dz <= radius; dz++)
-            {
-                if ((cx == 0 && dx < 0) || (cy == 0 && dy < 0) || (cz == 0 && dz < 0))
-                    continue;
-
-                uint nx = cx + dx;
-                uint ny = cy + dy;
-                uint nz = cz + dz;
-
-                if (nx >= c.nb_chunk_x || ny >= c.nb_chunk_y || nz >= c.nb_chunk_z)
-                    continue;
-
-                uint start =
-                    start_chunks[nx + ny * c.nb_chunk_x * c.nb_chunk_z + nz * c.nb_chunk_x];
-                if (start == -1 || start >= NB_PARTICLES)
-                    continue;
-
-                uint chunk_idx = pairs[start].chunk_idx;
-
-                for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
-                {
-                    vec3 diff = particles[pairs[i].particle_idx].pos - pos;
-                    float sqr_dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-                    if (sqr_dist <= c.particle_influence_radius * c.particle_influence_radius)
-                        return 1;
-                }
-            }
-
-    return 0;
-}
-
 
 bool inside_box(vec3 p)
 {
