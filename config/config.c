@@ -1,19 +1,19 @@
 #include "config.h"
 
 config c = {
-    .sx = 200,
-    .sy = 200,
-    .sz = 200,
+    .sx = 1000,
+    .sy = 500,
+    .sz = 1000,
 
     .pressure_force = 1,
     .target_pressure = -1,
-    .particle_influence_radius = 20,
+    .particle_influence_radius = 50,
     .radius = 5,
-    .gravity_multiplier = 0,
+    .gravity_multiplier = 100,
     .viscosity_strength = 0,
     .particle_density_threshold = 1,
 
-    .velocity_drag = 0.99,
+    .velocity_drag = 0.8,
     .velocity_collision_dampner = 0.8,
 
     .static_config = {
@@ -25,7 +25,7 @@ config c = {
 #endif
         .render_scale = 0.4,
 
-    	.nb_particles = 40,
+    	.nb_particles = 27000,
     },
 
 };

@@ -8,8 +8,8 @@ layout(std430, binding = BINDING_EXISTENCE_FIELD) buffer ExistenceFieldBuffer
 
 out vec4 FragColor;
 
-#define MAX_STEPS 250
-#define STEP_LEN 10.0
+#define MAX_STEPS 50
+#define STEP_LEN 25.0
 #define SURFACE_THRESHOLD 0.8 // beetween 0 and 1 // K-value
 #define SURFACE_SEARCH_ITERATION 7
 
