@@ -27,5 +27,7 @@ typedef struct
     uint32_t screen_width;
     uint32_t screen_height;
 
+    float render_scale;
+
     int nb_particles;
 } config;

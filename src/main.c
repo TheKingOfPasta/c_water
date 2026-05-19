@@ -239,6 +239,15 @@ int main()
     GLFWwindow* win = init_window();
     glfwSwapInterval(0);
 
+    uint32_t win_w = c->screen_width;
+    uint32_t win_h = c->screen_height;
+    uint32_t render_w = (uint32_t)((float)win_w * c->render_scale);
+    uint32_t render_h = (uint32_t)((float)win_h * c->render_scale);
+    if (render_w < 1) render_w = 1;
+    if (render_h < 1) render_h = 1;
+    c->screen_width  = render_w;
+    c->screen_height = render_h;
+
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, key_callback);
     glfwSetCursorPosCallback(win, cursor_callback);
@@ -304,6 +313,18 @@ int main()
 
     glEnableVertexAttribArray(LOCATION_POS);
     glVertexAttribPointer(LOCATION_POS, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+
+    GLuint fbo, fbo_tex;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glGenTextures(1, &fbo_tex);
+    glBindTexture(GL_TEXTURE_2D, fbo_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, render_w, render_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo_tex, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     bind_uniform_buffer(&s->config_ubo, BINDING_CONFIG, c, sizeof(config));
     bind_uniform_buffer(&s->simulation_ubo, BINDING_SIMULATION, s, sizeof(shader_simulation));
@@ -423,6 +444,8 @@ int main()
 
         double t1 = glfwGetTime();
 
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glViewport(0, 0, render_w, render_h);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(render_prog);
@@ -434,6 +457,12 @@ int main()
 
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(0, 0, render_w, render_h, 0, 0, win_w, win_h,
+                          GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glfwSwapBuffers(win);
         glfwPollEvents();

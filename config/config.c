@@ -24,5 +24,7 @@ config c = {
     .screen_height = 1080,
 #endif
 
-    .nb_particles = 4,
+    .render_scale = 0.4,
+
+    .nb_particles = 40,
 };
