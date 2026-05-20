@@ -19,34 +19,34 @@ void main()
     if (p.pos.x > c.sx - c.chunk_size)
     {
         p.pos.x = 2 * (c.sx - c.chunk_size) - p.pos.x;
-        p.velo.x *= -c.velocity_drag;
+        p.velo.x *= -c.velocity_collision_dampner;
     }
     else if (p.pos.x < c.chunk_size)
     {
         p.pos.x = 2 * (c.chunk_size) - p.pos.x;
-        p.velo.x *= -c.velocity_drag;
+        p.velo.x *= -c.velocity_collision_dampner;
     }
 
     if (p.pos.y > c.sy - c.chunk_size)
     {
         p.pos.y = 2 * (c.sy - c.chunk_size) - p.pos.y;
-        p.velo.y *= -c.velocity_drag;
+        p.velo.y *= -c.velocity_collision_dampner;
     }
     else if (p.pos.y < c.chunk_size)
     {
         p.pos.y = 2 * (c.chunk_size) - p.pos.y;
-        p.velo.y *= -c.velocity_drag;
+        p.velo.y *= -c.velocity_collision_dampner;
     }
 
     if (p.pos.z > c.sz - c.chunk_size)
     {
         p.pos.z = 2 * (c.sz - c.chunk_size) - p.pos.z;
-        p.velo.z *= -c.velocity_drag;
+        p.velo.z *= -c.velocity_collision_dampner;
     }
     else if (p.pos.z < c.chunk_size)
     {
         p.pos.z = 2 * (c.chunk_size) - p.pos.z;
-        p.velo.z *= -c.velocity_drag;
+        p.velo.z *= -c.velocity_collision_dampner;
     }
 
     particles[idx] = p;
