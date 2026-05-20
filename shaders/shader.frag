@@ -70,7 +70,7 @@ vec3 background(vec3 pos, vec3 dir)
         {
             vec3 hit = pos + dir * t;
 
-            float grid_size = 42;
+            float grid_size = 42 * 4;
             vec3 grid_col_A = vec3(0.1, 0.1, 0.1);
             vec3 grid_col_B = vec3(0.8, 0.8, 0.8);
 

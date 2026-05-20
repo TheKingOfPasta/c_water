@@ -29,6 +29,8 @@ vec3 particle_calculate_viscosity(uint idx, uint i)
 
 void main()
 {
+    if (c.viscosity_strength == 0)
+        return;
     uint idx = gl_GlobalInvocationID.x;
     if (idx >= NB_PARTICLES)
         return;
