@@ -11,14 +11,15 @@ out vec4 FragColor;
 #define MAX_STEPS 100
 #define STEP_LEN 5.0
 #define STEP_SCALE_MAX 10.0 // acceleration when in a 0 value field
-#define SURFACE_THRESHOLD 0.8 // beetween 0 and 1 // K-value
+#define SURFACE_THRESHOLD 0.9 // beetween 0 and 1 // K-value
 #define SURFACE_SEARCH_ITERATION 5
 
 #define INNER_STEPS 10
-#define INNER_STEP_LEN 30.0 // higher steps size for sub marching
+#define INNER_STEP_LEN 10.0 // higher steps size for sub marching
 
-#define FLUID_TINT vec3(1.0, 1.0, 0.0) // absorption colour of the water
-#define ABSORPTION 0.01 // higher = less transparent
+#define FLUID_COLOR vec3(0.1, 0.55, 1.0)  // body tint of the water
+#define FLUID_ABSORPTION vec3(0.8, 0.35, 0.03) // per-channel absorption (high = opaque)
+#define ABSORPTION 0.01 // overall absorption scale
 #define INDEX_OF_REFLECTION 1.333
 #define BASE_REFLECTANCE 0.02
 #define REFLECTION_GAIN 1.0 // scale the reflected sky contribution
@@ -81,7 +82,7 @@ vec3 background(vec3 pos, vec3 dir)
 
             float lit = max(dot(vec3(0, 1, 0), LIGHT_DIR), 0.0);
             base *= AMBIENT_LIGHT + LIGHT_COLOR * lit * 0.8;
-            float haze = clamp(t / 1000.0, 0.0, 1.0);
+            float haze = clamp(t / 3000.0, 0.0, 1.0);
             return mix(base, background_sky(dir), haze);
         }
     }
@@ -110,7 +111,7 @@ float field(vec3 pos)
     if (existence_field[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x] == 0u)
         return 0.0;
 
-    float r  = c.particle_influence_radius;
+    float r  = c.particle_influence_radius + 10;
     float r2 = r * r;
     float sum = 0.0;
 
@@ -163,7 +164,7 @@ float field_and_gradient(vec3 pos, out vec3 grad)
         return 0.0;
     }
 
-    float r  = c.particle_influence_radius;
+    float r  = c.particle_influence_radius + 10;
     float r2 = r * r;
     float sum = 0.0;
     grad = vec3(0.0);
@@ -229,7 +230,7 @@ vec3 trace_inside(vec3 ro, vec3 rd)
     vec3 back = background(p, rd);
 
     // absorb more the more traveled
-    vec3 absorb = exp(-FLUID_TINT * ABSORPTION * traveled * 6.0);
+    vec3 absorb = exp(-FLUID_ABSORPTION * ABSORPTION * traveled * 6.0);
     return back * absorb;
 }
 
@@ -325,7 +326,7 @@ void main()
 
     // diffuse
     float diff = max(dot(N, LIGHT_DIR), 0.0);
-    vec3 body = (AMBIENT_LIGHT + LIGHT_COLOR * diff * 0.25) * FLUID_TINT;
+    vec3 body = (AMBIENT_LIGHT + LIGHT_COLOR * diff * 0.25) * FLUID_COLOR;
 
     vec3 color = mix(refraction, reflection, fres); // Fresnel reflect & refract
     color += body * (1.0 - fres) * 0.4;
