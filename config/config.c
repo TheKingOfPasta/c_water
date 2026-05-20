@@ -23,7 +23,7 @@ config c = {
 #else
         .screen_height = 1080,
 #endif
-        .render_scale = 0.1,
+        .render_scale = 0.2,
 
     	.nb_particles = 27000,
     },

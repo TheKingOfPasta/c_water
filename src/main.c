@@ -26,38 +26,28 @@ int next_p2(int n)
     return res;
 }
 
-static const uint32_t zero_histogram[256];
-
-void radix_sort_pairs(GLuint histogram_ssbo, GLuint count_prog, GLuint prefix_prog,
-                      GLuint scatter_prog, shader_simulation* s)
+void bitonic_sort_pairs(GLuint sort_prog, shader_simulation* s, int n2)
 {
-    int groups = ((int)NB_PARTICLES + 255) / 256;
+    int loc_step = glGetUniformLocation(sort_prog, "passStep");
+    int loc_stage = glGetUniformLocation(sort_prog, "passStage");
+    int loc_n2 = glGetUniformLocation(sort_prog, "next_p2");
+    int groups = (n2 / 2 + 255) / 256;
 
-    for (uint32_t pass = 0; pass < 4; pass++)
+    opengl_prepare_program(sort_prog, s);
+    glUniform1ui(loc_n2, n2);
+
+    for (int k = 2; k <= n2; k *= 2)
     {
-        uint32_t reverse = pass & 1u;
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, histogram_ssbo);
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 256 * sizeof(uint32_t), zero_histogram);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        opengl_prepare_program(count_prog, s);
-        glUniform1ui(glGetUniformLocation(count_prog, "PASS"), pass);
-        glUniform1ui(glGetUniformLocation(count_prog, "REVERSE"), reverse);
-        glDispatchCompute(groups, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        opengl_prepare_program(prefix_prog, s);
-        glDispatchCompute(1, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        opengl_prepare_program(scatter_prog, s);
-        glUniform1ui(glGetUniformLocation(scatter_prog, "PASS"), pass);
-        glUniform1ui(glGetUniformLocation(scatter_prog, "REVERSE"), reverse);
-        glDispatchCompute(1, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        for (int j = k; j >= 2; j /= 2)
+        {
+            glUniform1i(loc_step, j);
+            glUniform1i(loc_stage, k);
+            glDispatchCompute(groups, 1, 1);
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        }
     }
 }
+
 
 typedef struct AppState
 {
@@ -272,9 +262,7 @@ int main()
     GLuint density_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/density.comp");
     GLuint pressure_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/pressure.comp");
     GLuint init_pairs_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_pairs.comp");
-    GLuint radix_count_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/radix_count.comp");
-    GLuint radix_prefix_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/radix_prefix.comp");
-    GLuint radix_scatter_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/radix_scatter.comp");
+    GLuint bitonic_sort_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/sort.comp");
     GLuint init_chunks_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/init_chunks.comp");
     GLuint viscosity_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/viscosity.comp");
     GLuint update_pos_prog = compile_shader(GL_COMPUTE_SHADER, "shaders/update_pos.comp");
@@ -310,10 +298,6 @@ int main()
                          BINDING_START_CHUNKS);
     GLuint pairs_ssbo =
         opengl_add_array(pairs, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS);
-    GLuint radix_histogram_ssbo =
-        opengl_add_array(NULL, 256 * sizeof(uint32_t), BINDING_RADIX_HISTOGRAM);
-    GLuint pairs_temp_ssbo =
-        opengl_add_array(NULL, sizeof(chunk_particle_idx_pair) * n2, BINDING_PAIRS_TEMP);
     GLuint existence_field_ssbo =
         opengl_add_array(NULL, sizeof(GLuint) * c->nb_chunk_x * c->nb_chunk_y * c->nb_chunk_z,
                          BINDING_EXISTENCE_FIELD);
@@ -403,8 +387,7 @@ int main()
         // PRINT_SSBO(pairs_ssbo, chunk_particle_idx_pair, NB_PARTICLES, print_pair);
 
         START_TIME(sort);
-        radix_sort_pairs(radix_histogram_ssbo, radix_count_prog, radix_prefix_prog,
-                         radix_scatter_prog, s);
+        bitonic_sort_pairs(bitonic_sort_prog, s, n2);
         END_TIME(sort);
 
         START_TIME(chunks);
