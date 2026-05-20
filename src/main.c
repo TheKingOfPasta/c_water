@@ -53,6 +53,7 @@ typedef struct AppState
     bool step_mode;
     bool draw_densities;
     bool draw_chunks;
+    bool draw_particles;
     bool reset;
     bool mouse_initialized;
     double mouse_x;
@@ -113,6 +114,9 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     if (key == GLFW_KEY_G)
         state->draw_chunks = !state->draw_chunks;
+
+    if (key == GLFW_KEY_F)
+        state->draw_particles = !state->draw_particles;
 
     if (key == GLFW_KEY_C)
         reload_config();
@@ -283,6 +287,13 @@ int main()
     GLuint fs = compile_shader(GL_FRAGMENT_SHADER, "shaders/shader.frag");
     GLuint render_prog = create_program(vs, fs);
 
+    GLuint pts_vs = compile_shader(GL_VERTEX_SHADER, "shaders/particles.vert");
+    GLuint pts_fs = compile_shader(GL_FRAGMENT_SHADER, "shaders/particles.frag");
+    GLuint particles_prog = create_program(pts_vs, pts_fs);
+    GLuint loc_NB_PARTICLES_pts = glGetUniformLocation(particles_prog, "NB_PARTICLES");
+
+    glEnable(GL_PROGRAM_POINT_SIZE);
+
     c->chunk_size = c->particle_influence_radius;
     c->nb_chunk_x = c->sx / c->chunk_size + 1;
     c->nb_chunk_y = c->sy / c->chunk_size + 1;
@@ -449,25 +460,43 @@ int main()
         double t1 = glfwGetTime();
 
         START_TIME(render);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        glViewport(0, 0, render_w, render_h);
-        glClear(GL_COLOR_BUFFER_BIT);
+        if (state.draw_particles)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, win_w, win_h);
+            glClearColor(0.04f, 0.04f, 0.08f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_DEPTH_TEST);
 
-        glUseProgram(render_prog);
-        glUniform1ui(loc_NB_PARTICLES_render, NB_PARTICLES);
-        glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
-        glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
+            opengl_prepare_program(particles_prog, s);
+            glUniform1ui(loc_NB_PARTICLES_pts, NB_PARTICLES);
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_POINTS, 0, NB_PARTICLES);
 
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDisable(GL_DEPTH_TEST);
+        }
+        else
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            glViewport(0, 0, render_w, render_h);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBlitFramebuffer(0, 0, render_w, render_h, 0, 0, win_w, win_h, GL_COLOR_BUFFER_BIT,
-                          GL_LINEAR);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glUseProgram(render_prog);
+            glUniform1ui(loc_NB_PARTICLES_render, NB_PARTICLES);
+            glBindBuffer(GL_UNIFORM_BUFFER, s->config_ubo);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(config), c);
+            glBindBuffer(GL_UNIFORM_BUFFER, s->simulation_ubo);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_simulation), s);
+
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+            glBlitFramebuffer(0, 0, render_w, render_h, 0, 0, win_w, win_h, GL_COLOR_BUFFER_BIT,
+                              GL_LINEAR);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
         END_TIME(render);
 
         START_TIME(swap);
@@ -478,18 +507,14 @@ int main()
         double t2 = glfwGetTime();
 
         char* var_names[] = {
-            "pressure_force",
-            "target_pressure",
-            "particle_influence_radius",
-            "radius",
-            "gravity_multiplier",
-            "velocity_collision_dampner",
-            "velocity_drag",
-            "viscosity_strength",
+            "pressure_force", "target_pressure",    "particle_influence_radius",
+            "radius",         "gravity_multiplier", "velocity_collision_dampner",
+            "velocity_drag",  "viscosity_strength",
         };
 
         PRINT_TIMINGS(1.0 / (t2 - t0));
-        printf("\n%s : %f                                   ", var_names[state.var_index], *(&(c->pressure_force) + state.var_index));
+        printf("\n%s : %f                                   ", var_names[state.var_index],
+               *(&(c->pressure_force) + state.var_index));
         printf("\n");
         fflush(stdout);
     }
