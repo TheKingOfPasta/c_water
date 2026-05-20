@@ -8,7 +8,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #include "config_reloader.h"
@@ -47,7 +46,6 @@ void bitonic_sort_pairs(GLuint sort_prog, shader_simulation* s, int n2)
         }
     }
 }
-
 
 typedef struct AppState
 {
@@ -336,8 +334,6 @@ int main()
 
     GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
 
-    size_t fps_i = 0;
-
     opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
 
     opengl_launch_program(predicted_positions_prog, s, NB_PARTICLES);
@@ -347,6 +343,7 @@ int main()
     while (!glfwWindowShouldClose(win))
     {
         double t0 = glfwGetTime();
+        TIMINGS_FRAME_START();
 
         s->dt = (float)(t0 - last_t) * c->sim_speed;
         last_t = t0;
@@ -466,13 +463,7 @@ int main()
         END_TIME(swap);
 
         double t2 = glfwGetTime();
-
-        if ((fps_i++) % 10 == 0)
-        {
-            printf("\r%s : %f                         ",
-                   state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / (t2 - t0));
-            fflush(stdout);
-        }
+        PRINT_TIMINGS(1.0 / (t2 - t0));
     }
 
     glfwTerminate();
