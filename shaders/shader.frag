@@ -9,11 +9,12 @@ layout(std430, binding = BINDING_EXISTENCE_FIELD) buffer ExistenceFieldBuffer
 out vec4 FragColor;
 
 #define MAX_STEPS 100
-#define STEP_LEN 25.0
+#define STEP_LEN 5.0
+#define STEP_SCALE_MAX 10.0 // acceleration when in a 0 value field
 #define SURFACE_THRESHOLD 0.8 // beetween 0 and 1 // K-value
-#define SURFACE_SEARCH_ITERATION 1
+#define SURFACE_SEARCH_ITERATION 5
 
-#define INNER_STEPS (MAX_STEPS/2)
+#define INNER_STEPS 10
 #define INNER_STEP_LEN 30.0 // higher steps size for sub marching
 
 #define FLUID_TINT vec3(1.0, 1.0, 0.0) // absorption colour of the water
@@ -150,17 +151,60 @@ float field(vec3 pos)
     return sum;
 }
 
-vec3 field_normal(vec3 p)
+float field_and_gradient(vec3 pos, out vec3 grad)
 {
-    float e = 0.9;
-    vec3 g = vec3(
-        field(p + vec3(e, 0, 0)) - field(p - vec3(e, 0, 0)),
-        field(p + vec3(0, e, 0)) - field(p - vec3(0, e, 0)),
-        field(p + vec3(0, 0, e)) - field(p - vec3(0, 0, e)));
+    uint cx = clamp(uint(pos.x) / c.chunk_size, 0u, c.nb_chunk_x - 1u);
+    uint cy = clamp(uint(pos.y) / c.chunk_size, 0u, c.nb_chunk_y - 1u);
+    uint cz = clamp(uint(pos.z) / c.chunk_size, 0u, c.nb_chunk_z - 1u);
 
-    if (dot(g, g) < 1e-12)
-        return vec3(0, 1, 0);
-    return normalize(-g);
+    if (existence_field[cx + cy * c.nb_chunk_x * c.nb_chunk_z + cz * c.nb_chunk_x] == 0u)
+    {
+        grad = vec3(0.0);
+        return 0.0;
+    }
+
+    float r  = c.particle_influence_radius;
+    float r2 = r * r;
+    float sum = 0.0;
+    grad = vec3(0.0);
+
+    int lo_x = int((pos.x - r) / float(c.chunk_size));
+    int hi_x = int((pos.x + r) / float(c.chunk_size));
+    int lo_y = int((pos.y - r) / float(c.chunk_size));
+    int hi_y = int((pos.y + r) / float(c.chunk_size));
+    int lo_z = int((pos.z - r) / float(c.chunk_size));
+    int hi_z = int((pos.z + r) / float(c.chunk_size));
+
+    lo_x = max(lo_x, 0);  hi_x = min(hi_x, int(c.nb_chunk_x) - 1);
+    lo_y = max(lo_y, 0);  hi_y = min(hi_y, int(c.nb_chunk_y) - 1);
+    lo_z = max(lo_z, 0);  hi_z = min(hi_z, int(c.nb_chunk_z) - 1);
+
+    for (int nx = lo_x; nx <= hi_x; nx++)
+        for (int ny = lo_y; ny <= hi_y; ny++)
+            for (int nz = lo_z; nz <= hi_z; nz++)
+            {
+                uint start = start_chunks[uint(nx) + uint(ny) * c.nb_chunk_x * c.nb_chunk_z
+                                          + uint(nz) * c.nb_chunk_x];
+                if (start == uint(-1) || start >= NB_PARTICLES)
+                    continue;
+
+                uint chunk_idx = pairs[start].chunk_idx;
+
+                for (uint i = start; i < NB_PARTICLES && pairs[i].chunk_idx == chunk_idx; i++)
+                {
+                    vec3 d = particles[pairs[i].particle_idx].pos - pos;
+                    float sqr = dot(d, d);
+                    if (sqr < r2)
+                    {
+                        float x = 1.0 - sqr / r2;
+                        sum += x * x * x;
+                        grad += x * x * d;
+                    }
+                }
+            }
+
+    grad *= 6.0 / r2;
+    return sum;
 }
 
 vec3 trace_inside(vec3 ro, vec3 rd)
@@ -210,7 +254,15 @@ void main()
          || (dir.z <= 0.0 && pos.z < 0.0) || (dir.z >= 0.0 && pos.z > c.sz))
             break;
 
-        float f = inside_box(pos) ? field(pos) : 0.0;
+        float f = 0.0;
+        if (inside_box(pos))
+        {
+            uint ecx = clamp(uint(pos.x) / c.chunk_size, 0u, c.nb_chunk_x - 1u);
+            uint ecy = clamp(uint(pos.y) / c.chunk_size, 0u, c.nb_chunk_y - 1u);
+            uint ecz = clamp(uint(pos.z) / c.chunk_size, 0u, c.nb_chunk_z - 1u);
+            if (existence_field[ecx + ecy * c.nb_chunk_x * c.nb_chunk_z + ecz * c.nb_chunk_x] != 0u)
+                f = field(pos);
+        }
 
         if (f > SURFACE_THRESHOLD && prev_f <= SURFACE_THRESHOLD)
         {
@@ -232,7 +284,8 @@ void main()
 
         prev_f   = f;
         prev_pos = pos;
-        pos     += dir * STEP_LEN;
+        float step_scale = max(1.0, (SURFACE_THRESHOLD - f) / SURFACE_THRESHOLD * STEP_SCALE_MAX);
+        pos     += dir * STEP_LEN * step_scale;
     }
 
     if (!hit_smthng)
@@ -241,13 +294,15 @@ void main()
         return;
     }
 
-    vec3 N = field_normal(surf_pos);
+    vec3 surf_grad;
+    field_and_gradient(surf_pos, surf_grad);
+    vec3 N = (dot(surf_grad, surf_grad) < 1e-12) ? vec3(0, 1, 0) : normalize(-surf_grad);
     vec3 V = -dir;
 
     if (dot(N, V) < 0.0)
         N = -N;
 
-    // Fresnel : reflect vs refract
+    // Fresnel : reflect/refract
     float cosTheta = clamp(dot(N, V), 0.0, 1.0);
     float fres = BASE_REFLECTANCE + (1.0 - BASE_REFLECTANCE) * pow(1.0 - cosTheta, 5.0);
 
