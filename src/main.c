@@ -60,6 +60,7 @@ typedef struct AppState
     double mouse_x;
     double mouse_y;
     shader_simulation* s;
+    int var_index;
 } AppState;
 
 #define CAM_PITCH_LIMIT 1.55334f
@@ -117,6 +118,11 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
 
     if (key == GLFW_KEY_C)
         reload_config();
+
+    if (key == GLFW_KEY_RIGHT && state->var_index < 7)
+        state->var_index += 1;
+    if (key == GLFW_KEY_LEFT && state->var_index > 0)
+        state->var_index -= 1;
 }
 
 static void update_camera(GLFWwindow* window, AppState* state, float dt)
@@ -162,9 +168,15 @@ static void update_camera(GLFWwindow* window, AppState* state, float dt)
         vec3_sub_inplace(&state->s->cam_pos, up);
 
     if (glfwGetKey(window, GLFW_KEY_UP))
-        c->particle_density_threshold += 1;
-    if (glfwGetKey(window, GLFW_KEY_DOWN) && c->particle_density_threshold > 0)
-        c->particle_density_threshold -= 1;
+    {
+        float* var = &(c->pressure_force) + state->var_index;
+        *var *= 1 + 0.1 * s->dt;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN))
+    {
+        float* var = &(c->pressure_force) + state->var_index;
+        *var *= 1 - 0.1 * s->dt;
+    }
 }
 
 #define PRINT_SSBO(ssbo, type, nb_elts, print_func)                                                \
@@ -229,6 +241,7 @@ int main()
         .step_mode = true,
         .mouse_initialized = false,
         .s = s,
+        .var_index = 0,
     };
 
     s->cam_pos = (Vec3){
@@ -467,10 +480,21 @@ int main()
 
         double t2 = glfwGetTime();
 
+        char* var_names[] = {
+            "pressure_force",
+            "target_pressure",
+            "particle_influence_radius",
+            "radius",
+            "gravity_multiplier",
+            "velocity_collision_dampner",
+            "velocity_drag",
+            "viscosity_strength",
+        };
+
         if ((fps_i++) % 10 == 0)
         {
-            printf("\r%s : %f                         ",
-                   state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / (t2 - t0));
+            printf("\r%s : %f       %s : %f                        ",
+                   state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / (t2 - t0), var_names[state.var_index], *(&(c->pressure_force) + state.var_index));
             fflush(stdout);
         }
     }
