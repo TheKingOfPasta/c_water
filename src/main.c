@@ -489,7 +489,7 @@ int main()
         };
 
         PRINT_TIMINGS(1.0 / (t2 - t0));
-        printf("\n%s : %f", var_names[state.var_index], *(&(c->pressure_force) + state.var_index));
+        printf("\n%s : %f                                   ", var_names[state.var_index], *(&(c->pressure_force) + state.var_index));
         printf("\n");
         fflush(stdout);
     }
