@@ -81,7 +81,7 @@ vec3 background(vec3 pos, vec3 dir)
 
             float lit = max(dot(vec3(0, 1, 0), LIGHT_DIR), 0.0);
             base *= AMBIENT_LIGHT + LIGHT_COLOR * lit * 0.8;
-            float haze = clamp(t / 1000.0, 0.0, 1.0);
+            float haze = clamp(t / 5000.0, 0.0, 1.0);
             return mix(base, background_sky(dir), haze);
         }
     }
