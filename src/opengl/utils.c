@@ -1,8 +1,46 @@
 #include "opengl/utils.h"
 
 #include <GLFW/glfw3.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+extern TimingSlot* __start_timing_ptrs[];
+extern TimingSlot* __stop_timing_ptrs[];
+
+void timing_frame_start(void)
+{
+    for (TimingSlot** sp = __start_timing_ptrs; sp < __stop_timing_ptrs; sp++)
+        (*sp)->ran = 0;
+}
+
+void print_timings_dashboard(double fps)
+{
+    TimingSlot** begin = __start_timing_ptrs;
+    TimingSlot** end   = __stop_timing_ptrs;
+    int          count = (int)(end - begin) + 1;
+
+    static int initialized = 0;
+    if (!initialized)
+    {
+        for (int i = 0; i < count + 1; i++)
+            printf("\n");
+        initialized = 1;
+    }
+
+    printf("\033[%dA", count + 1);
+
+    for (TimingSlot** sp = end - 1; sp >= begin; sp--)
+    {
+        TimingSlot* s = *sp;
+        if (s->ran)
+            printf("\r\033[K  %-22s %.3f ms\n", s->name, s->ms);
+        else
+            printf("\r\033[K  %-22s ---\n", s->name);
+    }
+
+    printf("\r\033[K  FPS: %.1f", fps);
+}
 
 #include "config_reloader.h"
 #include "opengl/headers.h"

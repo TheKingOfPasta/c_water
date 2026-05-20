@@ -21,20 +21,38 @@ char* read_shader_includes(char* file);
 char* read_shader(char* file);
 GLFWwindow* init_window();
 
-#define ENABLE_PRINTS false
+#define ENABLE_PRINTS true
+
+typedef struct
+{
+    const char* name;
+    double ms;
+    int ran;
+} TimingSlot;
+
+void timing_frame_start(void);
+void print_timings_dashboard(double fps);
+
+#define TIMINGS_FRAME_START() timing_frame_start()
+#define PRINT_TIMINGS(fps) print_timings_dashboard(fps)
 
 #if ENABLE_PRINTS == true
 
 #    define START_TIME(t)                                                                          \
-        GLuint query##t;                                                                           \
-        glGenQueries(1, &query##t);                                                                \
-        glBeginQuery(GL_TIME_ELAPSED, query##t);
+        static TimingSlot _ts_##t = { .name = #t };                                                \
+        static TimingSlot* _tsp_##t __attribute__((section("timing_ptrs"), used)) = &_ts_##t;      \
+        GLuint _query_##t;                                                                         \
+        glGenQueries(1, &_query_##t);                                                              \
+        glBeginQuery(GL_TIME_ELAPSED, _query_##t);
 
 #    define END_TIME(t)                                                                            \
         glEndQuery(GL_TIME_ELAPSED);                                                               \
-        GLuint64 elapsed##t;                                                                       \
-        glGetQueryObjectui64v(query##t, GL_QUERY_RESULT, &elapsed##t);                             \
-        printf("GPU time %s : %.2f ms\n", #t, elapsed##t / 1e6);
+        {                                                                                          \
+            GLuint64 _e;                                                                           \
+            glGetQueryObjectui64v(_query_##t, GL_QUERY_RESULT, &_e);                               \
+            _ts_##t.ms = _e / 1e6;                                                                 \
+            _ts_##t.ran = 1;                                                                       \
+        }
 
 #else
 #    define START_TIME(t) ;
