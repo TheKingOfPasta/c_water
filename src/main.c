@@ -352,11 +352,6 @@ int main()
 
     GLuint loc_NB_PARTICLES_render = glGetUniformLocation(render_prog, "NB_PARTICLES");
 
-#define FPS_COUNT 100
-
-    double total = 0.0;
-
-    double FPS[FPS_COUNT] = { 0 };
     size_t fps_i = 0;
 
     opengl_launch_program(init_particles_prog, s, NB_PARTICLES);
@@ -489,18 +484,10 @@ int main()
 
         double t2 = glfwGetTime();
 
-        total -= FPS[fps_i] / FPS_COUNT;
-
-        FPS[fps_i++] = 1.0 / (t1 - t0);
-        total += FPS[fps_i - 1] / FPS_COUNT;
-
-        if (fps_i == FPS_COUNT)
-            fps_i = 0;
-
-        if (fps_i % 10 == 0)
+        if ((fps_i++) % 10 == 0)
         {
-            printf("\r%s : %f %f                         ",
-                   state.step_mode ? "PAUSED  " : "UNPAUSED", total, 1.0 / (t2 - t0));
+            printf("\r%s : %f                         ",
+                   state.step_mode ? "PAUSED  " : "UNPAUSED", 1.0 / (t2 - t0));
             fflush(stdout);
         }
     }
