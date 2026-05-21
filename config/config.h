@@ -16,7 +16,6 @@ typedef struct
     float velocity_collision_dampner;
     float velocity_drag;
     float viscosity_strength;
-    uint32_t particle_density_threshold;
 
     int chunk_size;
 

@@ -11,7 +11,6 @@ layout(std140, binding = BINDING_CONFIG) uniform ConfigBlock {
     float velocity_collision_dampner;
     float velocity_drag;
     float viscosity_strength;
-    uint particle_density_threshold;
 
     uint chunk_size;
 
