@@ -1,5 +1,13 @@
 # c_water
 
+## dependencies
+
+Il y a un flake.nix a la root
+
+```bash
+nix develop
+```
+
 ## usage
 
 ```bash
@@ -8,6 +16,7 @@ make clean all && ./c_water
 
 ## configuration
 
-one can modify simulation settings in config/config.c, no need to recompile after :]
+On peut modifier la configuration dans config/config.c, pas besoin de recompiler apres :]
+Ou dans la simulation avec les fleches de gauche et droite, et haut bas
 
-for the settings of the render (raymarching), they are defined in shader/shader.frag
+Pour les parametres du rendu raymarching, il y a plein de constantes dans shaders/shader.frag

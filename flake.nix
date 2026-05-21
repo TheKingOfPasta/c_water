@@ -1,5 +1,5 @@
 {
-  description = "real time rendering with glfw";
+  description = "water sim on opengl";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
