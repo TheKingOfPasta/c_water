@@ -115,7 +115,7 @@ static void key_callback(GLFWwindow* window, int key, [[maybe_unused]] int scanc
     if (key == GLFW_KEY_G)
         state->draw_chunks = !state->draw_chunks;
 
-    if (key == GLFW_KEY_F)
+    if (key == GLFW_KEY_M)
         state->draw_particles = !state->draw_particles;
 
     if (key == GLFW_KEY_C)
